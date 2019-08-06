@@ -1,0 +1,5 @@
+export PYTHONPATH=${PWD}
+export FLASK_APP=web
+export FLASK_ENV=production
+alias start_server='flask run > /dev/shm/run_lights.log 2>&1 &'
+alias stop_server="kill -3 `ps -ea | grep flask | awk '{ print $1 }'`"

@@ -1,0 +1,23 @@
+<html>
+
+<body>
+<p>
+<h3>{{ title }}</h3>
+<p>Python version: {{data.py_version}}<br>
+Discoveries: most recent {{ data.last_discover }},
+{{ data.num_successes }} successes, {{ data.num_failures }} failures.</p> 
+<ol>
+  {% for light in data.lights %}
+  <li>{{ light.name }}</li>
+	  <ul>
+			<li>hue: {{ light.hue }}</li>
+			<li>saturation: {{ light.saturation }}</li>
+			<li>brightness: {{ light.brightness }}</li>
+			<li>kelvin: {{ light.kelvin }}</li>
+		</ul>
+  </li>
+  {% endfor %}
+</ol>
+</body>
+  
+</html>

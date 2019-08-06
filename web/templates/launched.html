@@ -1,0 +1,32 @@
+<html>
+
+<head>
+<link 
+  rel="stylesheet" type="text/css"
+  href="{{ url_for('static', filename='styles.css') }}" />
+
+{% if icon is defined %}
+  <link rel="icon" sizes="192x192" href="static/{{ icon }}-192.png" />
+  <link rel="icon" sizes="512x512" href="static/{{ icon }}-512.png" />
+{% endif %}
+
+<script language='javascript'>var path_root = '{{ path_root }}';</script>
+<script src="{{ url_for('static', filename='lights.js') }}"></script>
+
+</head>
+
+<body class="{{ agent_class }} launched" onLoad="addEvents()">
+
+<div class="main">
+  <div class="statusColumn">
+    <div
+      class="lightCommand statusRow"
+      style =
+        "color: {{ script.color }}; background-color: {{ script.background }}">
+      {{ script.title }}
+    </div>
+	  <div class="lightCommand statusRow homeButton" id="index">Home</div>
+	</div>
+</div>
+
+</body>

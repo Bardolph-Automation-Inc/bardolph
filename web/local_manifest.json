@@ -1,0 +1,110 @@
+[
+{  
+  "file_name": "all_off.ls",
+  "path": "off",
+  "background": "#222",
+  "color": "Linen"
+},
+{  
+  "file_name": "all_on.ls",
+  "path": "on",
+  "background": "Linen",
+  "color": "#222"
+},
+{  
+  "file_name": "reading.ls",
+  "background": "rgb(64, 64, 128)",
+  "color": "rgb(128, 192, 192)"
+},
+{  
+  "file_name": "incan.ls",
+  "title": "Incandescent",
+  "background": "LightYellow",
+  "color": "#222"
+},
+{  
+  "file_name": "incan-dark.ls",
+  "title": "Dark Incan",
+  "background": "Tan",
+  "color": "#222"
+},
+{  
+  "file_name": "table.ls",
+  "title": "Table Only",
+  "background": "SlateGray",
+  "color": "#222"
+},
+{  
+  "file_name": "tv.ls",
+  "icon": "colorBulb",
+  "title": "TV Viewing",
+  "background": "rgb(32, 192, 192)",
+  "color": "#222"
+},
+{  
+  "file_name": "on5.ls",
+  "title": "On 5 Min.",
+  "background": "rgb(21, 139, 168)",
+  "color": "white"
+},
+{  
+  "file_name": "cycle-slow.ls",
+  "icon": "colorBulb",
+  "repeat": true,
+  "title": "Slow Cycle",
+  "background": "rgb(16, 96, 32)",
+  "color": "White"
+},
+{  
+  "file_name": "cycle-color-slow.ls",
+  "icon": "colorBulb",
+  "repeat": true,
+  "title": "Slow Same Color",
+  "background": "rgb(32, 192, 192)",
+  "color": "#222"
+},
+{  
+  "file_name": "fade-to-dark.ls",
+  "path": "fade",
+  "title": "Fade to Dark",
+  "background": "rgb(220, 190, 170)",
+  "color": "black"
+},
+{  
+  "file_name": "from_table.ls",
+  "icon": "colorBulb",
+  "path": "from-table",
+  "title": "Copy Table",
+  "background": "rgb(64, 156, 255)",
+  "color": "#222"
+},
+{  
+  "file_name": "cycle-pole.ls",
+  "icon": "colorBulb",
+  "repeat": true,
+  "background": "rgb(82, 151, 183)",
+  "color": "Linen"
+},
+{  
+  "file_name": "",
+  "path": "capture",
+  "title": "Capture",
+  "background": "SlateGray",
+  "color": "White"
+},
+{  
+  "file_name": "",
+  "path": "stop",
+  "title": "Stop",
+  "background": "Maroon",
+  "color": "White"
+},
+{  
+  "file_name": "__snapshot__.ls",
+  "icon": "colorBulb",
+  "path": "retrieve",
+  "title": "Retrieve",
+  "background": "rgb(64, 64, 128)",
+  "color": "rgb(128, 192, 192)"
+}
+]
