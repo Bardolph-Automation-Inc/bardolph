@@ -1,3 +1,6 @@
+class UnboundException(Exception): pass
+
+
 class Injection:
     providers = {}
 
@@ -35,8 +38,12 @@ def inject(*interfaces):
 
 
 def provide(interface):
-    creator = Injection.providers.get(interface, interface)
+    if interface not in Injection.providers:
+        raise UnboundException("interface {}".format(interface))
+        
+    creator = Injection.providers[interface]
     return creator()
+
 
 def configure(): Injection.providers = {}
 

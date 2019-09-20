@@ -4,6 +4,7 @@ from ..lib.i_lib import Settings
 from ..lib.injection import provide
 
 def configure():
+    """ Assumes injection and settings are already initialized. """
     log_config.configure()
     clock.configure()
 

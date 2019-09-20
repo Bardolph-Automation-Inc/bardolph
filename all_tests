@@ -1,2 +1,2 @@
 #!/bin/bash
-python -m tests.all_tests $*
+python tests/all_tests.py $*

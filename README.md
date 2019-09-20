@@ -1,6 +1,8 @@
-# Bardolph
+![bulb](web/static/colorBulb-192.png) 
+# Bardolph 
 Al Fontes - [bardolph@fontes.org](mailto:bardolph@fontes.org)
 
+## Introduction
 **Bardolph** is a facility for controlling [LIFX](https://www.lifx.com/) lights
 through a simple scripting language. It is targeted at people who would like
 to control or experiment with their lights in an automated way, but who do not 
@@ -10,31 +12,73 @@ My intention was also to make the code usable in other Python programs. A
 goal for the parser and virtual machine is to make them accessible through 
 reasonably simple entry points.
 
-The program does not use the Internet to
-access the bulbs, and no login is required; all of its  communication occurs
-over the local WiFi network. You can edit scripts with a basic text editor and
-run them from command line.
+The program does not use the Internet to access the bulbs, and no login is 
+required; all of its  communication occurs over the local WiFi network. You 
+can edit scripts with a basic text editor and run them from the command line.
 
-This project relies heavily on the [lifxlan](https://github.com/mclarkk/lifxlan)
+This project relies heavily on the [lifxlan](https://pypi.org/project/lifxlan/)
 Python library to access the bulbs. You need to have it installed for the code
-in this project to run.
+in this project to run. If you run the web server, you will also need 
+[flup](https://www.saddi.com/software/flup) and
+[Flask](https://palletsprojects.com/p/flask/).
 
 The language is missing quite a lot of what you might expect, as it's still
 under development. However, it is also very simple, and should be usable
 by non-programmers.
 
-## Lightbulb Scripts
+### Lightbulb Scripts
 A script is a plain-text file in which all whitespace is equivalent. You can 
 format it with tabs or put the entire script on a single line if you want. 
 Comments begin with the '#' character and continue to the end of the line. All
 keywords are in lower-case text. Script file names have a ".ls" extension, 
 meaning "lightbulb script".
 
-### Basics
-To set the color of one or more lights, the virtual machine will send
-four parameters (hue, saturation, brightness, and kelvin) to the bulbs.
+#### Quick Examples
+The source distribution contains some sample scripts in the `scripts` directory.
+They should work with whatever lights may be on the network. For example, to
+turn on all your lights:
+```
+run scripts/all_on.ls
+```
+In this case, `run` is a bash shell script that runs the Python `run.py` module.
 
-Here's an example:
+In another example, to turn all the lights on, wait for 5 minutes, and then turn
+them all off::
+```
+run scripts/on5.ls
+```
+Note that the application will run as long as there is an active script. You can
+kill the active script and quit by pressing Ctrl-C. You can easily run the
+program as a background job, as it is not abnormally resource-intensive.
+
+### Web Server
+To make scripts more accessible, you can use the web server component, which
+implements a very basic web page that has running scripts as its sole purpose.
+The server also provides a 1:1 mapping betwen scripts and URL's. This server
+is designed to run locally, on your WiFi network only. 
+
+For example, if you run the web server on a machine with the hostname
+ `myserver.local`, you could launch the  `all_on.ls` script by going to
+ `http://myserver.local/all-on` with any browser on your WiFi network.
+ Because scripts can run over a long period of time, even indefinitely in
+ an infinite loop, having a cheap, dedicated device like a Raspberry Pi is an
+ ideal way to host the server.
+
+## Script Basics
+Internally, launching a script is a two-step process. First, a parser reads the
+source file and converts it to a sequence of encoded instructions. Next, a
+simple virtual machine executes those instructions. A job-control facility
+maintains a queue, allowing execution of a sequence of scripts.
+
+You set the color and brightness of one or more lights by sending them
+4 numbers: hue, saturation, brightness, and kelvin. The 
+meaning of the numerical values, and how the lights process them, is
+defined by the LIFX [LAN Protocol](https://lan.developer.lifx.com).
+
+To set the color of one or more lights, your script supplies these parameters,
+and the Bardolph virtual machine sends them to the bulbs.
+
+Here's an example, including some comments:
 ```
 # comment
 hue 1200 # red
@@ -44,16 +88,16 @@ kelvin 2700
 set all
 on all
 ``` 
-This script sets the colors of all known lights , and turns all of them on. The 
-meaning of the numerical values, and how the lights process them, is defined
-by the LIFX [LAN Protocol](https://lan.developer.lifx.com).
+This script sets the colors of all known lights to a bright shade of red and 
+turns all of them on. 
 
 Any values never specified default to zero, or an empty string. This can lead
 to unwanted results, so each of the values should be set at least once before
-setting the color of any lights.
+setting the color of any lights. Consider starting your script with `get all` 
+(the `get` command is described below).
 
-When a value isn't specified a second time, the previous one gets used again. 
-For example, the following uses the same numbers for saturation, brightness,
+When a value isn't specified a second time, the existing value is used again. 
+For example, the following reuses numbers for saturation, brightness,
 and kelvin throughout:
 ```
 hue 20000 saturation 65500 brightness 45000 kelvin 2700 set all
@@ -70,8 +114,10 @@ named "Table", you can set its color with:
 hue 20000 saturation 65500 brightness 45000 kelvin 2700
 set "Table"
 ```
-Light names must be in quotation marks. They can contain spaces, but they may
-not contain a linefeed. For example:
+A light's name is configured when you do initial setup with the LIFX software.
+
+When they appear in a script, bulb names must be in quotation marks. They 
+can  contain spaces, but  may not contain a linefeed. For example:
 ```
 # Ok
 on "Chair Side"
@@ -80,8 +126,8 @@ on "Chair Side"
 on "Chair
 Side"
 ```
-If a script mentions a name for a light that has not been found or is otherwise
-unavailable, an error is sent to the log, and execution of the script
+If a script contains a name for a light that has not been discovered or is 
+otherwise unavailable, an error is sent to the log, but execution of the script
 continues. 
 
 ### Power Command
@@ -102,9 +148,8 @@ to the bulbs.
 Scripts can contain time delays and durations, both of which are are expressed 
 in milliseconds. A time delay designates the amount of time to wait before
 transmitting the next command to the lights. The duration value is passed
-through to the bulbs, and its interpretation is defined through the LIFX API.
-
-For example:
+through to the bulbs, and its interpretation is defined through the 
+ [LIFX API](https://lan.developer.lifx.com).
 ```
 off all time 5000 duration 2000 on all off "Table"
 ```
@@ -129,7 +174,7 @@ This script will:
 1. Wait 1000 ms. 
 1. Turns both lights on *simultaneously*. 
 
-Contrast this to:
+This contrasts with:
 ```
 time 1000 on "Table" on "Chair Side"   # Does not use "and".
 ```
@@ -233,31 +278,35 @@ This gets the average hue from all of the lights in this group, and that becomes
 the hue used in any subsequent `set` action. The same calculation is done on
 saturation, brightness, and kelvin, as well.
 
+To retrieve the average valuess  from all known lights and use them in subsequent
+commands:
+```
+get all
+```
 ## Running Scripts
-To run a script from the command line:
+Run a script from the command line:
 ```
 run name.ls
 ``` 
-In this context, "name" contains the name a script. This is equivalent to:
+In this context, "name" contains the name of a script. This is equivalent to:
 ```
-python -m controller.run name.ls
+python -m bardolph.controller.run name.ls
 ```
 You can sequentially run multiple scripts. If you specify more than one on the
-command line, it will cue them in that order and execute them sequentially.
-For example, 
+command line, it will cue them in that order and execute them sequentially:
 ```
 run light.ls dark.ls
 ``` 
-would run `light.ls`, and upon its completion, execute `dark.ls`.
+would run `light.ls`, and upon completion, execute `dark.ls`.
 
 ### Options
-Command-line flags can modify how a script is run. For example:
+Command-line flags modify how a script is run. For example:
 ```
 run --verbose test.ls
 
 run -r color_cycle.ls
 ```
-The available options are:
+Available options:
 1. -r or --repeat: Repeat the scripts indefinitely, until Ctrl-C is pressed.
 1. -v or --verbose: Generate full debugging output while running.
 1. -f or --fake: Don't operate on real lights. Instead, use "fake" lights that
@@ -266,28 +315,29 @@ just send output to stdout. This can be helpful for debugging and testing.
 With the -f option, there will be 5 fake lights, and their name are fixed as
 "Table", "Top", "Middle", "Bottom", and "Chair". Two fake groups are
 available: "Pole" and "Table". One location named "Home" contains all
-of the fake lights, as well.
+of the fake lights, as well. If you want to use a different set of fake lights,
+you will need to edit some Python code. Specificlly, you'll need to modify
+`LightSet.discover` in `tests/fake_light_set.py`.
 
 ## Other Programs
 Some utility Python programs are available to be run from the command line.
-There is a small script for each one of them that runs on any platform
+A small script for each one of them runs on any platform
 capable of executing a bash script, typically MacOS and Linux systems. All of
 these must be run from the directory where Bardolph is installed.
 
 ### lsc - Lightbulb Script Compiler
-This is equivalent to `python -m controller.lsc`. The syntax is
-`lsc name.ls`. Only one file name may be provided.
+This is equivalent to `python -m bardolph.controller.lsc`. The syntax is
+`lsc name.ls`; only one file name may be provided.
 
-The acronym LSC stands for "lightbulb script compiler". This meta-compiler
-generates a Python file that contains a parsed and encoded version of the
-script, in a file called  `__generated__.py`. The generated file can be run 
-from the command line like any other Python module for example:
+LSC stands for "lightbulb script compiler". That meta-compiler writes a 
+parsed and encoded version of the script, along with run-time  support, to 
+file  `__generated__.py`. The generated file can be run  grom the command
+line like any other Python module:
 ```
 lsc scripts/evening.ls
 python -m __generated__
 ```
-The generated Python module still relies on the Bardolph runtime code, and
-needs to be executed from the same directory.
+The generated Python module relies on the Bardolph runtime code.
 
 If you want to use this module in your own Python code, you can import the
 and call the function `run_script()`. However, because the module is not 
@@ -308,14 +358,13 @@ indicating what the script would do.
 
 ### snapshot
 The `snapshot` command is a bash script wihch is equivalent to
-`python -m controller.snapshot`.
+`python -m bardoolph.controller.snapshot`.
 
 This program captures the current state of the lights and generates the
 requested type of output. The default output is a human-readable listing
 of the lights.
 
-The nature of that output is determined by command-line options. These are 
-the most interesting:
+The nature of that output is determined by command-line options, notably:
 1. `-s`: outputs a light script to stdout. If you save that output to a file
 and run it as a script, it will restore the lights to the same state,
 including color and power.
@@ -329,26 +378,28 @@ by the `lsc` command, and can be run with `python -m __generated__`.
 The program has been tested on Python versions 3.5.1 and 3.7.3. I haven't tried
 it, but I'm almost certain that it won't run on any 2.x version.
 
-I haven't done any stress testing, so I don't know what the limits are on
-script size. Note that the application loads the entire script into memory
-beore executing it.
+Because I haven't done any stress testing, I don't know the limits on
+script size. Note that the application loads the encoded script into memory
+before executing it.
 
 I've run the program on MacOS 10.14.5, Debian Linux Stretch, and the
-June, 2019, release of Raspbian. It works fine for me on a Raspberry Pi Zero W.
+June, 2019, release of Raspbian. It works fine for me on a Raspberry Pi Zero W,
+controlling 5 bulbs.
 
 # Web Server
-There is also a very thin web server application that is available. This server
-takes a different approach in that the server runs in your home. The advantage
-is that you can access this server from your phone, TV, or laptop, as long as
-you're on the home WiFi. The disadvantage is you can't access your living room
-lights from the office.
+A very thin web server application can be used to run scripts on an independent,
+standalone computer. This server won't work on the Internet and runs in your home. 
+You can access it from your phone, TV, or laptop, as long as you're on
+the home WiFi.
 
-The support for the web UI has a lot of non-Python files, and is therefore
-available through (https://github.com/al-fontes-jr/bardolph).
+This is currently an experimental feature, as getting it to run can be a bit of a chore.
+I describe the process for setting up and running a server in
+[docs/web_server.md](docs/web_server.md).
 
 ## Missing Features
 These are among the missing features that I'll be working on, roughly with
 this priority:
+1. Easy-to-use web server.
 1. Flow of control, such as loops, branching, and subroutines.
 1. Mathematical expressions.
 1. Support for devices that aren't bulbs.

@@ -1,10 +1,11 @@
+![bulb](../web/static/colorBulb-192.png) 
 # Bardolph Web Frontend Server
 Al Fontes - [bardolph@fontes.org](mailto:bardolph@fontes.org)
 
 ## Introduction
 I originally wrote this application for my own use, and it serves
 as my primary means of controlling my lights. However, it is designed to
-compliment the LIFX mobile app, not to replace it.
+*compliment* the LIFX mobile app, not to replace it.
 
 It's important to note that while this is a web server, it is not designed to
 work on the public Internet. The server runs entirely within your WiFi
@@ -12,7 +13,8 @@ network. The target configuration is a very inexpensive device which
 runs 24/7 as a headless server. At home I use a dedicated Raspberry Pi W
 that sits in a corner of my apartment.
 
-In comparison to the mobile app, the local web server has these advantages:
+In comparison to the LIFX mobile app, the local web server has these 
+differences:
 1. Each script has its own URL. This makes it easy to access scripts with
 bookmarks and a web browser.
 1. After the bulbs boot up, there's no need for external Internet connectivity.

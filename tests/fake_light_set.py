@@ -15,6 +15,12 @@ class Light:
         self.power = 12345
         self.color = color if color is not None else [0, 0, 0, 0]
         
+    def __repr__(self):
+        s = 'name: "{}", group: "{}", location: "{}", power: {}, '.format(
+            self.name, self.group, self.location, self.power)
+        s += 'color: {}'.format(self.color)
+        return s
+        
     def get_color(self):
         logging.info('Get color "{}" {}'.format(self.name, self.color))
         return self.color
@@ -66,7 +72,7 @@ class LightSet:
             self.add_light(
                 'Chair', 'Furniture', 'Home', [10000, 20000, 30000, 40000])
      
-    def add_light(self, name, group, location, color = None):
+    def add_light(self, name, group, location, color=None):
         new_light = Light(name, group, location, color)
         self.lights[name] = new_light
         if group is not None:
@@ -90,7 +96,7 @@ class LightSet:
         return self.lights[name]
     
     def get_all_lights(self):
-        return self.lights;
+        return list(self.lights.values());
 
     def get_group_names(self):
         return self.groups.keys()

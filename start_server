@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo lighttpd -f web/server/lighttpd.conf

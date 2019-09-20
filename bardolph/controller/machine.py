@@ -141,7 +141,7 @@ class Machine:
     @inject(LightSet)
     def get_light_color(self, light_set):
         if self.reg.name is None:
-            self.get_multiple_color(light_set.get_all_lights)
+            self.get_average_color(light_set.get_all_lights)
         else:
             light = light_set.get_light(self.reg.name)
             if light is None:
@@ -151,17 +151,18 @@ class Machine:
 
     @inject(LightSet)
     def get_group_color(self, light_set):
-        self.get_multiple_color(light_set.get_group)
+        self.get_average_color(light_set.get_group)
         
     @inject(LightSet)
     def get_location_color(self, light_set):
-        self.get_multiple_color(light_set.get_location)
+        self.get_average_color(light_set.get_location)
     
-    def get_multiple_color(self, get_fn):
+    def get_average_color(self, get_fn):
         if self.reg.name is None:
-            self.color_to_reg(average_color(get_fn()))
+            colors = [light.get_color() for light in get_fn()]
         else:
-            self.color_to_reg(average_color(get_fn(self.reg.name)))
+            colors = get_fn(self.reg.name)
+        self.color_to_reg(average_color(colors))
             
     def nop(self): pass
         

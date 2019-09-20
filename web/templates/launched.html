@@ -1,9 +1,7 @@
 <html>
 
 <head>
-<link 
-  rel="stylesheet" type="text/css"
-  href="{{ url_for('static', filename='styles.css') }}" />
+<link rel="stylesheet" type="text/css" href="static/styles.css" />
 
 {% if icon is defined %}
   <link rel="icon" sizes="192x192" href="static/{{ icon }}-192.png" />
@@ -11,7 +9,7 @@
 {% endif %}
 
 <script language='javascript'>var path_root = '{{ path_root }}';</script>
-<script src="{{ url_for('static', filename='lights.js') }}"></script>
+<script src="static/lights.js"></script>
 
 </head>
 

@@ -1,5 +1,5 @@
 import html
-import json as json
+import json
 from os.path import join
 import platform
 import time
@@ -28,7 +28,7 @@ class WebApp:
         self.scripts = {}
         self.scripts_list = []
         self.jobs = JobControl()
-        self.load_manifest()
+        self.load_manifest()           
 
     @inject(Settings)        
     def queue_script(self, script, settings):

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+#
+# MacOS version - uses /tmp for socket
+#
+
+spawn-fcgi -s /tmp/lights.sock -- wsgi.py

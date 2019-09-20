@@ -38,11 +38,16 @@ class Parser:
         return self.code
 
     def load(self, file_name):
-        logging.debug("File name: {}".format(file_name))
-        f = open(file_name, 'r')
-        input_string = f.read()
-        f.close()
-        return self.parse(input_string)
+        logging.debug('File name: {}'.format(file_name))
+        try:
+            f = open(file_name, 'r')
+            input_string = f.read()
+            f.close()
+            return self.parse(input_string)
+        except FileNotFoundError:
+            logging.error('Error: file {} not found.'.format(file_name))
+        except:
+            logging.error('Error accessing file {}'.format(file_name))
 
     def script(self):
         return self.body() and self.eof()
@@ -86,7 +91,7 @@ class Parser:
         elif self.current_token in self.symbol_table:
             value = self.symbol_table[self.current_token]
         else:
-            return self.token_error("Unknown parameter value: \"{}\"")
+            return self.token_error('Unknown parameter value: "{}"')
 
         self.add_instruction(OpCode.set_reg, self.name, value)
         return self.next_token()
@@ -151,7 +156,7 @@ class Parser:
         elif self.current_token in self.symbol_table:
             self.name = self.symbol_table[self.current_token]
         else:
-            return self.token_error("Unknown variable: {}")
+            return self.token_error('Unknown variable: {}')
         return self.next_token()
 
     def and_operand(self):
@@ -190,10 +195,10 @@ class Parser:
         return self.error_output;
     
     def add_message(self, message):
-        self.error_output += "{}\n".format(message)
+        self.error_output += '{}\n'.format(message)
         
     def trigger_error(self, message):
-        full_message = "Line {}: {}".format(self.lexer.line_num, message)
+        full_message = 'Line {}: {}'.format(self.lexer.line_num, message)
         logging.error(full_message)
         self.add_message(full_message)
         return False
@@ -206,7 +211,7 @@ class Parser:
         return True
         
     def syntax_error(self):
-        return self.token_error("Unexpected input \"{}\"")
+        return self.token_error('Unexpected input "{}"')
 
     def optimize(self):
         opt = []
@@ -224,12 +229,12 @@ class Parser:
                 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("file", help="name of the script file")
+    ap.add_argument('file', help='name of the script file')
     args = ap.parse_args()
     
     logging.basicConfig(
         level=logging.DEBUG,
-        format="%(filename)s(%(lineno)d) %(funcName)s(): %(message)s")
+        format='%(filename)s(%(lineno)d) %(funcName)s(): %(message)s')
     parser = Parser()
     output_code = parser.load(args.file)
     if output_code:
@@ -239,7 +244,7 @@ def main():
         print(parser.error_output)
 
     
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
     
 """

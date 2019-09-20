@@ -1,68 +1,69 @@
 #!/usr/bin/env python
-from flask import Blueprint, Flask, render_template, request
+from flask import Blueprint, render_template, request
 
-from bardolph.lib.injection import provide
+from bardolph.lib.injection import inject, provide
 
-from . import web_module
-from .web_app import WebApp
-    
-web_module.configure()
+from .i_web import WebApp
 
 class ScriptFrontEnd:
-    def __init__(self):
-        self.web_app = provide(WebApp)
-        
     def index(self, title='Lights'):
         ac = self.get_agent_class()
+        web_app = provide(WebApp)
         return render_template('index.html',
             agent_class=ac,
             icon = 'switch',
-            scripts=self.web_app.get_script_list(),
+            scripts=web_app.get_script_list(),
             title=title,
-            path_root=self.web_app.get_path_root())  
+            path_root=web_app.get_path_root())  
     
-    def run_script(self, script_path):
-        script_info = self.web_app.get_script(script_path)
+    @inject(WebApp)
+    def run_script(self, script_path, web_app):
+        script_info = web_app.get_script(script_path)
         if script_info is not None:
-            self.web_app.queue_script(script_info)
+            web_app.queue_script(script_info)
             return self.render_launched(script_info)
         else:
             return self.index()
 
-    def off(self):
-        script_info = self.web_app.get_script('off')
-        self.web_app.request_stop()
-        self.web_app.queue_script(script_info)
+    @inject(WebApp)
+    def off(self, web_app):
+        script_info = web_app.get_script('off')
+        web_app.request_stop()
+        web_app.queue_script(script_info)
         return render_template(
             'launched.html',
             agent_class=self.get_agent_class(),
             icon='darkBulb',
             script=script_info,
-            path_root=self.web_app.get_path_root())
+            path_root=web_app.get_path_root())
   
-    def capture(self):
-        self.web_app.snapshot()
+    @inject(WebApp)
+    def capture(self, web_app):
+        web_app.snapshot()
         return self.index()
 
-    def stop(self):
-        self.web_app.request_stop()
+    @inject(WebApp)
+    def stop(self, web_app):
+        web_app.request_stop()
         return self.index('Stopped')
     
-    def render_launched(self, script_info):
+    @inject(WebApp)
+    def render_launched(self, script_info, web_app):
         return render_template(
             'launched.html',
             agent_class=self.get_agent_class(),
             icon=script_info.icon,
             script=script_info,
-            path_root=self.web_app.get_path_root())
+            path_root=web_app.get_path_root())
         
-    def status(self):
+    @inject(WebApp)
+    def status(self, web_app):
         return render_template(
             "status.html",
             title="Status",
             agent_class=self.get_agent_class(),
-            data=self.web_app.get_status(),
-            path_root=self.web_app.get_path_root())
+            data=web_app.get_status(),
+            path_root=web_app.get_path_root())
         
     def get_agent_class(self):
         """ return a string containing 'tv', 'mobile', or 'desktop' """
