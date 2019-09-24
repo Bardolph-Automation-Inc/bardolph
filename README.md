@@ -48,11 +48,11 @@ In this case, `run` is a bash shell script that runs the Python `run.py` module.
 
 The `duration` parameter, which is described below, works to slowly shut off the
 lights
-over a period 1500 ms., which is much nicer experience than abruptly turning
+over a period 1500 ms., which is a much nicer experience than abruptly turning
 them off with no dimming.
 
 In another example, to turn all the lights on, wait for 5 minutes, and then turn
-them all off::
+them all off:
 ```
 run scripts/on5.ls
 ```
@@ -63,8 +63,11 @@ time 300000 off all
 ```
 The application runs in the foreground as long as a script is running. In this
 example, the application will run for 5 minutes. However, it will spend most of
-its time inside a `sleep()` call to avoid burdening the CPU. You can
-kill it and quit by pressing Ctrl-C. You may want to run the
+its time inside a `sleep()` call to avoid burdening the CPU. In my experience,
+script execution for the application takes up less than 10% of the CPU capactiy 
+on a Raspberry Pi Zero.
+
+You can kill the script and quit by pressing Ctrl-C. You may want to run the
 program as a background job, which will terminate when the script is done.
 
 ### Web Server
@@ -79,6 +82,10 @@ For example, if have a machine with the hostname
  Because scripts can run over a long period of time, even indefinitely, 
  a cheap, dedicated device like a Raspberry Pi is an ideal way to host the 
  web server.
+
+This is currently an experimental feature, as getting it to run can be a bit of a chore.
+I describe the process for setting up and running a server in
+[docs/web_server.md](docs/web_server.md).
 
 ## Script Basics
 Internally, launching a script is a two-step process. First, a parser reads the
@@ -401,16 +408,6 @@ before executing it.
 I've run the program on MacOS 10.14.5, Debian Linux Stretch, and the
 June, 2019, release of Raspbian. It works fine for me on a Raspberry Pi Zero W,
 controlling 5 bulbs.
-
-# Web Server
-A very thin web server application can be used to run scripts on an independent,
-standalone computer. This server won't work on the Internet and runs in your home. 
-You can access it from your phone, TV, or laptop, as long as you're on
-the home WiFi.
-
-This is currently an experimental feature, as getting it to run can be a bit of a chore.
-I describe the process for setting up and running a server in
-[docs/web_server.md](docs/web_server.md).
 
 ## Missing Features
 These are among the missing features that I'll be working on, roughly with
