@@ -1,2 +1,2 @@
 #!/bin/bash
-python -m controller.snapshot $*
+python3 -m controller.snapshot $*

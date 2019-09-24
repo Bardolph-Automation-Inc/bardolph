@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from flup.server.fcgi import WSGIServer
 from web.flask_module import create_app

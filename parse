@@ -1,2 +1,2 @@
 #!/bin/bash
-python -m parser.parse $*
+python3 -m parser.parse $*

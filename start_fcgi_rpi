@@ -1,0 +1,7 @@
+#!/bin/bash
+
+#
+# Raspberry Pi version - uses ramdisk for socket
+#
+
+spawn-fcgi -s /dev/shm/lights.sock -- wsgi.py

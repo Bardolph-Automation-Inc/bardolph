@@ -1,2 +1,2 @@
 #!/bin/bash
-python -m controller.lsc $*
+python3 -m controller.lsc $*

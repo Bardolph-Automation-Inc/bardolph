@@ -40,45 +40,61 @@ turn on all your lights:
 ```
 run scripts/all_on.ls
 ```
+That script contains the following code:
+```
+duration 1500 on all
+```
 In this case, `run` is a bash shell script that runs the Python `run.py` module.
+
+The `duration` parameter, which is described below, works to slowly shut off the
+lights
+over a period 1500 ms., which is much nicer experience than abruptly turning
+them off with no dimming.
 
 In another example, to turn all the lights on, wait for 5 minutes, and then turn
 them all off::
 ```
 run scripts/on5.ls
 ```
-Note that the application will run as long as there is an active script. You can
-kill the active script and quit by pressing Ctrl-C. You can easily run the
-program as a background job, as it is not abnormally resource-intensive.
+The code for that script:
+```
+duration 1500 on all
+time 300000 off all
+```
+The application runs in the foreground as long as a script is running. In this
+example, the application will run for 5 minutes. However, it will spend most of
+its time inside a `sleep()` call to avoid burdening the CPU. You can
+kill it and quit by pressing Ctrl-C. You may want to run the
+program as a background job, which will terminate when the script is done.
 
 ### Web Server
-To make scripts more accessible, you can use the web server component, which
-implements a very basic web page that has running scripts as its sole purpose.
-The server also provides a 1:1 mapping betwen scripts and URL's. This server
-is designed to run locally, on your WiFi network only. 
+The web server component makes scripts available in a user-friendly manner.
+It implements a simple web page that lists available scripts and provides a
+1:1 mapping betwen scripts and URL's. The server is designed to run locally, 
+on your WiFi network.
 
-For example, if you run the web server on a machine with the hostname
+For example, if have a machine with the hostname
  `myserver.local`, you could launch the  `all_on.ls` script by going to
  `http://myserver.local/all-on` with any browser on your WiFi network.
- Because scripts can run over a long period of time, even indefinitely in
- an infinite loop, having a cheap, dedicated device like a Raspberry Pi is an
- ideal way to host the server.
+ Because scripts can run over a long period of time, even indefinitely, 
+ a cheap, dedicated device like a Raspberry Pi is an ideal way to host the 
+ web server.
 
 ## Script Basics
 Internally, launching a script is a two-step process. First, a parser reads the
-source file and converts it to a sequence of encoded instructions. Next, a
+source file and compiles it into a sequence of encoded instructions. Next, a
 simple virtual machine executes those instructions. A job-control facility
-maintains a queue, allowing execution of a sequence of scripts.
+maintains a queue, allowing execution of a sequence of compiled scripts.
 
-You set the color and brightness of one or more lights by sending them
+You set the color and brightness of the lights specifying
 4 numbers: hue, saturation, brightness, and kelvin. The 
 meaning of the numerical values, and how the lights process them, is
 defined by the LIFX [LAN Protocol](https://lan.developer.lifx.com).
 
-To set the color of one or more lights, your script supplies these parameters,
-and the Bardolph virtual machine sends them to the bulbs.
+Your script supplies these parameters, and the Bardolph virtual machine 
+sends them to the bulbs.
 
-Here's an example, including some comments:
+Here's another example, including some comments:
 ```
 # comment
 hue 1200 # red
@@ -91,12 +107,7 @@ on all
 This script sets the colors of all known lights to a bright shade of red and 
 turns all of them on. 
 
-Any values never specified default to zero, or an empty string. This can lead
-to unwanted results, so each of the values should be set at least once before
-setting the color of any lights. Consider starting your script with `get all` 
-(the `get` command is described below).
-
-When a value isn't specified a second time, the existing value is used again. 
+When a value isn't specified a second time, the VM uses the existing value. 
 For example, the following reuses numbers for saturation, brightness,
 and kelvin throughout:
 ```
@@ -106,6 +117,11 @@ hue 40000 set all
 This script will:
 1. Set all lights to HSBK of 20000, 65500, 45000, 2700
 1. Set all lights to HSBK of 40000, 65500, 45000, 2700
+
+Any uninitialized values default to zero, or an empty string. This can lead
+to unwanted results, so each of the values should be set at least once before
+setting the color of any lights. Or, consider starting your script with
+`get all` (the `get` command is described below).
 
 ### Individual Lights
 Scripts can control individual lights by name. For example, if you have a light
@@ -131,7 +147,7 @@ otherwise unavailable, an error is sent to the log, but execution of the script
 continues. 
 
 ### Power Command
-The commands to turn the lights on or off resemble the one for colors:
+The commands to turn the lights on or off resemble the `set` command:
 ```
 off all
 on "Table"
@@ -141,7 +157,7 @@ This turns off all the lights, and turns on the one named "Table".
 The "on" and "off" commands have no effect on the color of the lights.
 When "on" executes, each light will have whatever its color was when 
 it was turned off. If a lights is already on or off, an otherwise 
-redundant power operation will have no effect, although it will be sent
+redundant power operation will have no effect, although the VM does send it
 to the bulbs.
 
 ### Timing Color Changes
