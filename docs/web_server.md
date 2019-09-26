@@ -15,14 +15,10 @@ bookmarks and a web browser.
 * I can acess the app from any browser in my apartment, with none of the
 hassles of logging in.
 
-Currently, the web frontend is a thin layer that displays a simple
-UI, with a back-end that queues up scripts available on the server's
-file system. It has only one page, listing a set of available scripts. 
-
-For example, to turn on or turn off off all the lights, I have  home screen
-shortcuts on my phone. No need to navigate any mobile app; after
-unlocking the phone, the lights are on or off with a single tap. It's also 
-convenient to access the lights from my smart TV's web browser.
+For example, to turn on or turn off off all the lights, I have have a couple
+of home screen shortcuts on my phone. No need to navigate any mobile
+app; after unlocking the phone, the lights are on or off with a single tap.
+It's also  convenient to access the lights from my smart TV's web browser.
 
 It's important to note that while this is a web server, it is not designed to
 work on the public Internet. The server runs entirely within your WiFi
