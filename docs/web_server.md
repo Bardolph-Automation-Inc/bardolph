@@ -1,7 +1,7 @@
-![bulb](../web/static/colorBulb-192.png) 
 # Bardolph Web Frontend Server
 Al Fontes - [bardolph@fontes.org](mailto:bardolph@fontes.org)
 
+![screenshot](web.png)
 ## Introduction
 I originally wrote this application for my own use, and it serves
 as my primary means of controlling my lights. However, it is designed to
@@ -32,7 +32,7 @@ that sits in a corner of my apartment.
 
 The server executes within the Flask framework. If you run it,
 you should become familiar with Flask. In particular, you 
-should follow their recommendations with respect to a reverse proxy.
+should follow their recommendations with respect to WSGI.
 
 ## Running the Server
 The [Flask website](https://flask.palletsprojects.com) covers the general
@@ -154,9 +154,9 @@ more commands to the lights.
 
 ### "Production" Configuration
 Although a so-called "production" configuration isn't necessary, I still recommend
-it if you use the web server every day, as I do at home. This can be a complex
+it if you use a WSGI-enabled web frontend, as I do at home. This can be a complex
 process, but I have provided some example configuration files in the source code
-tree. They can be found under `web/server`.
+tree that may help. They can be found under `web/server`.
 
 In my confguration, Flask provides a WSGI service. In a separate process,
 [lighttpd]([https://https://www.lighttpd.net) attaches to that service through

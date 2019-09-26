@@ -64,8 +64,8 @@ time 300000 off all
 The application runs in the foreground as long as a script is running. In this
 example, the application will run for 5 minutes. However, it will spend most of
 its time inside a `sleep()` call to avoid burdening the CPU. In my experience,
-script execution for the application takes up less than 10% of the CPU capactiy 
-on a Raspberry Pi Zero.
+scripts spend most of their time inside a delay, and  execution for the 
+application takes up less than 10% of the CPU cycles on a Raspberry Pi Zero.
 
 You can kill the script and quit by pressing Ctrl-C. You may want to run the
 program as a background job, which will terminate when the script is done.
