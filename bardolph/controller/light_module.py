@@ -10,7 +10,7 @@ def configure():
 
     settings = provide(Settings)
     if settings.get_value('use_fakes'):
-        import tests.fake_light_set as fake_light_set
+        from ..fakes import fake_light_set
         fake_light_set.configure()
     else:
         from . import light_set

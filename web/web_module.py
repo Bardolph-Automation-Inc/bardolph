@@ -1,5 +1,3 @@
-import logging
-
 from bardolph.lib import injection, settings
 from bardolph.controller import config_values, light_module
 from . import web_app, i_web

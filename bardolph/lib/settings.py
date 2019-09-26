@@ -18,9 +18,9 @@ class Settings:
         self.active_config = Settings.active_config
      
     def get_value(self, name, default = None):
-        if self.active_config == None and default != None:
+        if self.active_config is None and default != None:
             return default
-        elif default == None:
+        elif default is None:
             return self.active_config[name]
         else:
             return self.active_config.get(name, default) 
@@ -32,7 +32,7 @@ class Settings:
     
     @classmethod
     def specialize(cls, overrides):
-        if Settings.active_config == None:
+        if Settings.active_config is None:
             Settings.active_config = overrides.copy()
         else:
             Settings.active_config.update(overrides)

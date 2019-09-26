@@ -48,7 +48,7 @@ class JobControl:
         else:
             try:
                 fn(job)
-                if self.promise == None:
+                if self.promise is None:
                     self.run_next_job()
             finally:
                 self.lock.release()
@@ -61,7 +61,7 @@ class JobControl:
             logging.error("Unable to acquire lock.")
         else:
             try:
-                if self.promise == None and len(self.queue) > 0:
+                if self.promise is None and len(self.queue) > 0:
                     next_job = self.queue.popleft()
                     if self.repeat:
                         self.queue.append(next_job) 

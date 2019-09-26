@@ -6,6 +6,7 @@ class Injection:
 
 
 class Binder:
+    """ Parameter implementation is a class to be used as the factory. """
     def __init__(self, implementation):
         self.implementation = implementation
         
@@ -14,6 +15,7 @@ class Binder:
         
 
 class ObjectBinder:
+    """ Singleton. Parameter implementor is always returned. """
     def __init__(self, implementor):
         self.implementor = implementor
         
