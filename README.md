@@ -315,8 +315,8 @@ In this context, "name" contains the name of a script. This is equivalent to:
 ```
 python -m bardolph.controller.run name.ls
 ```
-You can sequentially run multiple scripts. If you specify more than one on the
-command line, it will cue them in that order and execute them sequentially:
+You can queue up multiple scripts. If you specify more than one on the
+command line, it will queue them in that order and execute them sequentially:
 ```
 run light.ls dark.ls
 ``` 
@@ -350,7 +350,7 @@ these must be run from the directory where Bardolph is installed.
 
 ### lsc - Lightbulb Script Compiler
 This is equivalent to `python -m bardolph.controller.lsc`. The syntax is
-`lsc name.ls`; only one file name may be provided.
+`lsc name.ls`. Only one file name may be provided.
 
 LSC stands for "lightbulb script compiler". That meta-compiler writes a 
 parsed and encoded version of the script, along with run-time  support, to 
@@ -415,7 +415,7 @@ this priority:
 1. Easy-to-use web server.
 1. Flow of control, such as loops, branching, and subroutines.
 1. Mathematical expressions.
-1. Support for devices that aren't bulbs.
+1. Support for devices that aren't bulbs (I don't own anything but bulbs).
 
 ## Project Name Source
 [Bardolph](https://en.wikipedia.org/wiki/Bardolph_(Shakespeare_character)) was
