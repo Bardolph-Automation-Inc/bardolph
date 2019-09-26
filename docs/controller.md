@@ -1,7 +1,7 @@
-# Bardolf Controller Module
+# Bardolph Controller Module
 
 ## Introduction
-This document is the first draft of an description of Bardolf's core module
+This document is the first draft of an description of Bardolph's core module
 that interprets a script and accesses the lights.
 
 The module builds on a very simple virtual machine that executes a program 

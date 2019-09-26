@@ -118,7 +118,7 @@ name of the script. It will replace any underscore or dash with a space, and
 capitalize each word. For example, `reading.ls` yields "Reading", 
 while `all-off.ls` yields "All Off".
 
-The default for "path" is the base name of the file. In thess example, the URL's
+The default for "path" is the base name of the file. In these examples, the URL's
 would be http://localhost:5000/reading and http://localhost:5000/all-off.
 
 The default for "repeat" is false.
@@ -133,16 +133,21 @@ they have finished executing. Such scripts are designed to run continuously
 until stopped from the outside.
 
 Aside from listing the scripts which are contained in the manifest the home page
-also has some special-purpose buttons. The "Stop" button immediately stops 
-the current script and clears the queue of
-any others. Because a script can potentially take hours to run, you may need
-this button if you want to access the lights immediately. This button is also
-the mechanism used to stop a repeatable script.
+also has some special-purpose buttons.
+
+The "Stop" button immediately stops the current script and clears the queue of
+any others. Because a script can potentially run indefinitely, you may need
+this button if you want to access the lights immediately, or use an LIFX
+app to control them. This button is the default mechanism for stopping a
+repeatable script, which by design never stops.
 
 The "Capture" button causes the server to query the lights and generate
 a script that reflects their current settings. That file is
-`scripts/snapshot.ls`. Clicking on "Retrieve" runs that script, thus restoring
-the saved settings.
+`scripts/__snapshot__.ls`. Clicking on "Retrieve" runs that script, thus
+restoring the saved state.
+
+Although the index page has no link to it, a page at http://server.local/status
+lists the status of all the known lights in a very plain output with no CSS.
 
 ### LIFX Apps
 Bardolph does nothing to directly interfere with the operation of the apps provided
