@@ -20,6 +20,8 @@ of home screen shortcuts on my phone. No need to navigate any mobile
 app; after unlocking the phone, the lights are on or off with a single tap.
 It's also  convenient to access the lights from my smart TV's web browser.
 
+![web frontent on phone simultor](sim_screen.png)
+
 It's important to note that while this is a web server, it is not designed to
 work on the public Internet. The server runs entirely within your WiFi
 network. The target configuration is a very inexpensive device which
