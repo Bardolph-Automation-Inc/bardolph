@@ -1,4 +1,3 @@
-duration 2000
+time 0 duration 15000
 on all
-
-hue 44600 saturation 0 brightness 20000 kelvin 3000 set all
+hue 300 saturation 0 brightness 25 kelvin 2800 set all

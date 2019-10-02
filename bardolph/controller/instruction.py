@@ -1,33 +1,26 @@
-from enum import IntEnum
+from enum import auto, Enum
 
 
-next_int_value = 0
-def auto():
-    global next_int_value
-    next_int_value += 1
-    return next_int_value
-
-
-class OpCode(IntEnum):
-    color = auto()
-    end = auto()
-    get_color = auto()
-    nop = auto()
-    pause = auto()
-    power = auto()
-    set_reg = auto()
-    stop = auto()
-    time_wait = auto()
+class OpCode(Enum):
+    COLOR = auto()
+    END = auto()
+    GET_COLOR = auto()
+    NOP = auto()
+    PAUSE = auto()
+    POWER = auto()
+    SET_REG = auto()
+    STOP = auto()
+    TIME_WAIT = auto()
     
     
-class Operand(IntEnum):
-    light = auto()
-    group = auto()
-    location = auto()
+class Operand(Enum):
+    LIGHT = auto()
+    GROUP = auto()
+    LOCATION = auto()
 
 
 class Instruction:
-    def __init__(self, op_code = OpCode.nop, name = None, param = None):
+    def __init__(self, op_code = OpCode.NOP, name = None, param = None):
         self.op_code = op_code
         self.name = name
         self.param = param
@@ -57,7 +50,7 @@ class Instruction:
             raise TypeError
         
     def as_list_text(self):
-        if self.op_code != OpCode.set_reg:
+        if self.op_code != OpCode.SET_REG:
             return 'OpCode.{}'.format(self.op_code.name)
           
         if type(self.param).__name__ == 'str':

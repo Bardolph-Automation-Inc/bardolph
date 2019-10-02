@@ -1,1 +1,1 @@
-duration 3000 get all set all
+duration 2000 get all set all

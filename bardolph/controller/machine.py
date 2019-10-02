@@ -1,4 +1,3 @@
-from enum import IntEnum
 import logging
 
 from ..lib.i_lib import Clock
@@ -36,15 +35,15 @@ class Machine:
         self.reg = Registers()
         self.enable_pause = True
         self.fn_table = {
-            OpCode.color: self.color,
-            OpCode.end: self.end,
-            OpCode.get_color: self.get_color,
-            OpCode.nop: self.nop,
-            OpCode.pause: self.pause,
-            OpCode.power: self.power,
-            OpCode.set_reg: self.set_reg,
-            OpCode.stop: self.stop,
-            OpCode.time_wait: self.time_wait
+            OpCode.COLOR: self.color,
+            OpCode.END: self.end,
+            OpCode.GET_COLOR: self.get_color,
+            OpCode.NOP: self.nop,
+            OpCode.PAUSE: self.pause,
+            OpCode.POWER: self.power,
+            OpCode.SET_REG: self.set_reg,
+            OpCode.STOP: self.stop,
+            OpCode.TIME_WAIT: self.time_wait
         }
 
     def run(self, program):
@@ -54,7 +53,7 @@ class Machine:
         self.clock.start()
         while self.pc < len(self.program):
             inst = self.program[self.pc]
-            if inst.op_code == OpCode.stop:
+            if inst.op_code == OpCode.STOP:
                 break
             self.fn_table[inst.op_code]()
             self.pc += 1
@@ -70,9 +69,9 @@ class Machine:
                 op_fn(lst_or_obj)
 
     def color(self): {
-            Operand.light: self.color_light, 
-            Operand.group: self.color_group,
-            Operand.location: self.color_location
+            Operand.LIGHT: self.color_light, 
+            Operand.GROUP: self.color_group,
+            Operand.LOCATION: self.color_location
         }[self.reg.operand]()
 
     @inject(LightSet)
@@ -108,9 +107,9 @@ class Machine:
             return light
         
     def power(self): { 
-        Operand.light: self.power_light, 
-        Operand.group: self.power_group,
-        Operand.location: self.power_location
+        Operand.LIGHT: self.power_light, 
+        Operand.GROUP: self.power_group,
+        Operand.LOCATION: self.power_location
     }[self.reg.operand]()
     
     @inject(LightSet)
@@ -133,9 +132,9 @@ class Machine:
         target.set_power(self.power_param(), self.reg.duration)
 
     def get_color(self): { 
-        Operand.light: self.get_light_color, 
-        Operand.group: self.get_group_color,
-        Operand.location: self.get_location_color
+        Operand.LIGHT: self.get_light_color, 
+        Operand.GROUP: self.get_group_color,
+        Operand.LOCATION: self.get_location_color
     }[self.reg.operand]()
     
     @inject(LightSet)

@@ -16,6 +16,12 @@ class ScriptRunner(Job):
         new_instance = ScriptRunner()
         new_instance.load_file(file_name)
         return new_instance
+    
+    @classmethod
+    def from_string(cls, script):
+        new_instance = ScriptRunner()
+        new_instance.load_string(script)
+        return new_instance
         
     def load_file(self, file_name):
         self.program = self.parser.load(file_name)

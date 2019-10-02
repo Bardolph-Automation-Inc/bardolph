@@ -8,10 +8,6 @@ through a simple scripting language. It is targeted at people who would like
 to control or experiment with their lights in an automated way, but who do not 
 want to learn a programming language or API.
 
-My intention was also to make the code usable in other Python programs. A 
-goal for the parser and virtual machine is to make them accessible through 
-reasonably simple entry points.
-
 The program does not use the Internet to access the bulbs, and no login is 
 required; all of its  communication occurs over the local WiFi network. You 
 can edit scripts with a basic text editor and run them from the command line.
@@ -86,6 +82,21 @@ For example, if have a machine with the hostname
 This is currently an experimental feature, as getting it to run can be a bit of a chore.
 I describe the process for setting up and running a server in
 [docs/web_server.md](docs/web_server.md).
+
+## Python API
+I've attempted to make it easy to use Bardolph scripts in your Python code.
+For some uses, this may be significantly easier than learning and using a
+full-purpose Python library. For example, here's a complete program that
+turns all the lights off and then on again:
+```
+from bardolph.controller import ls_module
+
+script = "time 5000 duration 1500 off all on all"
+ls_module.configure()
+ls_module.queue_script(script)
+```
+More information on using scripts in Python code is available in
+[docs/python_api.md](docs/python_api.md)
 
 ## Script Basics
 Internally, launching a script is a two-step process. First, a parser reads the
@@ -398,7 +409,7 @@ the known bulbs. The resulting file is very similar to the output generated
 by the `lsc` command, and can be run with `python -m __generated__`.
 
 ## System Requirements
-The program has been tested on Python versions 3.5.1 and 3.7.3. I haven't tried
+The program has been tested on Python version 3.7.3. I haven't tried
 it, but I'm almost certain that it won't run on any 2.x version.
 
 Because I haven't done any stress testing, I don't know the limits on

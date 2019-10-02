@@ -1,4 +1,7 @@
+![bulb](bulb.png) 
 # Bardolph Controller Module
+
+ Part of the [Bardolph Project](https://www.bardolph.org)
 
 ## Introduction
 This document is the first draft of an description of Bardolph's core module

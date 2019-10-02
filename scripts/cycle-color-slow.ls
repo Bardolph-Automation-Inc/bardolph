@@ -1,16 +1,16 @@
 time 0 duration 2000 on all
 
-duration 119000 
-hue 6000 saturation 45000 brightness 40000 set all
-time 120000  
+duration 120000 
+hue 30 saturation 75 brightness 65 set all
 
-hue 12000 set all
-hue 18000 set all
-hue 24000 set all
-hue 30000 set all
-hue 36000 set all
-hue 42000 set all
-hue 48000 set all
-hue 54000 set all
-hue 60000 set all
-hue 0     set all
+time 120000
+hue 60 set all
+hue 90 set all
+hue 120 set all
+hue 150 set all
+hue 180 set all
+hue 210 set all
+hue 240 set all
+hue 270 set all
+hue 300 set all
+hue 360 set all

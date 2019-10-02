@@ -1,5 +1,6 @@
-# Bardolph Web Frontend Server
-Al Fontes - [bardolph@fontes.org](mailto:bardolph@fontes.org)
+# Web Frontend Server
+
+Part of the [Bardolph Project](https://www.bardolph.org)
 
 ![screenshot](web.png)
 ## Introduction

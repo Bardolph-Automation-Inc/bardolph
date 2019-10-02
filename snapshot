@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 -m controller.snapshot $*
+python3 -m bardolph.controller.snapshot $*

@@ -1,32 +1,27 @@
-from enum import IntEnum
+from enum import auto, Enum
 
-next_int_value = 0
-
-def auto():
-    global next_int_value
-    next_int_value += 1
-    return next_int_value
-
-class TokenTypes(IntEnum):
-    all = auto()
-    and_operand = auto()
-    brightness = auto()
-    define = auto()
-    duration = auto()
-    eof = auto()
-    get = auto()
-    group = auto()
-    hue = auto()
-    integer = auto()
-    literal = auto()
-    location = auto()
-    off = auto()
-    on = auto()
-    pause = auto()
-    kelvin = auto()
-    saturation = auto()
-    set = auto()
-    space = auto()
-    syntax_error = auto()
-    time = auto()
-    unknown = auto()
+class TokenTypes(Enum):
+    ALL = auto()
+    AND = auto()
+    BRIGHTNESS = auto()
+    DEFINE = auto()
+    DURATION = auto()
+    EOF = auto()
+    GET = auto()
+    GROUP = auto()
+    HUE = auto()
+    LITERAL = auto()
+    LOCATION = auto()
+    LOGICAL = auto()
+    NUMBER = auto()
+    OFF = auto()
+    ON = auto()
+    PAUSE = auto()
+    KELVIN = auto()
+    RAW = auto()
+    SATURATION = auto()
+    SET = auto()
+    SYNTAX_ERROR = auto()
+    TIME = auto()
+    UNITS = auto()
+    UNKNOWN = auto()
