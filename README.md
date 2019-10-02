@@ -107,20 +107,18 @@ maintains a queue, allowing execution of a sequence of compiled scripts.
 You set the color and brightness of the lights specifying
 4 numbers: hue, saturation, brightness, and kelvin. The value
 for hue is considered to be an angle, expressed in degrees.
-The values for saturation and brightness are treated as percentages,
-while kelvin the temperature modification applied to the resulting color.
-All of these number must be positive, and may be floating-point
-values. Percentages above 100 are considered invalid, as are
-kelvin values less than 2,500 or greater than 9,000.
-
-The easiest way to understand the meaning of these numbers is to
-use the LIFX mobile app and observe the displayed numbers as
-you change the lighting.
-
 Your script supplies these parameters, and the Bardolph virtual machine 
 sends them to the bulbs.
 
-Here's another example, including some comments:
+The values for saturation and brightness are treated as percentages,
+while kelvin is a temperature modification applied to the resulting color.
+All of these number must be positive, and may be floating-point
+values. Percentages above 100 are considered invalid, as are
+kelvin values less than 2,500 or greater than 9,000. The easiest way to 
+understand the meaning of these numbers is to use the LIFX mobile
+app and observe the displayed numbers as you change the lighting.
+
+Here's another example, showing how you can use comments:
 ```
 # comment
 hue 360 # red
@@ -285,7 +283,7 @@ The `set`, `on`, and `off` commands can be applied to groups and locations.
 For example, if you have a location called "Living Room", you can set them 
 all to the same color with:
 ```
-hue 50000 saturation 80 brightness 75 kelvin 2700
+hue 120 saturation 80 brightness 75 kelvin 2700
 set location "Living Room"
 ```
 Continuing the same example, you can also set the color of all the lights in the
@@ -296,7 +294,7 @@ set group "Reading Lights"
 ### Definitions 
 Symbols can be defined to hold a  commonly-used name or number:
 ```
-define blue 250 define deep 100 define dim 20 
+define blue 240 define deep 100 define dim 20 
 define gradual 4000
 define ceiling "Ceiling Light in the Living Room"
 hue blue saturation deep brightness dim duration gradual
@@ -304,7 +302,7 @@ set ceiling
 ```
 Definitions may refer to other existing symbols:
 ```
-define blue 250
+define blue 240
 define b blue
 ```
 ### Retrieving Current Colors
