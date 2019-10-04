@@ -10,8 +10,19 @@ from .i_controller import LightSet
 from .lsc import Compiler
 from . import light_module
 
-def quote_if_string(param):
-    return '{}'.format(param) if isinstance(param, str) else param
+
+def normalize_parameter(param, name):
+    if isinstance(param, str):
+        return '{}'.format(param) 
+    else 
+        if name == 'hue':
+            logical_value = param * 360.0 / 65535.0
+        elif name in ('saturation', 'brightness'):
+            logical_value = param * 100.0 / 65535.0
+        else:
+            logical_value = param
+        return param
+
 
 class Snapshot:
     def start_snapshot(self): pass
@@ -84,7 +95,7 @@ class InstructionSnapshot(Snapshot):
     
     def handle_setting(self, name, value):
         self.snapshot += 'OpCode.set_reg, "{}", {},\n'.format(
-            name, quote_if_string(value))
+            name, normalize_parameter(value, name))
     
     def handle_power(self, power):
         self.power = power
