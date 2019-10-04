@@ -2,7 +2,7 @@
 
 Part of the [Bardolph Project](https://www.bardolph.org)
 
-![screenshot](web.png)
+![screenshot](web_mobile.png)
 ## Introduction
 I originally wrote this application for my own use, and it serves
 as my primary means of controlling my lights. However, it is designed to

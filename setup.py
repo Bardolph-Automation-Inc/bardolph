@@ -5,11 +5,11 @@ with open("README.md", "r") as f:
 
 setup(
     name="bardolph",
-    version="0.0.5",
+    version="0.0.6",
     author="Al Fontes",
     author_email="bardolph@fontes.org",
     description="Simple script interpreter for LIFX light bulbs",
-    url="https://github.com/al-fontes-jr/bardolph",
+    url="https://www.bardolph.org",
     license = 'Apache License 2.0',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -28,6 +28,6 @@ setup(
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
-        "Development Status :: 2 - Beta"
+        "Development Status :: 3 - Alpha"
     ],
 )

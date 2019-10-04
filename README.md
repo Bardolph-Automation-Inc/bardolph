@@ -1,4 +1,4 @@
-![bulb](web/static/colorBulb-192.png) 
+![bulb](docs/bulb.png) 
 # Bardolph 
 Al Fontes - [bardolph@fontes.org](mailto:bardolph@fontes.org)
 
@@ -67,6 +67,8 @@ You can kill the script and quit by pressing Ctrl-C. You may want to run the
 program as a background job, which will terminate when the script is done.
 
 ### Web Server
+![bulb](docs/web.png) 
+
 The web server component makes scripts available in a user-friendly manner.
 It implements a simple web page that lists available scripts and provides a
 1:1 mapping betwen scripts and URL's. The server is designed to run locally, 
@@ -96,7 +98,7 @@ ls_module.configure()
 ls_module.queue_script(script)
 ```
 More information on using scripts in Python code is available in
-[docs/python_api.md](docs/python_api.md)
+[docs/python_wrapper.md](docs/python_wrapper.md)
 
 ## Script Basics
 Internally, launching a script is a two-step process. First, a parser reads the
@@ -105,25 +107,31 @@ simple virtual machine executes those instructions. A job-control facility
 maintains a queue, allowing execution of a sequence of compiled scripts.
 
 You set the color and brightness of the lights specifying
-4 numbers: hue, saturation, brightness, and kelvin. The value
-for hue is considered to be an angle, expressed in degrees.
+4 numbers: `hue`, `saturation`, `brightness`, and `kelvin`.
 Your script supplies these parameters, and the Bardolph virtual machine 
 sends them to the bulbs.
 
-The values for saturation and brightness are treated as percentages,
-while kelvin is a temperature modification applied to the resulting color.
+The easiest way to understand the meaning of these numbers is to use 
+the LIFX mobile app and observe the displayed numbers as you change
+the lighting.
+
+The value you supply for `hue` is an angle expressed in
+in degrees, normally between 0 and 360. The values for `saturation` 
+and `brightness` are treated as percentages, while `kelvin` is a 
+temperature modification applied by the bulbs to the resulting color.
+
 All of these number must be positive, and may be floating-point
 values. Percentages above 100 are considered invalid, as are
-kelvin values less than 2,500 or greater than 9,000. The easiest way to 
-understand the meaning of these numbers is to use the LIFX mobile
-app and observe the displayed numbers as you change the lighting.
+kelvin values less than 2,500 or greater than 9,000. Angles above
+360 are converted to a to a number less than 360 by modulo
+arithmetic.
 
 Here's another example, showing how you can use comments:
 ```
 # comment
 hue 360 # red
-saturation 100
-brightness 60
+saturation 100 # 100% saturation
+brightness 60.0 # 60% brightness
 kelvin 2700
 set all
 on all
@@ -132,8 +140,8 @@ This script sets the colors of all known lights to a bright shade of red and
 turns all of them on. 
 
 When a value isn't specified a second time, the VM uses the existing value. 
-For example, the following reuses numbers for saturation, brightness,
-and kelvin throughout:
+For example, the following reuses numbers for `saturation`, `brightness`,
+and `kelvin` throughout:
 ```
 hue 120 saturation 100 brightness 50 kelvin 2700 set all
 hue 180 set all
@@ -149,7 +157,7 @@ setting the color of any lights. Or, consider starting your script with
 
 If you prefer to send unmodified numbers to the bulbs, as specified by the 
 [LIFX API](https://lan.developer.lifx.com), you can use "raw" units (and switch
-back to "logical" units if desired):
+back to "logical" units as desired):
 ```
 units raw
 hue 30000 saturation 65535 brightness 32767 kelvin 2700 set all

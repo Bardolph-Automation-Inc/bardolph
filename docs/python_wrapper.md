@@ -8,7 +8,7 @@ I hope that my code is clear and modular enough to be reused in someone else's
 programs. However, if you're just looking to quickly write some Python code to
 control your lights, you can easily run lightbulb scripts using `ls_module.py`. 
 This simple module performs the necessary runtime initialization and offers a 
-simple entry point for running a script.
+clean entry point for running a script.
 
 In the source distribution, the `embedded` directory contains example programs
 that show how to embed lightbulb scripts inside Python code.
