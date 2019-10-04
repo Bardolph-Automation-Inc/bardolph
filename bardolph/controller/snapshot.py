@@ -11,18 +11,8 @@ from .lsc import Compiler
 from . import light_module
 
 
-def normalize_parameter(param, name):
-    if isinstance(param, str):
-        return '{}'.format(param) 
-    else 
-        if name == 'hue':
-            logical_value = param * 360.0 / 65535.0
-        elif name in ('saturation', 'brightness'):
-            logical_value = param * 100.0 / 65535.0
-        else:
-            logical_value = param
-        return param
-
+def quote_if_string(param):
+    return '{}'.format(param) if isinstance(param, str) else param
 
 class Snapshot:
     def start_snapshot(self): pass
@@ -60,7 +50,7 @@ class ScriptSnapshot(Snapshot):
         self.script = ''
     
     def start_snapshot(self):
-        self.script = 'duration 1500\n'
+        self.script = 'units raw duration 1500\n'
         
     def start_light(self, light):
         self.light_name = light.get_label()
@@ -95,7 +85,7 @@ class InstructionSnapshot(Snapshot):
     
     def handle_setting(self, name, value):
         self.snapshot += 'OpCode.set_reg, "{}", {},\n'.format(
-            name, normalize_parameter(value, name))
+            name, quote_if_string(value))
     
     def handle_power(self, power):
         self.power = power
