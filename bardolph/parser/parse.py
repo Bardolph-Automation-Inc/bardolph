@@ -1,24 +1,16 @@
 #!/usr/bin/env python
 
 import argparse
-from enum import auto, Enum
 import logging
 import re
 
 from ..controller.instruction import Instruction, OpCode, Operand
+from ..controller.units import UnitMode, Units
 from . import lex
 from .token_types import TokenTypes
 
 
 word_regex = re.compile(r"\w+")
-HSB_RANGE = (0.0, 65536.0)
-KELVIN_RANGE = (2500.0, 9000.0)
-RAW_RANGE = (0, 65536)
-
-
-class UnitMode(Enum):
-    LOGICAL = auto()
-    RAW = auto()
 
 
 class Parser:
@@ -107,62 +99,21 @@ class Parser:
         else:
             return self.token_error('Unknown parameter value: "{}"')
 
-        value = self.convert_units(reg, value)
-        if value is None:
-            return False
-        
+        u = Units()
+        if self.unit_mode == UnitMode.LOGICAL:
+            value = u.as_raw(reg, value)
+            if u.has_range(reg):
+                (min_val, max_val) = u.get_range(reg)
+                if value < min_val or value > max_val:
+                    if self.unit_mode == UnitMode.LOGICAL:
+                        min_val = u.as_logical(reg, min_val)
+                        max_val = u.as_logical(reg, max_val)
+                    return self.trigger_error(
+                        '{} must be between {} and {}'.format(
+                            reg.name.lower(), min_val, max_val))
+
         self.add_instruction(OpCode.SET_REG, self.name, value)
         return self.next_token()
-    
-    def convert_units(self, reg, code_value):
-        """If necessary, converts units to integer values that can be passed
-        into the light API.
-        
-        With UnitMode.RAW, all parameters are passed through unmodified to the
-        API.
-        
-        With UnitMode.LOGICAL, hue is an angle measured in degrees, while
-        saturation and brightness are percentages. 
-        
-        In either case, kelvin is passed through unmodified.
-        
-        Args:
-            reg: TokenType corresponding to the register being set.
-            code_value: the numerical parameter as it appears in the script.
-                Should be floating point, but int's should work.
-            
-        Returns:
-            An integer containing the value that corresponds to the incoming
-            value from the script, or None if the value is out of range.
-        """
-        if reg in (TokenTypes.DURATION, TokenTypes.TIME):
-            return code_value
-
-        value = code_value
-        if self.unit_mode == UnitMode.RAW:
-            (min_val, max_val) = RAW_RANGE
-        else:
-            if reg == TokenTypes.HUE:
-                (min_val, max_val) = HSB_RANGE
-                if code_value == 360.0 or code_value == 0:
-                    value = 0.0;
-                else:
-                    value = round((code_value % 360.0) / 360.0 * 65535.0)
-            elif reg in (TokenTypes.BRIGHTNESS, TokenTypes.SATURATION):
-                (min_val, max_val) = HSB_RANGE
-                if code_value == 100.0:
-                    value = 65535.0
-                else:
-                    value = code_value / 100.0 * 65535.0
-            elif reg in (TokenTypes.DURATION, TokenTypes.TIME):
-                (min_val, max_val) = RAW_RANGE
-            else:
-                (min_val, max_val) = KELVIN_RANGE
-        if value < min_val or value > max_val:
-            self.trigger_error(
-                "Invalid value {} for {}".format(code_value, self.name))
-            return None
-        return round(value)
     
     def set_units(self):
         self.next_token()

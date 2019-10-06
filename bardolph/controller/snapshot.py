@@ -4,11 +4,13 @@ import argparse
 
 from ..lib import injection
 from ..lib import settings
+from ..parser.token_types import TokenTypes
 
 from . import config_values
+from . import light_module
 from .i_controller import LightSet
 from .lsc import Compiler
-from . import light_module
+from .units import Units
 
 
 def quote_if_string(param):
@@ -50,7 +52,7 @@ class ScriptSnapshot(Snapshot):
         self.script = ''
     
     def start_snapshot(self):
-        self.script = 'units raw duration 1500\n'
+        self.script = 'raw duration 1500\n'
         
     def start_light(self, light):
         self.light_name = light.get_label()
@@ -58,6 +60,19 @@ class ScriptSnapshot(Snapshot):
     def handle_setting(self, name, value):
         self.script += '{} {} '.format(name, value)
         
+    def handle_color(self, color):
+        params = zip( [
+            TokenTypes.HUE, TokenTypes.SATURATION, TokenTypes.BRIGHTNESS,
+            TokenTypes.KELVIN
+            ], color)
+        u = Units()
+        for p in params:
+            reg = p[0]
+            value = p[1]
+            fmt = '{} {:.2f} ' if u.requires_conversion(reg) else '{} {} '
+            self.script += fmt.format(
+                reg.name.lower(), u.as_logical(reg, value))
+                        
     def handle_power(self, power):
         self.power = power
           
@@ -127,11 +142,16 @@ class TextSnapshot(Snapshot):
         self.add_field(light.get_label())
         
     def handle_color(self, color):
-        for x in color:       
-            self.add_field(x)
+        params = zip( [
+            TokenTypes.HUE, TokenTypes.SATURATION, TokenTypes.BRIGHTNESS,
+            TokenTypes.KELVIN
+            ], color)
+        u = Units()
+        for p in params:
+            self.add_field('{:>6.2f}'.format(u.as_logical(p[0], p[1])))
             
     def handle_power(self, power):
-        self.add_field(power)
+        self.add_field('{:>5d}'.format(power))
             
     def end_light(self):
         self.text += '\n'    

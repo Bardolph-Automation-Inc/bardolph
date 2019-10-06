@@ -13,13 +13,15 @@ from .script_runner import ScriptRunner
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("file", help="name of the script file", nargs='+')
+    ap.add_argument('file', help='name of the script file', nargs='*')
     ap.add_argument(
-        "-f", "--fakes", help="use fake lights", action="store_true")
+        '-f', '--fakes', help='use fake lights', action='store_true')
     ap.add_argument(
-        "-r", "--repeat", help="repeat until key pressed", action="store_true")
+        '-r', '--repeat', help='repeat until key pressed', action='store_true')
     ap.add_argument(
-        "-v", "--verbose", help="verbose output", action="store_true")
+        '-s', '--script', help='run script from command line', action='store')
+    ap.add_argument(
+        '-v', '--verbose', help='verbose output', action='store_true')
     args = ap.parse_args()
     
     injection.configure()   
@@ -37,7 +39,9 @@ def main():
     settings.specialize(overrides)
     light_module.configure()
 
-    jobs = job_control.JobControl(args.repeat)   
+    jobs = job_control.JobControl(args.repeat)
+    if args.script is not None:
+        jobs.add_job(ScriptRunner.from_string(args.script))   
     for file_name in args.file:
         jobs.add_job(ScriptRunner.from_file(file_name))
 
