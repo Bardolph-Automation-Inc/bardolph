@@ -91,7 +91,7 @@ class LightSet:
     
     def get_light(self, name):
         if not name in self.lights:
-            logging.error("Light \"{}\" not in fake lights".format(name))
+            logging.error("Light >\"{}\"< not in fake lights".format(name))
             return None
         return self.lights[name]
     

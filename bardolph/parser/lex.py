@@ -4,7 +4,7 @@ from .token_types import TokenTypes
 
 
 class Lex:
-    token_regex = re.compile(r'#.*$|".*"|\S+') 
+    token_regex = re.compile(r'#.*$|".*?"|\S+') 
     number_regex = re.compile(r'^[0-9]*\.?[0-9]+$')
 
     def __init__(self, input_string):

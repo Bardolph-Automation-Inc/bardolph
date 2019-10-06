@@ -135,6 +135,9 @@ class Parser:
             An integer containing the value that corresponds to the incoming
             value from the script, or None if the value is out of range.
         """
+        if reg in (TokenTypes.DURATION, TokenTypes.TIME):
+            return code_value
+
         value = code_value
         if self.unit_mode == UnitMode.RAW:
             (min_val, max_val) = RAW_RANGE
