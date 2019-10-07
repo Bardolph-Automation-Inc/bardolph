@@ -1,11 +1,11 @@
-from setuptools import find_packages, setup
+from setuptools import setup
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
     name="bardolph",
-    version="0.0.6",
+    version="0.0.8",
     author="Al Fontes",
     author_email="bardolph@fontes.org",
     description="Simple script interpreter for LIFX light bulbs",
@@ -20,8 +20,10 @@ setup(
     python_requires='>=3.7',
     entry_points={
         'console_scripts': [
+            'lsc=bardolph.controller:lsc.main',
+            'lscap=bardolph.controller:snapshot.main',
             'lsrun=bardolph.controller:run.main',
-            'lsnap=bardolph.controller:snapshot.main',
+            'lsparse=bardolph.parser:parse.main'
         ]
     },
     classifiers=[

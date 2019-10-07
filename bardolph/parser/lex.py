@@ -20,6 +20,12 @@ class Lex:
         else:
             self.line_num += 1
             self.tokens = self.token_regex.finditer(current_line)
+
+    def unabbreviate(self, token):
+        return {
+            'h': 'hue', 's': 'saturation', 'b': 'brightness', 'k': 'kelvin'
+        }.get(token, token)
+
     
     def next_token(self):
         token_type = None
@@ -32,7 +38,8 @@ class Lex:
                 else:
                     match = next(self.tokens, None)
             else:
-                token = match.string[match.start():match.end()]
+                token = self.unabbreviate(
+                    match.string[match.start():match.end()])
                 if token[0] != '#':
                     if token[0] == '"':
                         token = token[1:-1]

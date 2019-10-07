@@ -34,7 +34,17 @@ class LexTest(unittest.TestCase):
             "hue", "off", "on", "kelvin", "saturation", "set", "time", "01.234",
             "Hello There", "@"
         ]
-        
+        self.lex_and_compare(input_string, expected_tokens, expected_strings)
+
+    def test_abbreviations(self):
+        input_string = 'h k s b'
+        expected_tokens = [
+            TokenTypes.HUE, TokenTypes.KELVIN, TokenTypes.SATURATION, 
+            TokenTypes.BRIGHTNESS]
+        expected_strings = [ "hue", "kelvin", "saturation", "brightness"]
+        self.lex_and_compare(input_string, expected_tokens, expected_strings)
+
+    def lex_and_compare(self, input_string, expected_tokens, expected_strings):
         actual_tokens = []
         actual_strings = []
         
@@ -47,8 +57,7 @@ class LexTest(unittest.TestCase):
             
         self.assertEqual(token_type, TokenTypes.EOF)
         self.assertListEqual(actual_tokens, expected_tokens)  
-        self.assertListEqual(actual_strings, expected_strings)
-        
+        self.assertListEqual(actual_strings, expected_strings)    
         
 if __name__ == '__main__':
     unittest.main()

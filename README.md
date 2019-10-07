@@ -34,7 +34,7 @@ The source distribution contains some sample scripts in the `scripts` directory.
 They should work with whatever lights may be on the network. For example, to
 turn on all your lights:
 ```
-run scripts/all_on.ls
+lsrun scripts/all_on.ls
 ```
 That script contains the following code:
 ```
@@ -50,7 +50,7 @@ them off with no dimming.
 In another example, to turn all the lights on, wait for 5 minutes, and then turn
 them all off:
 ```
-run scripts/on5.ls
+lsrun scripts/on5.ls
 ```
 The code for that script:
 ```
@@ -66,8 +66,15 @@ application takes up less than 10% of the CPU cycles on a Raspberry Pi Zero.
 You can kill the script and quit by pressing Ctrl-C. You may want to run the
 program as a background job, which will terminate when the script is done.
 
+Although it won't work with a bash script, you can run a short script directly
+in the command line, with the `-s` option. For example, to turn off all your
+lights from the command line:
+```
+python -m bardolph.controller.run -s "off all"
+```
+
 ### Web Server
-![bulb](docs/web.png) 
+![web screen shot](docs/web.png) 
 
 The web server component makes scripts available in a user-friendly manner.
 It implements a simple web page that lists available scripts and provides a
@@ -341,32 +348,32 @@ commands:
 get all
 ```
 ## Running Scripts
-Run a script from the command line:
+To run a script from the command line:
 ```
-run name.ls
+lsrun name.ls
 ``` 
-In this context, "name" contains the name of a script. This is equivalent to:
+In this context, "name" contains the name of a script. Or the python equivalent:
 ```
-python -m bardolph.controller.run name.ls
+python3 -m bardolph.controller.run name.ls
 ```
 You can queue up multiple scripts. If you specify more than one on the
 command line, it will queue them in that order and execute them sequentially:
 ```
-run light.ls dark.ls
+lsrun light.ls dark.ls
 ``` 
 would run `light.ls`, and upon completion, execute `dark.ls`.
 
 ### Options
 Command-line flags modify how a script is run. For example:
 ```
-run --verbose test.ls
-
-run -r color_cycle.ls
+lsrun --verbose test.ls
+lsrun -r color_cycle.ls
 ```
 Available options:
-1. -r or --repeat: Repeat the scripts indefinitely, until Ctrl-C is pressed.
-1. -v or --verbose: Generate full debugging output while running.
-1. -f or --fake: Don't operate on real lights. Instead, use "fake" lights that
+* -r or --repeat: Repeat the scripts indefinitely, until Ctrl-C is pressed.
+* -s or --script: Run text from the command line as a script.
+*  -v or --verbose: Generate full debugging output while running.
+*  -f or --fake: Don't operate on real lights. Instead, use "fake" lights that
 just send output to stdout. This can be helpful for debugging and testing.
 
 With the -f option, there will be 5 fake lights, and their name are fixed as
@@ -375,6 +382,14 @@ available: "Pole" and "Table". One location named "Home" contains all
 of the fake lights, as well. If you want to use a different set of fake lights,
 you will need to edit some Python code. Specificlly, you'll need to modify
 `LightSet.discover` in `tests/fake_light_set.py`.
+
+Use of the -s option requires the use of quotation marks to contain the
+script, which will always contain more than one word. For example to
+turn on all the lights, wait 60 seconds, and turn them
+off again, you can do the following from the command line:
+```
+lsrun -s "on all time 60000 off all"
+```
 
 ## Other Programs
 Some utility Python programs are available to be run from the command line.
@@ -394,7 +409,7 @@ line like any other Python module:
 lsc scripts/evening.ls
 python -m __generated__
 ```
-The generated Python module relies on the Bardolph runtime code.
+The generated Python module relies on the Bardolph python library.
 
 If you want to use this module in your own Python code, you can import the
 and call the function `run_script()`. However, because the module is not 
@@ -413,23 +428,36 @@ python -m __generated__ -fd
 This would not affect any physical lights, but would send text to the screen
 indicating what the script would do.
 
-### snapshot
-The `snapshot` command is a bash script wihch is equivalent to
-`python -m bardoolph.controller.snapshot`.
+### lscap
+The `lscap` command is equivalent to `python -m 
+bardoolph.controller.snapshot`.
 
 This program captures the current state of the lights and generates the
 requested type of output. The default output is a human-readable listing
 of the lights.
 
 The nature of that output is determined by command-line options, notably:
-1. `-s`: outputs a light script to stdout. If you save that output to a file
+*  `-s`: outputs a light script to stdout. If you save that output to a file
 and run it as a script, it will restore the lights to the same state,
 including color and power.
-1. `-t`: outputs text to stdout, in a human-friendly listing of all the known
+*  `-t`: outputs text to stdout, in a human-friendly listing of all the known
 bulbs, groups, and locations.
-1. `-p`: builds file `__generated__.py` based on the current state of
+*  `-p`: builds file `__generated__.py` based on the current state of
 the known bulbs. The resulting file is very similar to the output generated
 by the `lsc` command, and can be run with `python -m __generated__`.
+
+## Installation
+To install the Python libraries and shell scripts:
+```
+pip install bardolph
+```
+You may have to use pip3 instead of pip.
+
+After this installation, you can use the `lsrun`, `lsc`, and `lscap` scripts
+described above.
+
+If you want to run the web server and/or see some example scripts, you
+need to pull the source tree from https://github.com/al-fontes-jr/bardolph.
 
 ## System Requirements
 The program has been tested on Python version 3.7.3. I haven't tried
