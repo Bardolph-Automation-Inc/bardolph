@@ -20,7 +20,6 @@ class LexTest(unittest.TestCase):
     def test_all_tokens(self):
         input_string = 'all and brightness define # comment \n duration hue \
             off on kelvin saturation set time 01.234\n"Hello There" @'
-        
         expected_tokens = [
             TokenTypes.ALL, TokenTypes.AND, 
             TokenTypes.BRIGHTNESS, TokenTypes.DEFINE, TokenTypes.DURATION,

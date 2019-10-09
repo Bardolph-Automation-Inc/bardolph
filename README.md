@@ -65,12 +65,8 @@ application takes up less than 10% of the CPU cycles on a Raspberry Pi Zero.
 
 You can kill the script and quit by pressing Ctrl-C. You may want to run the
 program as a background job, which will terminate when the script is done.
-
-Although it won't work with a bash script, you can run a short script directly
-in the command line, with the `-s` option. For example, to turn off all your
-lights from the command line:
 ```
-python -m bardolph.controller.run -s "off all"
+lsrun -s "off all"
 ```
 
 ### Web Server
@@ -207,6 +203,15 @@ When "on" executes, each light will have whatever its color was when
 it was turned off. If a lights is already on or off, an otherwise 
 redundant power operation will have no effect, although the VM does send it
 to the bulbs.
+
+### Abbreviations
+Scripts can be much terser with shorthand parameter names: h (hue),
+s (saturation), b (brightness) k (kelvin). The following two lines do the same
+thing:
+```
+hue 180 saturation 100 brightness 50 kelvin 2700 set all
+h 180 s 100 b 50 k 2700 set all
+```
 
 ### Timing Color Changes
 Scripts can contain time delays and durations, both of which are are expressed 
@@ -354,7 +359,7 @@ lsrun name.ls
 ``` 
 In this context, "name" contains the name of a script. Or the python equivalent:
 ```
-python3 -m bardolph.controller.run name.ls
+python -m bardolph.controller.run name.ls
 ```
 You can queue up multiple scripts. If you specify more than one on the
 command line, it will queue them in that order and execute them sequentially:
@@ -372,7 +377,7 @@ lsrun -r color_cycle.ls
 Available options:
 * -r or --repeat: Repeat the scripts indefinitely, until Ctrl-C is pressed.
 * -s or --script: Run text from the command line as a script.
-*  -v or --verbose: Generate full debugging output while running.
+* -v or --verbose: Generate full debugging output while running.
 *  -f or --fake: Don't operate on real lights. Instead, use "fake" lights that
 just send output to stdout. This can be helpful for debugging and testing.
 
@@ -403,7 +408,7 @@ This is equivalent to `python -m bardolph.controller.lsc`. The syntax is
 
 LSC stands for "lightbulb script compiler". That meta-compiler writes a 
 parsed and encoded version of the script, along with run-time  support, to 
-file  `__generated__.py`. The generated file can be run  grom the command
+file  `__generated__.py`. The generated file can be run from the command
 line like any other Python module:
 ```
 lsc scripts/evening.ls
@@ -428,7 +433,7 @@ python -m __generated__ -fd
 This would not affect any physical lights, but would send text to the screen
 indicating what the script would do.
 
-### lscap
+### lscap - Capture Light State
 The `lscap` command is equivalent to `python -m 
 bardoolph.controller.snapshot`.
 
@@ -453,7 +458,7 @@ pip install bardolph
 ```
 You may have to use pip3 instead of pip.
 
-After this installation, you can use the `lsrun`, `lsc`, and `lscap` scripts
+After this installation, you can use the `lsrun`, `lsc`, and `lscap`  scripts
 described above.
 
 If you want to run the web server and/or see some example scripts, you

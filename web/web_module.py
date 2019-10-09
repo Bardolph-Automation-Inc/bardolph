@@ -6,7 +6,8 @@ def configure():
     injection.configure()   
     settings.using_base(config_values.functional).configure()
     settings.specialize({
-        'log_to_console': False
+        'log_to_console': False,
+        'script_path': 'scripts'
     })
     light_module.configure()
     injection.bind_instance(web_app.WebApp()).to(i_web.WebApp)

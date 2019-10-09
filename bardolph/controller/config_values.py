@@ -4,7 +4,6 @@ functional = {
     'default_num_lights': 5,
     'sleep_time': 0.01, # seconds
     
-    'script_path': 'scripts',
     'generated_path': 'generated',
     'log_date_format': '%D %H:%M:%S',
     'log_format':

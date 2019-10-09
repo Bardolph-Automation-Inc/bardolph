@@ -165,7 +165,11 @@ tree that may help. They can be found under `web/server`.
 In my confguration, Flask provides a WSGI service. In a separate process,
 [lighttpd]([https://https://www.lighttpd.net) attaches to that service through
 FastCGI. Although the configuration files I have provided are intended to be
-examples, I use them in their current state at home.
+examples, I use them in their current state at home. Generally, all you need
+is:
+```
+sudo apt-get install lighttpd
+```
 
 #### FastCGI Server - Raspbian
 The first step is to run the Python code containing the web server within the
