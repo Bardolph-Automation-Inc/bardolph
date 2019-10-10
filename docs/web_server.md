@@ -1,6 +1,6 @@
 # Web Frontend Server
 
-Part of the [Bardolph Project](https://www.bardolph.org)
+Part of the [Bardolph Project](http://www.bardolph.org)
 
 ![screenshot](web_mobile.png)
 ## Introduction
