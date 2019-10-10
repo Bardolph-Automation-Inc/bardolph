@@ -1,7 +1,7 @@
 ![bulb](bulb.png) 
 # Bardolph Python Wrapper
 
- Part of the [Bardolph Project](https://www.bardolph.org)
+Part of the [Bardolph Project](http://www.bardolph.org)
 
 ## Introduction
 I hope that my code is clear and modular enough to be reused in someone else's

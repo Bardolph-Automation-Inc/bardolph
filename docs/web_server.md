@@ -22,11 +22,11 @@ to turn on or turn off off all the lights, I have have a couple
 of home screen shortcuts on my phone. After unlocking the phone, 
 the lights are on or off with a single tap.
 
+![home shortcuts on phone simultor](home.png)
+
 It's also  convenient to access the lights from my smart TV's web
 browser. When I sit down to watch a movie, I don't have to find
 my phone to dim the lights; I just use the TV.
-
-![home shortcuts on phone simultor](home.png)
 
 It's important to note that while this is a web server, it is not designed to
 work on the public Internet. The server runs entirely within your WiFi
