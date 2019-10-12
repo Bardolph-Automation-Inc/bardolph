@@ -3,8 +3,6 @@ from enum import auto, Enum
 from ..parser.token_types import TokenTypes
 
 
-HSB_RANGE = (0, 65535)
-KELVIN_RANGE = (2500, 9000)
 RAW_RANGE = (0, 65535)
 
 
@@ -32,10 +30,8 @@ class Units:
             A tuple containing (minimum, maximum), or None if the parameter
             does not have a limited range of values.
         """
-        return {
-            TokenTypes.DURATION: None,
-            TokenTypes.TIME: None,
-            TokenTypes.KELVIN: KELVIN_RANGE }.get(reg, RAW_RANGE)
+        return None if reg in (
+            TokenTypes.DURATION, TokenTypes.TIME) else RAW_RANGE
         
     def as_raw(self, reg, logical_value):
         """If necessary, converts to integer value that can be passed into the
