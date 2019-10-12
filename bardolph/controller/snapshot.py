@@ -52,7 +52,7 @@ class ScriptSnapshot(Snapshot):
         self.script = ''
     
     def start_snapshot(self):
-        self.script = 'raw duration 1500\n'
+        self.script = 'duration 1500\n'
         
     def start_light(self, light):
         self.light_name = light.get_label()
@@ -61,14 +61,13 @@ class ScriptSnapshot(Snapshot):
         self.script += '{} {} '.format(name, value)
         
     def handle_color(self, color):
-        params = zip( [
+        params = zip([
             TokenTypes.HUE, TokenTypes.SATURATION, TokenTypes.BRIGHTNESS,
             TokenTypes.KELVIN
             ], color)
         u = Units()
-        for p in params:
-            reg = p[0]
-            value = p[1]
+        for param in params:
+            reg, value = param
             fmt = '{} {:.2f} ' if u.requires_conversion(reg) else '{} {} '
             self.script += fmt.format(
                 reg.name.lower(), u.as_logical(reg, value))
@@ -142,7 +141,7 @@ class TextSnapshot(Snapshot):
         self.add_field(light.get_label())
         
     def handle_color(self, color):
-        params = zip( [
+        params = zip([
             TokenTypes.HUE, TokenTypes.SATURATION, TokenTypes.BRIGHTNESS,
             TokenTypes.KELVIN
             ], color)
