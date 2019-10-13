@@ -14,6 +14,7 @@ class OpCode(Enum):
     
     
 class Operand(Enum):
+    ALL = auto()
     LIGHT = auto()
     GROUP = auto()
     LOCATION = auto()

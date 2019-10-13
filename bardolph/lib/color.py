@@ -9,7 +9,7 @@ def average_color(colors):
     totals = [0, 0, 0, 0]
     for color in colors:
         for i in range(0, 4):
-            totals[i] += color[i]      
+            totals[i] += color[i]
     avg = []
     for i in range(0, 4):
         avg.append(round(totals[i] / count))

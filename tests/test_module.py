@@ -1,5 +1,5 @@
 from bardolph.lib import injection, settings
-from . import fake_clock, fake_light_set
+from bardolph.fakes import fake_clock, fake_light_set
 
 def configure():
     injection.configure()

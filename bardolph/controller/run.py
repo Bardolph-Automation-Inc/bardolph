@@ -12,19 +12,19 @@ from . import config_values
 from .script_runner import ScriptRunner
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('file', help='name of the script file', nargs='*')
-    ap.add_argument(
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', help='name of the script file', nargs='*')
+    parser.add_argument(
         '-f', '--fakes', help='use fake lights', action='store_true')
-    ap.add_argument(
+    parser.add_argument(
         '-r', '--repeat', help='repeat until key pressed', action='store_true')
-    ap.add_argument(
+    parser.add_argument(
         '-s', '--script', help='run script from command line', action='store')
-    ap.add_argument(
+    parser.add_argument(
         '-v', '--verbose', help='verbose output', action='store_true')
-    args = ap.parse_args()
-    
-    injection.configure()   
+    args = parser.parse_args()
+
+    injection.configure()
     settings.using_base(config_values.functional).configure()
     overrides = {
         'log_date_format': "%I:%M:%S %p",
@@ -35,16 +35,16 @@ def main():
     }
     if args.fakes:
         overrides['use_fakes'] = True
-        
+
     settings.specialize(overrides)
     light_module.configure()
 
     jobs = job_control.JobControl(args.repeat)
     if args.script is not None:
-        jobs.add_job(ScriptRunner.from_string(args.script))   
+        jobs.add_job(ScriptRunner.from_string(args.script))
     for file_name in args.file:
         jobs.add_job(ScriptRunner.from_file(file_name))
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()

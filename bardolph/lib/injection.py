@@ -9,19 +9,19 @@ class Binder:
     """ Parameter implementation is a class to be used as the factory. """
     def __init__(self, implementation):
         self.implementation = implementation
-        
+
     def to(self, interface):
         Injection.providers[interface] = self.implementation
-        
+
 
 class ObjectBinder:
     """ Singleton. Parameter implementor is always returned. """
     def __init__(self, implementor):
         self.implementor = implementor
-        
+
     def to(self, interface):
         Injection.providers[interface] = lambda: self.implementor
-        
+
 
 def inject(*interfaces):
     def fn_wrapper(fn):
@@ -42,7 +42,7 @@ def inject(*interfaces):
 def provide(interface):
     if interface not in Injection.providers:
         raise UnboundException("interface {}".format(interface))
-        
+
     creator = Injection.providers[interface]
     return creator()
 

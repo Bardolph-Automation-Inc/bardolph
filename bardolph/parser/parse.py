@@ -15,28 +15,28 @@ word_regex = re.compile(r"\w+")
 
 class Parser:
     def __init__(self):
-        self.lexer = None
-        self.error_output = ''
-        self.light_state = {}
-        self.name = None
-        self.current_token_type = None
-        self.current_token = None
-        self.op_code = OpCode.NOP
-        self.symbol_table = {}
-        self.code = []
-        self.unit_mode = UnitMode.LOGICAL
+        self._lexer = None
+        self._error_output = ''
+        self._light_state = {}
+        self._name = None
+        self._current_token_type = None
+        self._current_token = None
+        self._op_code = OpCode.NOP
+        self._symbol_table = {}
+        self._code = []
+        self._unit_mode = UnitMode.LOGICAL
         
     def parse(self, input_string):
-        self.code.clear()
-        self.error_output = ''
-        self.lexer = lex.Lex(input_string)
-        self.next_token()
-        success = self.script()
-        self.lexer = None
+        self._code.clear()
+        self._error_output = ''
+        self._lexer = lex.Lex(input_string)
+        self._next_token()
+        success = self._script()
+        self._lexer = None
         if not success:
             return None
-        self.optimize()
-        return self.code
+        self._optimize()
+        return self._code
 
     def load(self, file_name):
         logging.debug('File name: {}'.format(file_name))
@@ -50,212 +50,214 @@ class Parser:
         except:
             logging.error('Error accessing file {}'.format(file_name))
 
-    def script(self):
-        return self.body() and self.eof()
+    def _script(self):
+        return self._body() and self._eof()
         
-    def body(self):
+    def _body(self):
         succeeded = True
-        while succeeded and self.current_token_type != TokenTypes.EOF:
-            succeeded = self.command()
+        while succeeded and self._current_token_type != TokenTypes.EOF:
+            succeeded = self._command()
         return succeeded
 
-    def eof(self):
-        if self.current_token_type != TokenTypes.EOF:
-            return self.trigger_error("Didn't get to end of file.")
+    def _eof(self):
+        if self._current_token_type != TokenTypes.EOF:
+            return self._trigger_error("Didn't get to end of file.")
         return True
 
-    def command(self):
+    def _command(self):
         fn = {
-            TokenTypes.BRIGHTNESS: self.set_reg,
-            TokenTypes.DEFINE: self.definition,
-            TokenTypes.DURATION: self.set_reg,
-            TokenTypes.GET: self.get,
-            TokenTypes.HUE: self.set_reg,
-            TokenTypes.KELVIN: self.set_reg,
-            TokenTypes.OFF: self.power_off,
-            TokenTypes.ON: self.power_on,
-            TokenTypes.PAUSE: self.pause,
-            TokenTypes.SATURATION: self.set_reg,
-            TokenTypes.SET: self.set,
-            TokenTypes.TIME: self.set_reg,
-            TokenTypes.UNITS: self.set_units,
-        }.get(self.current_token_type, self.syntax_error)
+            TokenTypes.BRIGHTNESS: self._set_reg,
+            TokenTypes.DEFINE: self._definition,
+            TokenTypes.DURATION: self._set_reg,
+            TokenTypes.GET: self._get,
+            TokenTypes.HUE: self._set_reg,
+            TokenTypes.KELVIN: self._set_reg,
+            TokenTypes.OFF: self._power_off,
+            TokenTypes.ON: self._power_on,
+            TokenTypes.PAUSE: self._pause,
+            TokenTypes.SATURATION: self._set_reg,
+            TokenTypes.SET: self._set,
+            TokenTypes.TIME: self._set_reg,
+            TokenTypes.UNITS: self._set_units,
+        }.get(self._current_token_type, self._syntax_error)
         return fn() if fn != None else True
         
-    def set_reg(self):
-        self.name = self.current_token
-        reg = self.current_token_type
-        self.next_token()
+    def _set_reg(self):
+        self._name = self._current_token
+        reg = self._current_token_type
+        self._next_token()
 
-        if self.current_token_type == TokenTypes.NUMBER:
+        if self._current_token_type == TokenTypes.NUMBER:
             try:
-                value = round(float(self.current_token))
+                value = round(float(self._current_token))
             except ValueError:
-                return self.token_error('Invalid number: "{}"')
-        elif self.current_token_type == TokenTypes.LITERAL:
-            value = self.current_token
-        elif self.current_token in self.symbol_table:
-            value = self.symbol_table[self.current_token]
+                return self._token_error('Invalid number: "{}"')
+        elif self._current_token_type == TokenTypes.LITERAL:
+            value = self._current_token
+        elif self._current_token in self._symbol_table:
+            value = self._symbol_table[self._current_token]
         else:
-            return self.token_error('Unknown parameter value: "{}"')
+            return self._token_error('Unknown parameter value: "{}"')
 
         u = Units()
-        if self.unit_mode == UnitMode.LOGICAL:
+        if self._unit_mode == UnitMode.LOGICAL:
             value = u.as_raw(reg, value)
             if u.has_range(reg):
                 (min_val, max_val) = u.get_range(reg)
                 if value < min_val or value > max_val:
-                    if self.unit_mode == UnitMode.LOGICAL:
+                    if self._unit_mode == UnitMode.LOGICAL:
                         min_val = u.as_logical(reg, min_val)
                         max_val = u.as_logical(reg, max_val)
-                    return self.trigger_error(
+                    return self._trigger_error(
                         '{} must be between {} and {}'.format(
                             reg.name.lower(), min_val, max_val))
 
-        self.add_instruction(OpCode.SET_REG, self.name, value)
-        return self.next_token()
+        self._add_instruction(OpCode.SET_REG, self._name, value)
+        return self._next_token()
     
-    def set_units(self):
-        self.next_token()
+    def _set_units(self):
+        self._next_token()
         mode = {
             TokenTypes.RAW: UnitMode.RAW,
             TokenTypes.LOGICAL:UnitMode.LOGICAL
-        }.get(self.current_token_type, None)
+        }.get(self._current_token_type, None)
     
         if mode is None:
-            return self.trigger_error(
-                'Invalid parameter "{}" for units.'.format(self.current_token))
+            return self._trigger_error(
+                'Invalid parameter "{}" for units.'.format(self._current_token))
 
-        self.unit_mode = mode
-        return self.next_token()
+        self._unit_mode = mode
+        return self._next_token()
 
-    def set(self):
-        return self.action(OpCode.COLOR)
+    def _set(self):
+        return self._action(OpCode.COLOR)
     
-    def get(self):
-        return self.action(OpCode.GET_COLOR)
+    def _get(self):
+        return self._action(OpCode.GET_COLOR)
     
-    def power_on(self):
-        self.add_instruction(OpCode.SET_REG, 'power', True)
-        return self.action(OpCode.POWER)
+    def _power_on(self):
+        self._add_instruction(OpCode.SET_REG, 'power', True)
+        return self._action(OpCode.POWER)
         
-    def power_off(self):
-        self.add_instruction(OpCode.SET_REG, 'power', False)
-        return self.action(OpCode.POWER)
+    def _power_off(self):
+        self._add_instruction(OpCode.SET_REG, 'power', False)
+        return self._action(OpCode.POWER)
     
-    def pause(self):
-        self.add_instruction(OpCode.PAUSE)
-        self.next_token()
+    def _pause(self):
+        self._add_instruction(OpCode.PAUSE)
+        self._next_token()
         return True
         
-    def action(self, op_code):
-        self.op_code = op_code
-        self.next_token()
+    def _action(self, op_code):
+        self._op_code = op_code
+        self._next_token()
 
-        if self.current_token_type == TokenTypes.GROUP:
-            self.add_instruction(OpCode.SET_REG, 'operand', Operand.GROUP)
-            self.next_token()
-        elif self.current_token_type == TokenTypes.LOCATION:
-            self.add_instruction(OpCode.SET_REG, 'operand', Operand.LOCATION)
-            self.next_token()
+        if self._current_token_type == TokenTypes.GROUP:
+            self._add_instruction(OpCode.SET_REG, 'operand', Operand.GROUP)
+            self._next_token()
+        elif self._current_token_type == TokenTypes.LOCATION:
+            self._add_instruction(OpCode.SET_REG, 'operand', Operand.LOCATION)
+            self._next_token()
         else:
-            self.add_instruction(OpCode.SET_REG, 'operand', Operand.LIGHT)
+            self._add_instruction(OpCode.SET_REG, 'operand', Operand.LIGHT)
         
-        return self.operand_list()
+        return self._operand_list()
     
-    def operand_list(self):
-        if self.current_token_type == TokenTypes.ALL:
-            self.add_instruction(OpCode.SET_REG, 'name', None)
-            if self.op_code != OpCode.GET_COLOR:
-                self.add_instruction(OpCode.TIME_WAIT)
-            self.add_instruction(self.op_code) 
-            return self.next_token()
+    def _operand_list(self):
+        if self._current_token_type == TokenTypes.ALL:
+            self._add_instruction(OpCode.SET_REG, 'name', None)
+            self._add_instruction(OpCode.SET_REG, 'operand', Operand.ALL)
+            if self._op_code != OpCode.GET_COLOR:
+                self._add_instruction(OpCode.TIME_WAIT)
+            self._add_instruction(self._op_code) 
+            return self._next_token()
         
-        if not self.operand_name():
+        if not self._operand_name():
             return False
         
-        self.add_instruction(OpCode.SET_REG, 'name', self.name)
-        if self.op_code != OpCode.GET_COLOR:
-            self.add_instruction(OpCode.TIME_WAIT)
-        self.add_instruction(self.op_code)
-        while self.current_token_type == TokenTypes.AND:
-            if not self.and_operand():
+        self._add_instruction(OpCode.SET_REG, 'name', self._name)
+        if self._op_code != OpCode.GET_COLOR:
+            self._add_instruction(OpCode.TIME_WAIT)
+        self._add_instruction(self._op_code)
+        while self._current_token_type == TokenTypes.AND:
+            if not self._and():
                 return False
         return True
     
-    def operand_name(self):
-        if self.current_token_type == TokenTypes.LITERAL:
-            self.name = self.current_token
-        elif self.current_token in self.symbol_table:
-            self.name = self.symbol_table[self.current_token]
+    def _operand_name(self):
+        if self._current_token_type == TokenTypes.LITERAL:
+            self._name = self._current_token
+        elif self._current_token in self._symbol_table:
+            self._name = self._symbol_table[self._current_token]
         else:
-            return self.token_error('Unknown variable: {}')
-        return self.next_token()
+            return self._token_error('Unknown variable: {}')
+        return self._next_token()
 
-    def and_operand(self):
-        self.next_token()
-        if not self.operand_name():
+    def _and(self):
+        self._next_token()
+        if not self._operand_name():
             return False
-        self.add_instruction(OpCode.SET_REG, 'name', self.name)
-        self.add_instruction(self.op_code)
+        self._add_instruction(OpCode.SET_REG, 'name', self._name)
+        self._add_instruction(self._op_code)
         return True
            
-    def definition(self):
-        self.next_token()
-        if self.current_token_type in [
+    def _definition(self):
+        self._next_token()
+        if self._current_token_type in [
                 TokenTypes.LITERAL, TokenTypes.NUMBER]:
-            return self.token_error('Unexpected literal: {}')
+            return self._token_error('Unexpected literal: {}')
         
-        var_name = self.current_token
-        self.next_token()
-        if self.current_token_type == TokenTypes.NUMBER:
-            value = int(self.current_token)
-        elif self.current_token_type == TokenTypes.LITERAL:
-            value = self.current_token
-        elif self.current_token in self.symbol_table:
-            value = self.symbol_table[self.current_token]
+        var_name = self._current_token
+        self._next_token()
+        if self._current_token_type == TokenTypes.NUMBER:
+            value = int(self._current_token)
+        elif self._current_token_type == TokenTypes.LITERAL:
+            value = self._current_token
+        elif self._current_token in self._symbol_table:
+            value = self._symbol_table[self._current_token]
         else:
-            return self.token_error('Unknown term: "{}"')
+            return self._token_error('Unknown term: "{}"')
 
-        self.symbol_table[var_name] = value
-        self.next_token()
+        self._symbol_table[var_name] = value
+        self._next_token()
         return True
 
-    def add_instruction(self, op_code, name = None, param = None):
-        self.code.append(Instruction(op_code, name, param))
+    def _add_instruction(self, op_code, name = None, param = None):
+        self._code.append(Instruction(op_code, name, param))
 
     def get_errors(self):
-        return self.error_output;
+        return self._error_output;
     
-    def add_message(self, message):
-        self.error_output += '{}\n'.format(message)
+    def _add_message(self, message):
+        self._error_output += '{}\n'.format(message)
         
-    def trigger_error(self, message):
-        full_message = 'Line {}: {}'.format(self.lexer.line_num, message)
+    def _trigger_error(self, message):
+        full_message = 'Line {}: {}'.format(self._lexer.line_num, message)
         logging.error(full_message)
-        self.add_message(full_message)
+        self._add_message(full_message)
         return False
     
-    def token_error(self, message_format):
-        return self.trigger_error(message_format.format(self.current_token))
+    def _token_error(self, message_format):
+        return self._trigger_error(message_format.format(self._current_token))
 
-    def next_token(self):
-        (self.current_token_type, self.current_token) = self.lexer.next_token()
+    def _next_token(self):
+        (self._current_token_type,
+            self._current_token) = self._lexer.next_token()
         return True
         
-    def syntax_error(self):
-        return self.token_error('Unexpected input "{}"')
+    def _syntax_error(self):
+        return self._token_error('Unexpected input "{}"')
 
-    def optimize(self):
+    def _optimize(self):
         """
-        Eliminate an instruction if it would set a register to the same value
+        Eliminate an instruction if it would _set a register to the same value
         that was assigned to it in the previous SET_REG instruction.
         
         Any GET_COLOR instruction clears out the previous value cache. 
         """
         opt = []
         prev_value = {}
-        for inst in self.code:
+        for inst in self._code:
             if inst.op_code == OpCode.GET_COLOR:
                 prev_value = {}
             if inst.op_code != OpCode.SET_REG:
@@ -265,7 +267,7 @@ class Parser:
                         prev_value[inst.name] != inst.param):
                     opt.append(inst)
                     prev_value[inst.name] = inst.param
-        self.code = opt
+        self._code = opt
                 
                 
 def main():
@@ -282,7 +284,7 @@ def main():
         for inst in output_code:
             print(inst)
     else:
-        print(parser.error_output)
+        print(parser._error_output)
 
     
 if __name__ == '__main__':
@@ -299,9 +301,9 @@ if __name__ == '__main__':
         | "kelvin" <set_reg>
         | "off" <power_off>
         | "on" <power_on>
-        | "pause" <pause>
+        | "_pause" <pause>
         | "saturation" <set_reg>
-        | "set" <set>
+        | "_set" <set>
         | "units" <set_units>
         | "time" <set_reg>
     <set_reg> ::= <name> <number> | <name> <literal> | <name> <symbol>
@@ -310,9 +312,9 @@ if __name__ == '__main__':
     <power_off> ::= <action>
     <power_on> ::= <action>
     <action> ::= <op_code> <operand_list>
-    <operand_list> ::= "all" | <operand_name> | <operand_name> <and_operand> *
+    <operand_list> ::= "all" | <operand_name> | <operand_name> <and> *
     <operand_name> ::= <token>
-    <and_operand> ::= "and" <operand_name>
+    <and> ::= "and" <operand_name>
     <definition> ::= <token> <number> | <token> <literal>
     <literal> ::= "\"" <token> "\""
 """

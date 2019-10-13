@@ -4,32 +4,22 @@ from . import injection
 
 class Settings:
     active_config = None
-    
-    def __init__(self):
-        self.refresh()
-    
-    def __str__(self):
-        return str(self.configs)
-    
+
     def __contains__(self, name):
         return self.active_config is not None and name in self.active_config
-    
-    def refresh(self):
-        self.active_config = Settings.active_config
-     
-    def get_value(self, name, default = None):
-        if self.active_config is None and default != None:
+
+    def get_value(self, name, default=None):
+        if self.active_config is None and default is not None:
             return default
-        elif default is None:
+        if default is None:
             return self.active_config[name]
-        else:
-            return self.active_config.get(name, default) 
+        return self.active_config.get(name, default)
 
     @classmethod
-    def configure(cls):        
+    def configure(cls):
         Settings.active_config = None
         injection.bind(Settings).to(i_lib.Settings)
-    
+
     @classmethod
     def specialize(cls, overrides):
         if Settings.active_config is None:
@@ -39,7 +29,7 @@ class Settings:
 
     @classmethod
     def put_config(cls, config):
-        Settings.active_config = config
+        cls.active_config = config
 
 
 class Base:
@@ -48,17 +38,17 @@ class Base:
 
     def and_override(self, override):
         return Overrider(self, override)
-        
+
     def configure(self):
         Settings.configure()
         Settings.specialize(self.overrides)
-        
+
 
 class Overrider:
     def __init__(self, base, override):
         self.base = base
         self.override = override
-        
+
     def configure(self):
         self.base.configure()
         Settings.specialize(self.override)

@@ -8,7 +8,9 @@ from tests.job_control_test import JobControlTest
 from tests.lex_test import LexTest
 from tests.light_set_test import LightSetTest
 from tests.log_config_test import LogConfigTest
+from tests.machine_test import MachineTest
 from tests.parser_test import ParserTest
+from tests.settings_test import SettingsTest
 from tests.units_test import UnitsTest
 from tests.web_app_test import WebAppTest
 
@@ -25,7 +27,9 @@ if __name__ == '__main__':
     add_test(LexTest) 
     add_test(LightSetTest)
     add_test(LogConfigTest)
-    add_test(ParserTest)   
+    add_test(MachineTest)
+    add_test(ParserTest)
+    add_test(SettingsTest)   
     add_test(UnitsTest)
     add_test(WebAppTest) 
     unittest.TextTestRunner(verbosity=2).run(tests)

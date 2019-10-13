@@ -10,14 +10,6 @@ def now():
     return time.time()
 
 
-def as_seconds(t):
-    return t  / 1000.0
-
-
-def as_ms(t):
-    return t * 1000.0
-
-    
 def configure():
     injection.bind(Clock).to(i_lib.Clock)
 
@@ -30,11 +22,11 @@ class Clock(i_lib.Clock):
         self.start_time = 0.0
         self.cue_time = 0.0
         self.keep_going = True
-    
+
     def start(self):
         self.reset()
         threading.Thread(target=self.run, args=(), daemon=True).start()
-    
+
     @injection.inject(i_lib.Settings)
     def run(self, settings):
         self.keep_going = True
@@ -43,22 +35,22 @@ class Clock(i_lib.Clock):
             if sleep_time > 0.0:
                 time.sleep(sleep_time)
             self.fire()
-    
+
     def stop(self):
         self.keep_going = False
-    
+
     def reset(self):
         self.cue_time = 0.0
         self.start_time = now()
-        
+
     def et(self):
-        return (time.time() - self.start_time)
+        return time.time() - self.start_time
 
     def fire(self):
         if self.keep_going:
             self.event.set()
             self.event.clear()
-        
+
     def wait(self):
         if self.keep_going:
             self.event.wait()
@@ -68,4 +60,3 @@ class Clock(i_lib.Clock):
         self.cue_time += delay
         while self.et() < self.cue_time:
             self.wait()
-        

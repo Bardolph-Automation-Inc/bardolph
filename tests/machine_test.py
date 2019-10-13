@@ -6,7 +6,8 @@ from bardolph.controller.i_controller import LightSet
 from bardolph.controller.instruction import Instruction, OpCode, Operand
 from bardolph.controller.machine import Machine
 from bardolph.lib.injection import provide
-from tests import test_module
+
+from . import test_module
 
 class MachineTest(unittest.TestCase):
     def setUp(self):
@@ -28,29 +29,29 @@ class MachineTest(unittest.TestCase):
             self.names[2], "Group2", "Loc1", self.colors[2])
         self.light_set.add_light(
             self.names[3], "Group2", "Loc2", self.colors[3])
-    
+
     def code_for_get(self, name, operand):
         return [
-            Instruction(OpCode.set_reg, "name", name),
-            Instruction(OpCode.set_reg, "operand", operand),
-            Instruction(OpCode.get_color)
+            Instruction(OpCode.SET_REG, "name", name),
+            Instruction(OpCode.SET_REG, "operand", operand),
+            Instruction(OpCode.GET_COLOR)
         ]
-    
+
     def test_get_single_color(self):
-        program = self.code_for_get(self.names[0], Operand.light)
+        program = self.code_for_get(self.names[0], Operand.LIGHT)
         machine = Machine()
         machine.run(program)
         self.assertListEqual(machine.color_from_reg(), self.colors[0])
 
     def test_get_group_color(self):
-        program = self.code_for_get("Group1", Operand.group)
+        program = self.code_for_get("Group1", Operand.GROUP)
         machine = Machine()
         machine.run(program)
         avg = [14, 18, 22, 26]
         self.assertListEqual(machine.color_from_reg(), avg)
 
     def test_get_location_color(self):
-        program = self.code_for_get("Loc2", Operand.location)
+        program = self.code_for_get("Loc2", Operand.LOCATION)
         machine = Machine()
         machine.run(program)
         avg = [44, 48, 52, 56]
@@ -58,18 +59,18 @@ class MachineTest(unittest.TestCase):
 
     def code_for_set(self, name, operand, params):
         return [
-            Instruction(OpCode.set_reg, "hue", params[0]),
-            Instruction(OpCode.set_reg, "saturation", params[1]),
-            Instruction(OpCode.set_reg, "brightness", params[2]),
-            Instruction(OpCode.set_reg, "kelvin", params[3]),
-            Instruction(OpCode.set_reg, "name", name),
-            Instruction(OpCode.set_reg, "operand", operand),
-            Instruction(OpCode.color)
+            Instruction(OpCode.SET_REG, "hue", params[0]),
+            Instruction(OpCode.SET_REG, "saturation", params[1]),
+            Instruction(OpCode.SET_REG, "brightness", params[2]),
+            Instruction(OpCode.SET_REG, "kelvin", params[3]),
+            Instruction(OpCode.SET_REG, "name", name),
+            Instruction(OpCode.SET_REG, "operand", operand),
+            Instruction(OpCode.COLOR)
         ]
-    
+
     def test_set_single_color(self):
         color = [1, 2, 3, 4]
-        program = self.code_for_set(self.names[0], Operand.light, color)
+        program = self.code_for_set(self.names[0], Operand.LIGHT, color)
         machine = Machine()
         machine.run(program)
         self.assertListEqual(machine.color_from_reg(), color)

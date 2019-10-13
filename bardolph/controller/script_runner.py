@@ -10,33 +10,33 @@ class ScriptRunner(Job):
         self.program = None
         self.parser = Parser()
         self.vm = Machine()
-        
+
     @classmethod
     def from_file(cls, file_name):
         new_instance = ScriptRunner()
         new_instance.load_file(file_name)
         return new_instance
-    
+
     @classmethod
     def from_string(cls, script):
         new_instance = ScriptRunner()
         new_instance.load_string(script)
         return new_instance
-        
+
     def load_file(self, file_name):
         self.program = self.parser.load(file_name)
-        if self.program == None:
+        if self.program is None:
             logging.error(self.parser.get_errors())
         return self.program
-    
+
     def load_string(self, input_string):
         self.program = self.parser.parse(input_string)
-        if self.program == None:
+        if self.program is None:
             logging.error(self.parser.get_errors())
         return self.program
-        
+
     def execute(self):
-        if self.program != None:
+        if self.program is not None:
             self.vm.run(self.program)
 
     def request_stop(self):

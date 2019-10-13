@@ -7,7 +7,7 @@ from ..lib import injection
 from ..lib import settings
 
 from . import config_values
-from .instruction import Instruction, OpCode, Operand 
+from .instruction import Instruction, OpCode, Operand
 from . import light_module
 from . import machine
 
@@ -20,11 +20,10 @@ current_instruction = 0
 def next_instruction():
     global current_instruction
     if current_instruction < len(instructions):
-        value = instructions[current_instruction]    
+        value = instructions[current_instruction]
         current_instruction += 1
         return value
-    else: 
-        return None
+    return None
 
 def build_instructions():
     program = []
@@ -40,12 +39,12 @@ def build_instructions():
     return program
 
 def run_script(overrides = None):
-    injection.configure()   
+    injection.configure()
     settings.using_base(config_values.functional).configure()
     if overrides != None:
         settings.specialize(overrides)
 
-    light_module.configure()    
+    light_module.configure()
     machine.Machine().run(build_instructions())
 
 def main():
@@ -55,8 +54,8 @@ def main():
     ap.add_argument(
         '-f', '--fakes', help='use fake lights', action='store_true')
     args = ap.parse_args()
-    
-    overrides = { 'sleep_time': 0.1 }
+
+    overrides = {'sleep_time': 0.1}
     if args.debug:
         overrides['log_level'] = logging.DEBUG
         overrides['log_to_console'] = True

@@ -9,116 +9,116 @@ from bardolph.controller import i_controller
 
 class Light:
     def __init__(self, name, group, location, color):
-        self.name = name
-        self.group = group
-        self.location = location
-        self.power = 12345
-        self.color = color if color is not None else [0, 0, 0, 0]
-        
-    def __repr__(self):
-        s = 'name: "{}", group: "{}", location: "{}", power: {}, '.format(
-            self.name, self.group, self.location, self.power)
-        s += 'color: {}'.format(self.color)
-        return s
-        
-    def get_color(self):
-        logging.info('Get color "{}" {}'.format(self.name, self.color))
-        return self.color
+        self._name = name
+        self._group = group
+        self._location = location
+        self._power = 12345
+        self._color = color if color is not None else [0, 0, 0, 0]
 
-    def set_color(self, color, duration = 0, _ = False):
-        self.color = color
-        logging.info('Color "{}" {}, {}'.format(self.name, color, duration))
-        
+    def __repr__(self):
+        rep = '_name: "{}", _group: "{}", _location: "{}", _power: {}, '.format(
+            self._name, self._group, self._location, self._power)
+        rep += '_color: {}'.format(self._color)
+        return rep
+
+    def get_color(self):
+        logging.info('Get _color "{}" {}'.format(self._name, self._color))
+        return self._color
+
+    def set_color(self, color, duration=0, _=False):
+        self._color = color
+        logging.info('Color "{}" {}, {}'.format(self._name, color, duration))
+
     def set_return_color(self, color):
-        self.color = color
-        
+        self._color = color
+
     def set_power(self, power, duration):
-        self.power = power
-        logging.info('Power "{}", {}, {}'.format(self.name, power, duration))
-        
+        self._power = power
+        logging.info('Power "{}", {}, {}'.format(self._name, power, duration))
+
     def get_power(self):
-        return self.power
-    
+        return self._power
+
     def set_return_power(self, power):
-        self.power = power
-        
+        self._power = power
+
     def get_label(self):
-        return self.name
-    
+        return self._name
+
     def get_location(self):
-        return self.location
-    
+        return self._location
+
     def get_group(self):
-        return self.group
-  
+        return self._group
+
 
 class LightSet:
     def __init__(self):
         self.clear_lights()
         self.discover()
-    
+
     def clear_lights(self):
-        self.lights = {}
-        self.groups = {}
-        self.locations = {} 
-        
+        self._lights = {}
+        self._groups = {}
+        self._locations = {}
+
     def discover(self):
-        if len(self.lights) == 0:
+        if len(self._lights) == 0:
             self.add_light('Table', 'Furniture', 'Home', [1, 2, 3, 4])
-            self.add_light('Top',  'Pole', 'Home', [10, 20, 30, 40])
+            self.add_light('Top', 'Pole', 'Home', [10, 20, 30, 40])
             self.add_light('Middle', 'Pole', 'Home', [100, 200, 300, 400])
             self.add_light(
                 'Bottom', 'Pole', 'Home', [1000, 2000, 3000, 4000])
             self.add_light(
                 'Chair', 'Furniture', 'Home', [10000, 20000, 30000, 40000])
-     
+
     def add_light(self, name, group, location, color=None):
         new_light = Light(name, group, location, color)
-        self.lights[name] = new_light
+        self._lights[name] = new_light
         if group is not None:
-            if group in self.groups:
-                self.groups[group].append(new_light)
+            if group in self._groups:
+                self._groups[group].append(new_light)
             else:
-                self.groups[group] = [new_light] 
+                self._groups[group] = [new_light]
         if location is not None:
-            if location in self.locations:
-                self.locations[location].append(new_light)
+            if location in self._locations:
+                self._locations[location].append(new_light)
             else:
-                self.locations[location] = [new_light]
-    
-    def get_light_names(self): 
-        return self.lights.keys()
-    
+                self._locations[location] = [new_light]
+
+    def get_light_names(self):
+        return self._lights.keys()
+
     def get_light(self, name):
-        if not name in self.lights:
-            logging.error("Light >\"{}\"< not in fake lights".format(name))
+        if not name in self._lights:
+            logging.error("Light >\"{}\"< not in fake _lights".format(name))
             return None
-        return self.lights[name]
-    
+        return self._lights[name]
+
     def get_all_lights(self):
-        return list(self.lights.values());
+        return list(self._lights.values())
 
     def get_group_names(self):
-        return self.groups.keys()
-    
+        return self._groups.keys()
+
     def get_group(self, name):
-        return self.groups.get(name, {})
-    
+        return self._groups.get(name, {})
+
     def get_location_names(self):
-        return self.locations.keys()
-    
+        return self._locations.keys()
+
     def get_location(self, name):
-        return self.locations.get(name, {})
+        return self._locations.get(name, {})
 
     def get_last_discover(self):
         return datetime.now()
-    
+
     def get_successful_discovers(self):
         return 100
-    
+
     def get_failed_discovers(self):
         return 10
-    
+
     def set_color(self, color, duration):
         logging.info("Color (all) {}, {}".format(color, duration))
 
