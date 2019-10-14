@@ -1,6 +1,0 @@
-#!/bin/bash
-
-#
-# MacOS version - uses ramdisk for socket
-#
-spawn-fcgi -s /Volumes/rdisk/lights.sock -- wsgi.py
