@@ -3,7 +3,7 @@ from enum import auto, Enum
 from ..parser.token_types import TokenTypes
 
 
-RAW_RANGE = (0, 65535)
+_RAW_RANGE = (0, 65535)
 
 
 class UnitMode(Enum):
@@ -31,7 +31,7 @@ class Units:
             does not have a limited range of values.
         """
         return None if reg in (
-            TokenTypes.DURATION, TokenTypes.TIME) else RAW_RANGE
+            TokenTypes.DURATION, TokenTypes.TIME) else _RAW_RANGE
 
     def as_raw(self, reg, logical_value):
         """If necessary, converts to integer value that can be passed into the

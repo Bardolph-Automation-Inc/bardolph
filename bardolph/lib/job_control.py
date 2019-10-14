@@ -10,8 +10,8 @@ class Job:
 
 class Promise:
     def __init__(self, job, callback):
-        self.job = job
-        self.callback = callback
+        self._job = job
+        self._callback = callback
 
     def execute(self):
         threading.Thread(
@@ -19,91 +19,88 @@ class Promise:
         return self
 
     def execute_and_call(self):
-        self.job.execute()
-        return self.callback()
+        self._job.execute()
+        return self._callback()
 
     def request_stop(self):
-        self.job.request_stop()
+        self._job.request_stop()
 
 
 class JobControl:
     def __init__(self, repeat=False):
-        self.promise = None
-        self.queue = collections.deque()
-        self.repeat = repeat
-        self.lock = threading.RLock()
+        self._promise = None
+        self._queue = collections.deque()
+        self._repeat = repeat
+        self._lock = threading.RLock()
 
     def set_repeat(self, repeat):
-        self.repeat = repeat
+        self._repeat = repeat
 
     def add_job(self, job):
-        return self.enqueue_job(job, self.queue.append)
+        return self.enqueue_job(job, self._queue.append)
 
     def insert_job(self, job):
-        return self.enqueue_job(job, self.queue.appendleft)
+        return self.enqueue_job(job, self._queue.appendleft)
 
-    def enqueue_job(self, job, fn):
-        if not self.lock.acquire(True, 1.0):
+    def enqueue_job(self, job, append_fn):
+        if not self._lock.acquire(True, 1.0):
             logging.error("Unable to acquire lock.")
         else:
             try:
-                fn(job)
-                if self.promise is None:
+                append_fn(job)
+                if self._promise is None:
                     self.run_next_job()
             finally:
-                self.lock.release()
+                self._lock.release()
 
     def has_jobs(self):
-        return len(self.queue) > 0
+        return len(self._queue) > 0
 
     def run_next_job(self):
-        if not self.lock.acquire(True, 1.0):
+        if not self._lock.acquire(True, 1.0):
             logging.error("Unable to acquire lock.")
         else:
             try:
-                if self.promise is None and len(self.queue) > 0:
-                    next_job = self.queue.popleft()
-                    if self.repeat:
-                        self.queue.append(next_job)
-                    self.promise = Promise(next_job, self.on_execution_done)
-                    self.promise.execute()
+                if self._promise is None and len(self._queue) > 0:
+                    next_job = self._queue.popleft()
+                    if self._repeat:
+                        self._queue.append(next_job)
+                    self._promise = Promise(next_job, self.on_execution_done)
+                    self._promise.execute()
             finally:
-                self.lock.release()
+                self._lock.release()
 
     def on_execution_done(self):
-        if not self.lock.acquire(True, 1.0):
+        if not self._lock.acquire(True, 1.0):
             logging.error("Unable to acquire lock.")
         else:
             try:
-                self.promise = None
-                logging.debug("Script jobs finished.")
+                self._promise = None
             finally:
-                self.lock.release()
+                self._lock.release()
             self.run_next_job()
 
     def request_stop(self):
-        if not self.lock.acquire(True, 1.0):
+        if not self._lock.acquire(True, 1.0):
             logging.error("Unable to acquire lock.")
         else:
             try:
-                logging.debug("Stop requested.")
-                self.repeat = False
-                self.queue.clear()
-                p = self.promise
-                if p is not None:
-                    self.promise = None
-                    p.request_stop()
+                self._repeat = False
+                self._queue.clear()
+                promise = self._promise
+                if promise is not None:
+                    self._promise = None
+                    promise.request_stop()
             finally:
-                self.lock.release()
+                self._lock.release()
 
     def request_finish(self):
-        """ Clear out the queue but let the running job finish. """
-        if not self.lock.acquire(True, 1.0):
+        """ Clear out the _queue but let the running job finish. """
+        if not self._lock.acquire(True, 1.0):
             logging.error("Unable to acquire lock.")
         else:
             try:
-                logging.debug("Finish requested.")
-                self.repeat = False
-                self.queue.clear()
+                self._repeat = False
+                self._queue.clear()
             finally:
-                self.lock.release()
+                self._lock.release()

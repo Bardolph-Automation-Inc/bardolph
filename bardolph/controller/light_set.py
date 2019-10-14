@@ -48,9 +48,9 @@ class LightSet(i_controller.LightSet):
             self._light_dict = new_dict
             self._last_discover = time.localtime()
 
-            self._groups = self._build_set(
+            self._groups = LightSet._build_set(
                 light_list, lifxlan.device.Device.get_group)
-            self._locations = self._build_set(
+            self._locations = LightSet._build_set(
                 light_list, lifxlan.device.Device.get_location)
         except lifxlan.errors.WorkflowException as ex:
             logging.error("Error during discovery {}".format(ex))
@@ -79,7 +79,8 @@ class LightSet(i_controller.LightSet):
 
         return light_list
 
-    def _build_set(self, light_list, fn):
+    @classmethod
+    def _build_set(cls, light_list, fn):
         # Produces a dictionary keyed on group or location name, pointing to
         # a list of (lifxlan) light objects.
         sets = {}
@@ -91,45 +92,53 @@ class LightSet(i_controller.LightSet):
                 sets[set_name] = [light]
         return sets
 
-    def get_light_names(self):
+    @property
+    def light_names(self):
         """ list of strings """
         return self._light_dict.keys()
+
+    @property
+    def lights(self):
+        """ list of Lights. """
+        return self._light_dict.values()
+
+    @property
+    def group_names(self):
+        """ list of strings """
+        return self._groups.keys()
+
+    @property
+    def location_names(self):
+        """ list of strings """
+        return self._locations.keys()
+
+    @property
+    def count(self):
+        return len(self._light_dict)
+
+    @property
+    def last_discover(self):
+        return self._last_discover
+
+    @property
+    def successful_discovers(self):
+        return self._num_successful_discovers
+
+    @property
+    def failed_discovers(self):
+        return self._num_failed_discovers
 
     def get_light(self, name):
         """ returns an instance of lifxlan.Light, or None if it's not there """
         return self._light_dict.get(name, None)
 
-    def get_group_names(self):
-        """ list of strings """
-        return self._groups.keys()
-
     def get_group(self, name):
         """ list of Lights """
         return self._groups.get(name, [])
 
-    def get_location_names(self):
-        """ list of strings """
-        return self._locations.keys()
-
     def get_location(self, name):
         """ list of Lights. """
         return self._locations.get(name, [])
-
-    def get_all_lights(self):
-        """ list of Lights. """
-        return self._light_dict.values()
-
-    def get_count(self):
-        return len(self._light_dict)
-
-    def get_last_discover(self):
-        return self._last_discover
-
-    def get_successful_discovers(self):
-        return self._num_successful_discovers
-
-    def get_failed_discovers(self):
-        return self._num_failed_discovers
 
     @inject(Settings)
     def set_color(self, color, duration, settings):
@@ -149,11 +158,7 @@ class LightSet(i_controller.LightSet):
 
     def get_power(self):
         """ Returns True if at least one bulb is on. """
-        return self.any_power(
-            self.get_lifxlan().get_power_all_lights())
-
-    def any_power(self, state_dict):
-        for state in state_dict.values():
+        for state in self.get_lifxlan().get_power_all_lights().values():
             if state:
                 return True
         return False
@@ -162,6 +167,7 @@ class LightSet(i_controller.LightSet):
     def get_lifxlan(self, settings):
         num_expected = settings.get_value('default_num_lights')
         return lifxlan.LifxLAN(num_expected)
+
 
 def start_light_refresh():
     logging.info("Starting refresh thread.")

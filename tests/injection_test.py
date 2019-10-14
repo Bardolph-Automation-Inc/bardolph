@@ -4,19 +4,19 @@ import unittest
 
 from bardolph.lib import injection
 
-    
-class Interface : pass
+
+class Interface: pass
 
 class Impl1:
     def f(self): return 1
 
 class Impl2:
     def f(self): return 2
-    
+
 class ImplN:
     def __init__(self, n):
         self.n = n
-        
+
     def f(self):
         return self.n
 
@@ -36,7 +36,7 @@ class InjectionTest(unittest.TestCase):
         injection.configure()
         injection.bind(Impl1).to(Interface)
         self.assertEqual(1, call_impl())
-        
+
         injection.configure()
         injection.bind(Impl2).to(Interface)
         self.assertEqual(2, call_impl())

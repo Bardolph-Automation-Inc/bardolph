@@ -30,7 +30,8 @@ class MachineTest(unittest.TestCase):
         self.light_set.add_light(
             self.names[3], "Group2", "Loc2", self.colors[3])
 
-    def code_for_get(self, name, operand):
+    @classmethod
+    def code_for_get(cls, name, operand):
         return [
             Instruction(OpCode.SET_REG, "name", name),
             Instruction(OpCode.SET_REG, "operand", operand),
@@ -38,26 +39,27 @@ class MachineTest(unittest.TestCase):
         ]
 
     def test_get_single_color(self):
-        program = self.code_for_get(self.names[0], Operand.LIGHT)
+        program = MachineTest.code_for_get(self.names[0], Operand.LIGHT)
         machine = Machine()
         machine.run(program)
         self.assertListEqual(machine.color_from_reg(), self.colors[0])
 
     def test_get_group_color(self):
-        program = self.code_for_get("Group1", Operand.GROUP)
+        program = MachineTest.code_for_get("Group1", Operand.GROUP)
         machine = Machine()
         machine.run(program)
         avg = [14, 18, 22, 26]
         self.assertListEqual(machine.color_from_reg(), avg)
 
     def test_get_location_color(self):
-        program = self.code_for_get("Loc2", Operand.LOCATION)
+        program = MachineTest.code_for_get("Loc2", Operand.LOCATION)
         machine = Machine()
         machine.run(program)
         avg = [44, 48, 52, 56]
         self.assertListEqual(machine.color_from_reg(), avg)
 
-    def code_for_set(self, name, operand, params):
+    @classmethod
+    def code_for_set(cls, name, operand, params):
         return [
             Instruction(OpCode.SET_REG, "hue", params[0]),
             Instruction(OpCode.SET_REG, "saturation", params[1]),
@@ -70,7 +72,7 @@ class MachineTest(unittest.TestCase):
 
     def test_set_single_color(self):
         color = [1, 2, 3, 4]
-        program = self.code_for_set(self.names[0], Operand.LIGHT, color)
+        program = MachineTest.code_for_set(self.names[0], Operand.LIGHT, color)
         machine = Machine()
         machine.run(program)
         self.assertListEqual(machine.color_from_reg(), color)

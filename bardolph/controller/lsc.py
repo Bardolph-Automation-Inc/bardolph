@@ -17,7 +17,8 @@ class Compiler:
         text = ',\n'.join(map(lambda inst: inst.as_list_text(), program))
         self.generate_from(text, file_name)
 
-    def generate_from(self, instruction_text, file_name=None):
+    @classmethod
+    def generate_from(cls, instruction_text, file_name=None):
         output = ''
         with open(os.path.join(
                 'bardolph', 'controller', 'lsc_template.py')) as srce:

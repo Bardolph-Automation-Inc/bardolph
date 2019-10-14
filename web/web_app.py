@@ -25,14 +25,38 @@ class Script:
 
 class WebApp:
     def __init__(self):
-        self.scripts = {}
-        self.scripts_list = []
-        self.jobs = JobControl()
-        self.load_manifest()           
+        self._scripts = {}
+        self._scripts_list = []
+        self._jobs = JobControl()
+        self._load_manifest()
 
-    @inject(Settings)        
+    @inject(Settings)
+    def _load_manifest(self, settings):
+        # If manifest_name is explicitly None, don't attempt to load a file.
+        basename = settings.get_value('manifest_name', 'manifest.json')
+        if basename is None:
+            return
+
+        fname = join('web', basename)
+        script_list = json.load(open(fname))
+        self._scripts = {}
+        self.script_order = []
+        for script_info in script_list:
+            file_name = script_info['file_name']
+            repeat = script_info.get('repeat', False)
+            title = self.get_script_title(script_info)
+            path = self.get_script_path(script_info)
+            background = script_info['background']
+            color = script_info['color']
+            icon = script_info.get('icon', 'litBulb')
+            new_script = Script(
+                file_name, repeat, title, path, background, color, icon)
+            self._scripts[path] = new_script
+            self._scripts_list.append(new_script)
+
+    @inject(Settings)
     def queue_script(self, script, settings):
-        """ 
+        """
         If a repeating script is to be queued up, first clear the entire
         queue. For a non-repeating script, append the incoming script and turn
         off repeating, but allow the current cycle of the running script
@@ -40,24 +64,24 @@ class WebApp:
         """
         if script.repeat:
             self.request_stop()
-            self.jobs.set_repeat(True)
+            self._jobs.set_repeat(True)
         else:
-            self.jobs.set_repeat(False)
+            self._jobs.set_repeat(False)
         fname = join(settings.get_value("script_path", "."), script.file_name)
-        self.jobs.add_job(ScriptRunner.from_file(fname))
-    
+        self._jobs.add_job(ScriptRunner.from_file(fname))
+
     def get_script(self, path):
-        return self.scripts.get(path, None)
-    
+        return self._scripts.get(path, None)
+
     def get_script_list(self):
-        return self.scripts_list
-    
+        return self._scripts_list
+
     def get_snapshot(self):
         return DictSnapshot().generate().get_list()
-    
+
     def set_repeat(self, repeat):
-        self.jobs.set_repeat(repeat)
-    
+        self._jobs.set_repeat(repeat)
+
     @inject(LightSet)
     def get_status(self, lights):
         last_discover_time = lights.get_last_discover()
@@ -78,31 +102,7 @@ class WebApp:
     @inject(Settings)
     def get_path_root(self, settings):
         return settings.get_value('path_root', '/')
-    
-    @inject(Settings)
-    def load_manifest(self, settings):
-        # If manifest_name is explicitly None, don't attempt to load a file.
-        basename = settings.get_value('manifest_name', 'manifest.json')
-        if basename is None:
-            return
 
-        fname = join('web',  basename)
-        script_list = json.load(open(fname))
-        self.scripts = {}
-        self.script_order = []
-        for script_info in script_list:
-            file_name = script_info['file_name']
-            repeat = script_info.get('repeat', False) 
-            title = self.get_script_title(script_info)
-            path = self.get_script_path(script_info)
-            background = script_info['background']
-            color = script_info['color']
-            icon = script_info.get('icon', 'litBulb')
-            new_script = Script(
-                file_name, repeat, title, path, background, color, icon)
-            self.scripts[path] = new_script
-            self.scripts_list.append(new_script)
-    
     def get_script_title(self, script_info):
         title = script_info.get('title', '')
         if len(title) == 0:
@@ -110,7 +110,7 @@ class WebApp:
             spaced = name.replace('_', ' ').replace('-', ' ')
             title = spaced.title()
         return title
-            
+
     def get_script_path(self, script_info):
         path = script_info.get('path', '')
         if len(path) == 0:
@@ -118,14 +118,14 @@ class WebApp:
             if path[-3:] == ".ls":
                 path = path[:-3]
         return path
-    
+
     def request_finish(self):
-        self.jobs.request_finish()
-    
+        self._jobs.request_finish()
+
     def request_stop(self):
-        self.jobs.request_stop()
-    
-    @inject(Settings)    
+        self._jobs.request_stop()
+
+    @inject(Settings)
     def snapshot(self, settings):
         output_name = join(
             settings.get_value('script_path', '.'), '__snapshot__.ls')

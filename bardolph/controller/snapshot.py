@@ -33,8 +33,7 @@ class Snapshot:
     @injection.inject(LightSet)
     def generate(self, light_set):
         self.start_snapshot()
-        light_names = light_set.get_light_names()
-        for name in light_names:
+        for name in light_set.light_names:
             light = light_set.get_light(name)
             self.start_light(light)
             self.handle_color(light.get_color())
@@ -80,7 +79,8 @@ class ScriptSnapshot(Snapshot):
         fmt = 'on "{}"\n' if self._power else 'off "{}"\n'
         self._script += fmt.format(self._light_name)
 
-    def get_text(self):
+    @property
+    def text(self):
         return '{}\n'.format(self._script)
 
 
@@ -112,7 +112,8 @@ class InstructionSnapshot(Snapshot):
         self._snapshot += 'OpCode.set_reg, "power", {},\n'.format(self._power)
         self._snapshot += 'OpCode.power,\n'
 
-    def get_text(self):
+    @property
+    def text(self):
         return self._snapshot[:-2]
 
 
@@ -121,7 +122,7 @@ class TextSnapshot(Snapshot):
     def __init__(self):
         self._field_width = len('saturation  ')
         self._text = ''
-        self._add_field('_name')._add_field('hue')
+        self._add_field('name')._add_field('hue')
         self._add_field('saturation')._add_field('brightness')
         self._add_field('kelvin')._add_field('power')
         self._text += '\n'
@@ -134,20 +135,20 @@ class TextSnapshot(Snapshot):
 
     @injection.inject(LightSet)
     def _add_sets(self, lights):
-        self._add_set('Groups', lights.get_group_names, lights.get_group)
+        self._add_set('Groups', lights.group_names, lights.get_group)
         self._add_set(
-            'Locations', lights.get_location_names, lights.get_location)
+            'Locations', lights.location_names, lights.get_location)
 
-    def _add_set(self, heading, name_fn, get_fn):
+    def _add_set(self, heading, names, get_fn):
         self._text += '\n{}\n'.format(heading)
         self._text += '-' * 17
         self._text += '\n'
-        for name in name_fn():
+        for name in names:
             self._text += '{}\n'.format(name)
             for light in get_fn(name):
                 self._text += '   {}\n'.format(light.get_label())
 
-    def generate(self, _):
+    def generate(self):
         super().generate()
         self._add_sets()
         return self
@@ -171,7 +172,8 @@ class TextSnapshot(Snapshot):
     def end_light(self):
         self._text += '\n'
 
-    def get_text(self):
+    @property
+    def text(self):
         return self._text
 
 
@@ -194,15 +196,17 @@ class DictSnapshot(Snapshot):
     def end_light(self):
         self._snapshot.append(self._current_dict)
 
-    def get_text(self):
-        return str(self.get_list())
+    @property
+    def text(self):
+        return str(self.list)
 
-    def get_list(self):
+    @property
+    def list(self):
         return self._snapshot
 
 
 def _do_gen(ctor):
-    print(ctor().generate().get_text() + '\n')
+    print(ctor().generate().text + '\n')
 
 
 def main():
@@ -238,7 +242,7 @@ def main():
     if do_text:
         _do_gen(TextSnapshot)
     if do_py:
-        text = InstructionSnapshot().generate().get_text()
+        text = InstructionSnapshot().generate().text
         Compiler().generate_from(text)
 
 

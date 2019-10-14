@@ -20,7 +20,7 @@ class SettingsTest(unittest.TestCase):
         s = settings.Settings()
         self.assertEqual(1, s.get_value('one'))
         self.assertEqual(2, s.get_value('two'))
-        
+
     def test_override(self):
         settings.using_base(base).and_override(override).configure()
         s = settings.Settings()

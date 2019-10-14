@@ -89,7 +89,7 @@ class Machine:
     def _color_light(self, light_set):
         light = light_set.get_light(self._reg.name)
         if light is None:
-            self._report_missing(self._reg.name)
+            Machine._report_missing(self._reg.name)
         else:
             light.set_color(self._reg.get_color(), self._reg.duration, True)
 
@@ -121,7 +121,7 @@ class Machine:
     def _power_light(self, light_set):
         light = light_set.get_light(self._reg.name)
         if light is None:
-            self._report_missing(self._reg.name)
+            Machine._report_missing(self._reg.name)
         else:
             light.set_power(self._reg.get_power(), self._reg.duration)
 
@@ -147,14 +147,14 @@ class Machine:
 
     @inject(LightSet)
     def _get_overall_color(self, light_set):
-        colors = [light.get_color() for light in light_set.get_all_lights()]
+        colors = [light.get_color() for light in light_set.lights]
         self.color_to_reg(average_color(colors))
 
     @inject(LightSet)
     def _get_light_color(self, light_set):
         light = light_set.get_light(self._reg.name)
         if light is None:
-            self._report_missing(self._reg.name)
+            Machine._report_missing(self._reg.name)
         else:
             self.color_to_reg(light.get_color())
 
@@ -199,7 +199,8 @@ class Machine:
     def _time_wait(self):
         self._check_wait()
 
-    def _report_missing(self, name):
+    @classmethod
+    def _report_missing(cls, name):
         logging.warning("Light \"{}\" not found.".format(name))
 
     def _power_param(self):

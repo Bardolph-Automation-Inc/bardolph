@@ -1,7 +1,7 @@
 import logging
 
 functional = {
-    'default_num_lights': 5,
+    'default_num_lights': 0,
     'sleep_time': 0.01, # seconds
     
     'generated_path': 'generated',

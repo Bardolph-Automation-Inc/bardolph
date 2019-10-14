@@ -10,7 +10,7 @@ from . import lex
 from .token_types import TokenTypes
 
 
-word_regex = re.compile(r"\w+")
+WORD_REGEX = re.compile(r"\w+")
 
 
 class Parser:
@@ -25,7 +25,7 @@ class Parser:
         self._symbol_table = {}
         self._code = []
         self._unit_mode = UnitMode.LOGICAL
-        
+
     def parse(self, input_string):
         self._code.clear()
         self._error_output = ''
@@ -41,18 +41,21 @@ class Parser:
     def load(self, file_name):
         logging.debug('File name: {}'.format(file_name))
         try:
-            f = open(file_name, 'r')
-            input_string = f.read()
-            f.close()
+            srce = open(file_name, 'r')
+            input_string = srce.read()
+            srce.close()
             return self.parse(input_string)
         except FileNotFoundError:
             logging.error('Error: file {} not found.'.format(file_name))
-        except:
+        except OSError:
             logging.error('Error accessing file {}'.format(file_name))
+
+    def get_errors(self):
+        return self._error_output
 
     def _script(self):
         return self._body() and self._eof()
-        
+
     def _body(self):
         succeeded = True
         while succeeded and self._current_token_type != TokenTypes.EOF:
@@ -65,7 +68,7 @@ class Parser:
         return True
 
     def _command(self):
-        fn = {
+        return {
             TokenTypes.BRIGHTNESS: self._set_reg,
             TokenTypes.DEFINE: self._definition,
             TokenTypes.DURATION: self._set_reg,
@@ -79,9 +82,8 @@ class Parser:
             TokenTypes.SET: self._set,
             TokenTypes.TIME: self._set_reg,
             TokenTypes.UNITS: self._set_units,
-        }.get(self._current_token_type, self._syntax_error)
-        return fn() if fn != None else True
-        
+        }.get(self._current_token_type, self._syntax_error)()
+
     def _set_reg(self):
         self._name = self._current_token
         reg = self._current_token_type
@@ -99,29 +101,29 @@ class Parser:
         else:
             return self._token_error('Unknown parameter value: "{}"')
 
-        u = Units()
+        units = Units()
         if self._unit_mode == UnitMode.LOGICAL:
-            value = u.as_raw(reg, value)
-            if u.has_range(reg):
-                (min_val, max_val) = u.get_range(reg)
+            value = units.as_raw(reg, value)
+            if units.has_range(reg):
+                (min_val, max_val) = units.get_range(reg)
                 if value < min_val or value > max_val:
                     if self._unit_mode == UnitMode.LOGICAL:
-                        min_val = u.as_logical(reg, min_val)
-                        max_val = u.as_logical(reg, max_val)
+                        min_val = units.as_logical(reg, min_val)
+                        max_val = units.as_logical(reg, max_val)
                     return self._trigger_error(
                         '{} must be between {} and {}'.format(
                             reg.name.lower(), min_val, max_val))
 
         self._add_instruction(OpCode.SET_REG, self._name, value)
         return self._next_token()
-    
+
     def _set_units(self):
         self._next_token()
         mode = {
             TokenTypes.RAW: UnitMode.RAW,
             TokenTypes.LOGICAL:UnitMode.LOGICAL
         }.get(self._current_token_type, None)
-    
+
         if mode is None:
             return self._trigger_error(
                 'Invalid parameter "{}" for units.'.format(self._current_token))
@@ -131,23 +133,23 @@ class Parser:
 
     def _set(self):
         return self._action(OpCode.COLOR)
-    
+
     def _get(self):
         return self._action(OpCode.GET_COLOR)
-    
+
     def _power_on(self):
         self._add_instruction(OpCode.SET_REG, 'power', True)
         return self._action(OpCode.POWER)
-        
+
     def _power_off(self):
         self._add_instruction(OpCode.SET_REG, 'power', False)
         return self._action(OpCode.POWER)
-    
+
     def _pause(self):
         self._add_instruction(OpCode.PAUSE)
         self._next_token()
         return True
-        
+
     def _action(self, op_code):
         self._op_code = op_code
         self._next_token()
@@ -160,21 +162,21 @@ class Parser:
             self._next_token()
         else:
             self._add_instruction(OpCode.SET_REG, 'operand', Operand.LIGHT)
-        
+
         return self._operand_list()
-    
+
     def _operand_list(self):
         if self._current_token_type == TokenTypes.ALL:
             self._add_instruction(OpCode.SET_REG, 'name', None)
             self._add_instruction(OpCode.SET_REG, 'operand', Operand.ALL)
             if self._op_code != OpCode.GET_COLOR:
                 self._add_instruction(OpCode.TIME_WAIT)
-            self._add_instruction(self._op_code) 
+            self._add_instruction(self._op_code)
             return self._next_token()
-        
+
         if not self._operand_name():
             return False
-        
+
         self._add_instruction(OpCode.SET_REG, 'name', self._name)
         if self._op_code != OpCode.GET_COLOR:
             self._add_instruction(OpCode.TIME_WAIT)
@@ -183,7 +185,7 @@ class Parser:
             if not self._and():
                 return False
         return True
-    
+
     def _operand_name(self):
         if self._current_token_type == TokenTypes.LITERAL:
             self._name = self._current_token
@@ -200,13 +202,13 @@ class Parser:
         self._add_instruction(OpCode.SET_REG, 'name', self._name)
         self._add_instruction(self._op_code)
         return True
-           
+
     def _definition(self):
         self._next_token()
         if self._current_token_type in [
                 TokenTypes.LITERAL, TokenTypes.NUMBER]:
             return self._token_error('Unexpected literal: {}')
-        
+
         var_name = self._current_token
         self._next_token()
         if self._current_token_type == TokenTypes.NUMBER:
@@ -222,29 +224,27 @@ class Parser:
         self._next_token()
         return True
 
-    def _add_instruction(self, op_code, name = None, param = None):
+    def _add_instruction(self, op_code, name=None, param=None):
         self._code.append(Instruction(op_code, name, param))
 
-    def get_errors(self):
-        return self._error_output;
-    
     def _add_message(self, message):
         self._error_output += '{}\n'.format(message)
-        
+
     def _trigger_error(self, message):
-        full_message = 'Line {}: {}'.format(self._lexer.line_num, message)
+        full_message = 'Line {}: {}'.format(
+            self._lexer.get_line_number(), message)
         logging.error(full_message)
         self._add_message(full_message)
         return False
-    
+
     def _token_error(self, message_format):
         return self._trigger_error(message_format.format(self._current_token))
 
     def _next_token(self):
         (self._current_token_type,
-            self._current_token) = self._lexer.next_token()
+         self._current_token) = self._lexer.next_token()
         return True
-        
+
     def _syntax_error(self):
         return self._token_error('Unexpected input "{}"')
 
@@ -252,8 +252,8 @@ class Parser:
         """
         Eliminate an instruction if it would _set a register to the same value
         that was assigned to it in the previous SET_REG instruction.
-        
-        Any GET_COLOR instruction clears out the previous value cache. 
+
+        Any GET_COLOR instruction clears out the previous value cache.
         """
         opt = []
         prev_value = {}
@@ -268,13 +268,13 @@ class Parser:
                     opt.append(inst)
                     prev_value[inst.name] = inst.param
         self._code = opt
-                
-                
+
+
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('file', help='name of the script file')
-    args = ap.parse_args()
-    
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('file', help='name of the script file')
+    args = arg_parser.parse_args()
+
     logging.basicConfig(
         level=logging.DEBUG,
         format='%(filename)s(%(lineno)d) %(funcName)s(): %(message)s')
@@ -284,20 +284,20 @@ def main():
         for inst in output_code:
             print(inst)
     else:
-        print(parser._error_output)
+        print(parser.get_errors())
 
-    
+
 if __name__ == '__main__':
     main()
-    
+
 """
     <script> ::= <body> <EOF>
     <body> ::= <command> *
     <command> ::=
         "brightness" <set_reg>
         | "define" <definition>
-        | "duration" <set_reg> 
-        | "hue" <set_reg> 
+        | "duration" <set_reg>
+        | "hue" <set_reg>
         | "kelvin" <set_reg>
         | "off" <power_off>
         | "on" <power_on>

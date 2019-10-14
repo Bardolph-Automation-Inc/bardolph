@@ -11,8 +11,8 @@ class OpCode(Enum):
     SET_REG = auto()
     STOP = auto()
     TIME_WAIT = auto()
-    
-    
+
+
 class Operand(Enum):
     ALL = auto()
     LIGHT = auto()
@@ -21,42 +21,52 @@ class Operand(Enum):
 
 
 class Instruction:
-    def __init__(self, op_code = OpCode.NOP, name = None, param = None):
-        self.op_code = op_code
-        self.name = name
-        self.param = param
+    def __init__(self, op_code=OpCode.NOP, name=None, param=None):
+        self._op_code = op_code
+        self._name = name
+        self._param = param
 
     def __repr__(self):
-        if self.param == None:
-            if self.name == None:
+        if self._param is None:
+            if self._name is None:
                 return 'Instruction(OpCode.{}, None, None)'.format(
-                    self.op_code.name)
-            else:
-                return 'Instruction(OpCode.{}, "{}", None)'.format(
-                    self.op_code.name, self.name)
-        
-        if type(self.param).__name__ == 'str':
-            param_str = '"{}"'.format(self.param)
+                    self._op_code._name)
+            return 'Instruction(OpCode.{}, "{}", None)'.format(
+                self._op_code._name, self._name)
+
+        if type(self._param).__name__ == 'str':
+            param_str = '"{}"'.format(self._param)
         else:
-            param_str = str(self.param)
-            
+            param_str = str(self._param)
+
         return 'Instruction(OpCode.{}, "{}", {})'.format(
-            self.op_code.name, self.name, param_str)
-        
+            self._op_code._name_, self._name, param_str)
+
     def __eq__(self, other):
-        if type(self) == type(other):
-            return (self.op_code == other.op_code
-                    and self.name == other.name and self.param == other.param)
-        else:
+        if not isinstance(other, type(self)):
             raise TypeError
-        
+        return (self._op_code == other._op_code
+                and self._name == other._name and self._param == other._param)
+
+    @property
+    def op_code(self):
+        return self._op_code
+    
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def param(self):
+        return self._param
+    
     def as_list_text(self):
-        if self.op_code != OpCode.SET_REG:
-            return 'OpCode.{}'.format(self.op_code.name)
-          
-        if type(self.param).__name__ == 'str':
-            param_str = '"{}"'.format(self.param)
+        if self._op_code != OpCode.SET_REG:
+            return 'OpCode.{}'.format(self._op_code._name)
+
+        if type(self._param).__name__ == 'str':
+            param_str = '"{}"'.format(self._param)
         else:
-            param_str = str(self.param)
-            
-        return 'OpCode.set_reg, "{}", {}'.format(self.name, param_str)
+            param_str = str(self._param)
+
+        return 'OpCode.set_reg, "{}", {}'.format(self._name, param_str)

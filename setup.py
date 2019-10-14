@@ -10,7 +10,7 @@ setup(
     author_email="bardolph@fontes.org",
     description="Simple script interpreter for LIFX light bulbs",
     url="http://www.bardolph.org",
-    license = 'Apache License 2.0',
+    license='Apache License 2.0',
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=[

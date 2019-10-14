@@ -7,9 +7,9 @@ from ..parser.parse import Parser
 
 class ScriptRunner(Job):
     def __init__(self):
-        self.program = None
-        self.parser = Parser()
-        self.vm = Machine()
+        self._program = None
+        self._parser = Parser()
+        self._machine = Machine()
 
     @classmethod
     def from_file(cls, file_name):
@@ -24,20 +24,24 @@ class ScriptRunner(Job):
         return new_instance
 
     def load_file(self, file_name):
-        self.program = self.parser.load(file_name)
-        if self.program is None:
-            logging.error(self.parser.get_errors())
-        return self.program
+        self._program = self._parser.load(file_name)
+        if self._program is None:
+            logging.error(self._parser.get_errors())
+        return self._program
 
     def load_string(self, input_string):
-        self.program = self.parser.parse(input_string)
-        if self.program is None:
-            logging.error(self.parser.get_errors())
-        return self.program
+        self._program = self._parser.parse(input_string)
+        if self._program is None:
+            logging.error(self._parser.get_errors())
+        return self._program
+    
+    @property
+    def program(self):
+        return self._program
 
     def execute(self):
-        if self.program is not None:
-            self.vm.run(self.program)
+        if self._program is not None:
+            self._machine.run(self._program)
 
     def request_stop(self):
-        self.vm.stop()
+        self._machine.stop()

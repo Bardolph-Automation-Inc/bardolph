@@ -7,24 +7,20 @@ from bardolph.lib import clock, injection, settings
 class ClockTest(unittest.TestCase):
     def setUp(self):
         injection.configure()
-        precision = 0.1
-        tolerance = 0.0075
-        self.min = precision - tolerance
-        self.max = precision + tolerance
+        self._precision = 0.1
+        settings.using_base({'sleep_time': self._precision}).configure()
 
-        settings.using_base({'sleep_time': precision}).configure()
-        
     def test_clock(self):
-        c = clock.Clock()
-        c.start()
-        t0 = c.et()
+        clk = clock.Clock()
+        clk.start()
+        time_0 = clk.et()
         for _ in range(1, 10):
-            c.wait()
-            t1 = c.et()
-            delta = t1 - t0
-            self.assertTrue(delta > self.min and delta < self.max)
-            t0 = t1
-        c.stop()
+            clk.wait()
+            time_1 = clk.et()
+            delta = time_1 - time_0
+            self.assertAlmostEqual(delta, self._precision, 1)
+            time_0 = time_1
+        clk.stop()
 
 if __name__ == '__main__':
     unittest.main()

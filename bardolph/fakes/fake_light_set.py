@@ -86,8 +86,37 @@ class LightSet:
             else:
                 self._locations[location] = [new_light]
 
-    def get_light_names(self):
+    @property
+    def light_names(self):
         return self._lights.keys()
+
+    @property
+    def lights(self):
+        return list(self._lights.values())
+
+    @property
+    def group_names(self):
+        return self._groups.keys()
+
+    @property
+    def location_names(self):
+        return self._locations.keys()
+    
+    @property
+    def count(self):
+        return len(self._lights)
+
+    @property
+    def last_discover(self):
+        return datetime.now()
+
+    @property
+    def successful_discovers(self):
+        return 100
+
+    @property
+    def failed_discovers(self):
+        return 10
 
     def get_light(self, name):
         if not name in self._lights:
@@ -95,36 +124,23 @@ class LightSet:
             return None
         return self._lights[name]
 
-    def get_all_lights(self):
-        return list(self._lights.values())
-
-    def get_group_names(self):
-        return self._groups.keys()
-
     def get_group(self, name):
         return self._groups.get(name, {})
-
-    def get_location_names(self):
-        return self._locations.keys()
 
     def get_location(self, name):
         return self._locations.get(name, {})
 
-    def get_last_discover(self):
-        return datetime.now()
-
-    def get_successful_discovers(self):
-        return 100
-
-    def get_failed_discovers(self):
-        return 10
-
     def set_color(self, color, duration):
         logging.info("Color (all) {}, {}".format(color, duration))
+        
+    def get_color(self):
+        return [1, 2, 3, 4]
 
     def set_power(self, power_level, duration):
         logging.info("Power (all) {} {}".format(power_level, duration))
 
+    def get_power(self):
+        return True
 
 def configure():
     injection.bind_instance(LightSet()).to(i_controller.LightSet)

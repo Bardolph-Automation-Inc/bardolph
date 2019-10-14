@@ -14,22 +14,21 @@ from tests.settings_test import SettingsTest
 from tests.units_test import UnitsTest
 from tests.web_app_test import WebAppTest
 
-tests = unittest.TestSuite()
+_tests = unittest.TestSuite()
 
 def add_test(test_class):
-    global tests
-    tests.addTest(unittest.makeSuite(test_class))
+    _tests.addTest(unittest.makeSuite(test_class))
 
 if __name__ == '__main__':
     add_test(ClockTest)
     add_test(InjectionTest)
     add_test(JobControlTest)
-    add_test(LexTest) 
+    add_test(LexTest)
     add_test(LightSetTest)
     add_test(LogConfigTest)
     add_test(MachineTest)
     add_test(ParserTest)
-    add_test(SettingsTest)   
+    add_test(SettingsTest)
     add_test(UnitsTest)
-    add_test(WebAppTest) 
-    unittest.TextTestRunner(verbosity=2).run(tests)
+    add_test(WebAppTest)
+    unittest.TextTestRunner(verbosity=2).run(_tests)

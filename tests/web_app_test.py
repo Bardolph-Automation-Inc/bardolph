@@ -9,21 +9,21 @@ class WebAppTest(unittest.TestCase):
     def setUp(self):
         injection.configure()
         settings.using_base({'manifest_name': None}).configure()
-        
+
     def test_get_title(self):
         app = WebApp()
-        script = { 'path': 'test-get_title' } 
+        script = {'path': 'test-get_title'}
         self.assertEqual(app.get_script_title(script), 'Test Get Title')
-        script = { 'file_name': 'test-get_title.ls' }
+        script = {'file_name': 'test-get_title.ls'}
         self.assertEqual(app.get_script_title(script), 'Test Get Title')
-        script = { 'file_name': 'test-get_title' }
+        script = {'file_name': 'test-get_title'}
         self.assertEqual(app.get_script_title(script), 'Test Get Title')
-        
+
     def test_get_path(self):
         app = WebApp()
-        script = { 'file_name': 'test.ls' } 
+        script = {'file_name': 'test.ls'}
         self.assertEqual(app.get_script_path(script), 'test')
-        script = { 'file_name': 'test.ls', 'path': 'test-path'}
+        script = {'file_name': 'test.ls', 'path': 'test-path'}
         self.assertEqual(app.get_script_path(script), 'test-path')
 
 

@@ -29,10 +29,10 @@ def build_instructions():
     program = []
     op_code = next_instruction()
     while op_code != None:
-        if op_code == OpCode.set_reg:
+        if op_code == OpCode.SET_REG:
             name = next_instruction()
             value = next_instruction()
-            program.append(Instruction(OpCode.set_reg, name, value))
+            program.append(Instruction(OpCode.SET_REG, name, value))
         else:
             program.append(Instruction(op_code))
         op_code = next_instruction()

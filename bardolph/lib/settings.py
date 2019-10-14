@@ -3,55 +3,56 @@ from . import injection
 
 
 class Settings:
-    active_config = None
+    _active_config = {}
 
     def __contains__(self, name):
-        return self.active_config is not None and name in self.active_config
+        return name in Settings._active_config
 
-    def get_value(self, name, default=None):
-        if self.active_config is None and default is not None:
+    @classmethod
+    def get_value(cls, name, default=None):
+        if cls._active_config is None and default is not None:
             return default
         if default is None:
-            return self.active_config[name]
-        return self.active_config.get(name, default)
+            return Settings._active_config[name]
+        return cls._active_config.get(name, default)
 
     @classmethod
     def configure(cls):
-        Settings.active_config = None
+        cls._active_config = None
         injection.bind(Settings).to(i_lib.Settings)
 
     @classmethod
     def specialize(cls, overrides):
-        if Settings.active_config is None:
-            Settings.active_config = overrides.copy()
+        if cls._active_config is None:
+            cls._active_config = overrides.copy()
         else:
-            Settings.active_config.update(overrides)
+            cls._active_config.update(overrides)
 
     @classmethod
     def put_config(cls, config):
-        cls.active_config = config
+        cls._active_config = config
 
 
 class Base:
     def __init__(self, overrides):
-        self.overrides = overrides
+        self._overrides = overrides
 
     def and_override(self, override):
         return Overrider(self, override)
 
     def configure(self):
         Settings.configure()
-        Settings.specialize(self.overrides)
+        Settings.specialize(self._overrides)
 
 
 class Overrider:
     def __init__(self, base, override):
-        self.base = base
-        self.override = override
+        self._base = base
+        self._override = override
 
     def configure(self):
-        self.base.configure()
-        Settings.specialize(self.override)
+        self._base.configure()
+        Settings.specialize(self._override)
 
 
 def using_base(overrides):
