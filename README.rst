@@ -107,8 +107,9 @@ a cheap, dedicated device like a Raspberry Pi is an ideal way to host the
 web server.
 
 This is currently an experimental feature, as getting it to run can be a bit of a chore.
-I describe the process for setting up and running a server in
-:ref:`web_server`.
+I describe the process for setting up and running a server in the
+`web server doc
+<https://github.com/al-fontes-jr/bardolph/blob/master/docs/web_server.rst>`_.
 
 Python API
 ==========
@@ -126,8 +127,10 @@ turns all the lights off and then on again:
   ls_module.queue_script(script)
 
 
-More information on using scripts in Python code is available in
-:ref:`python_wrapper`.
+More information on using scripts in Python code is available in the
+`Python wrapper doc
+<https://github.com/al-fontes-jr/bardolph/blob/master/docs/python_wrapper.rst>`_.
+
 
 Script Basics
 #############
