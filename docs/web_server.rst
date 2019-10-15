@@ -1,20 +1,24 @@
-# Web Frontend Server
+.. _web_server:
 
-Part of the [Bardolph Project](http://www.bardolph.org)
+Web Frontend Server
+###################
 
-![screenshot](web_mobile.png)
-## Introduction
+Part of the `Bardolph Project <http://www.bardolph.org>`_
+
+.. image:: web_mobile.png
+
 I originally wrote this application for my own use, and it serves
 as my primary means of controlling my lights. However, it is designed to
 compliment the LIFX mobile app, not to replace it.
 
 In comparison to the LIFX mobile app, the local web server has these 
 differences:
+
 * Each script has its own URL. This makes it easy to access scripts with
-bookmarks and a web browser.
+  bookmarks and a web browser.
 * After the bulbs boot up, there's no need for external Internet connectivity.
 * I can acess the app from any browser in my apartment without logging in
-to anything.
+  to anything.
 
 For example, if you just want to turn off the lights, you may not
 find that navigating an app is a bit too complicates. In my case,
@@ -22,7 +26,7 @@ to turn on or turn off off all the lights, I have have a couple
 of home screen shortcuts on my phone. After unlocking the phone, 
 the lights are on or off with a single tap.
 
-![home shortcuts on phone simultor](home.png)
+.. image:: home.png
 
 It's also  convenient to access the lights from my smart TV's web
 browser. When I sit down to watch a movie, I don't have to find
@@ -34,12 +38,14 @@ network. The target configuration is a very inexpensive device which
 runs 24/7 as a headless server. At home I use a dedicated Raspberry Pi W
 that sits in a corner of my apartment.
 
-## Running the Server
+Running the Server
+##################
 The server executes within the 
-[Flask framework](https://flask.palletsprojects.com). If you run it,
+`Flask framework <https://flask.palletsprojects.com>`_. If you run it,
 you may want to become familiar with Flask.
 
-### Development Mode
+Development Mode
+================
 You can run the server in so-called "development mode". Because the
 server will run on a local network, the issues around security and
 scalability are less of a concern. However, I would still recommend that
@@ -49,35 +55,51 @@ a Raspberry Pi.
 
 For experimenting and development, you may just want to stick with
 development mode. To do that, first:
-```
-pip3 install Flask flup lifxlan
-```
+
+.. code-block:: bash
+
+  pip3 install Flask flup lifxlan
+
+
 This installs the Python libraries that the Bardolph code relies on.
 
-### Log Configuration
+Log Configuration
+=================
 By default, the logs are written to `/var/log/lights/lights.log`.
 Therefore, you need a directory `/var/log/lights` which is writeable.
 
 On MacOS, I first create a RAM drive with this command:
-```
-diskutil erasevolume HFS+ rdisk `hdiutil attach -nomount ram://2048`
-```
-I then create a symbolic link with:
-```
-sudo ln -s /var/log/lights` to `/Volumes/rdisk`.
-```
-On Raspberry Pi, there's already a ram disk, and the command is:
-```
-sudo ln -s /var/log/lights` to `/dev/shm`.
-```
 
-### Starting the Server
+.. code-block:: bash
+
+  diskutil erasevolume HFS+ rdisk `hdiutil attach -nomount ram://2048`
+
+
+I then create a symbolic link with:
+
+.. code-block:: bash
+
+  sudo ln -s /var/log/lights` to `/Volumes/rdisk`
+
+
+On a default Raspbian installation, there's already a ram disk, and the
+command is:
+
+.. code-block:: bash
+
+  sudo ln -s /var/log/lights` to `/dev/shm`
+
+
+Starting the Server
+===================
 To start the server in that manner,  cd to the Bardolph
 home directory. Then:
-```
-source web/setenv
-flask run
-```
+
+.. code-block:: bash
+
+  source web/setenv
+  flask run
+
 
 The `setenv` script sets some environment variables used by Flask when
 running the server. After you start the server, you can access it with:
@@ -85,24 +107,28 @@ http://localhost:5000.
 
 To stop the server,  press Ctrl-C.
 
-### Manifest
+Manifest
+========
 The file `manifest.json` in the `scripts` directory contains the list of
 scripts that should be available on the web site. That list also contains 
 metadata for the scripts, mostly to control the appearance of their links. 
 
 For example:
-```
-// ...
-{  
-  "file_name": "all_off.ls",
-  "repeat": false,
-  "path": "off",
-  "title": "All Off",
-  "background": "#222",
-  "color": "Linen"
-},
-// ...
-```
+
+::
+
+  // ...
+  {  
+    "file_name": "all_off.ls",
+    "repeat": false,
+    "path": "off",
+    "title": "All Off",
+    "background": "#222",
+    "color": "Linen"
+  },
+  // ...
+
+
 This snippet is used to launch the script "all-off.ls". Because "repeat" is
 false, the script is run only once when you access the URL. 
 
@@ -119,17 +145,21 @@ The manifest file contains standard JSON, as expected by the `json.load`
 function in the Python standard library. The "repeat" value is optional,
 and is assumed to be false if not present.
 
-#### Default Behavior
+Default Behavior
+================
 For many scripts, default behaviors can be used to simplify the manifest:
-```
-// ...
-{  
-  "file_name": "reading.ls",
-  "background": "#222",
-  "color": "Linen"
-},
-// ...
-```
+
+::
+
+  // ...
+  {  
+    "file_name": "reading.ls",
+    "background": "#222",
+    "color": "Linen"
+  },
+  // ...
+
+
 If no value is supplied for "title", the server will generate it from the
 name of the script. It will replace any underscore or dash with a space, and
 capitalize each word. For example, `reading.ls` yields "Reading", 
@@ -140,7 +170,8 @@ would be http://localhost:5000/reading and http://localhost:5000/all-off.
 
 The default for "repeat" is false.
 
-### Usage
+Usage
+=====
 Clicking on a script button queues up the associated file containing that
 script. Subsequent clicks append scripts to the end of the queue. As each
 script finishes, the server executes the next in line.
@@ -166,7 +197,8 @@ restoring the saved state.
 Although the index page has no link to it, a page at http://server.local/status
 lists the status of all the known lights in a very plain output with no CSS.
 
-### LIFX Apps
+LIFX Apps
+=========
 Bardolph does nothing to directly interfere with the operation of the apps provided
 by LIFX. However, a running script will continue to send commands to the bulbs.
 Therefore, if you want to use the LIFX app or any other software, such as HomeKit
@@ -174,84 +206,110 @@ or Alexa, you should hit the "Stop" button on the Bardolph web site. Alternative
 if you shut down the web server, that will also prevent it from sending any
 more commands to the lights.
 
-## Hosting on Raspberry Pi
+Hosting on Raspberry Pi
+#######################
 A key design goal for this project is to produce something that's
 genuinely useful on an everyday basis. For me, that's a
 local web server which is available 24/7. This means it
 should be cheap to buy and consume a small amount of power.
 
 The
-[Raspberry Pi Zero-W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/)
-has been a great fit. Other Raspberry Pi models will 
-work as well, but the Zero-W is the cheapest, and is entirely powerful
+`Raspberry Pi Zero-W <https://www.raspberrypi.org/products/raspberry-pi-zero-w>`_
+has been a great fit for my everyday use. Other Raspberry Pi models will 
+work as well, but the Zero-W is the cheapest, and is entirely capable
 enough for this purpose.
 
 The server runs an a basic installation of Raspbian. It also runs on Debian and
 MacOS; basically, you need a Python interpreter version 3.7 or higher.
 
-#### O.S. Setup
+O.S. Setup
+==========
 This overview assumes you have already done the following, which are outside
 the scope of this document:
-1. Install Raspbian on your device. For more information, please refer to the
-[Raspbian installation instructions](https://www.raspberrypi.org/documentation/installation).
-1. Enable WiFi and ```ssh``` on your device. The server will run without a monitor
-or keyboard attached. For more information, see the
-[Raspberry Pi remote access documentation](https://www.raspberrypi.org/documentation/remote-access/ssh/).
- If your device has a physical ethernet port, you can use a wired
- connection, but the bulbs need to be on the same LAN.
+
+#. Install Raspbian on your device. For more information, please refer to the
+   `Raspbian installation instructions
+   <https://www.raspberrypi.org/documentation/installation>`_.
+#. Enable WiFi and `ssh` on your device. The server will run without a monitor
+   or keyboard attached. For more information, see the
+   `Raspberry Pi remote access documentation
+   <https://www.raspberrypi.org/documentation/remote-access/ssh/>`_.
+   
+If your device has a physical ethernet port, you can use a wired
+connection, but the bulbs need to be on the same LAN.
 
 By default, Raspbian already has a Python interpreter, so you won't need to
 install it. However for more infirmation on running Python code,
 please refer to the
-[Raspberry Pi Python documentation](https://www.raspberrypi.org/documentation/usage/python).
+`Raspberry Pi Python documentation
+<https://www.raspberrypi.org/documentation/usage/python>`_.
 
-### Dedicated User
+Dedicated User
+==============
 A special-purpose user is convenient for running the server.
 It provides you with a home directory for the Bardolph code, and allows
 you to tailor that user's characteristics to running the server.
 Therefore, the first steps are to create a user called `lights` and give it
 sudo access.
-```
-adduser lights
-sudo usermod -aG sudo lights
-```
-I also change the name of the server. In this example, my server will be
-"stella", accessed on the command line and in my browser as
-"stella.local". This can be done with
-[raspi-config](https://www.raspberrypi.org/documentation/configuration/raspi-config.md)
 
-### Bardolph Distribution
+.. code-block:: bash
+
+  adduser lights
+  sudo usermod -aG sudo lights
+
+
+I also change the name of the server. In this example, my server will be
+"vanya", accessed on the command line and in my browser as
+"vanya.local". This can be done with
+`raspi-config <https://www.raspberrypi.org/documentation/configuration/raspi-config.md>`_.
+
+Bardolph Distribution
+=====================
 To use the web server, you'll need the source distribution. You can
 download it from https://github.com/al-fontes-jr/bardolph. If you
 manually launch the web server, you must do so from the directory
 containing the root of the project. Therefore, from the `/home/lights`
 directory:
-```
-git clone https://github.com/al-fontes-jr/bardolph
-```
 
-### Application Server
-The Bardolph web UI runs within the 
-[Flask framework](https://palletsprojects.com/p/flask/). It also uses flup for
-its WSGI implementation. The core Bardolph code relies on lifxlan. You 
-can install all these with:
-```
-pip3 install Flask flup lifxlan
-```
+.. code-block:: bash
+
+  git clone https://github.com/al-fontes-jr/bardolph
+
+
+This will create a directory named `bardolph` and put the distribution
+inside that directory.
+
+Application Server
+==================
+The Bardolph web UI runs within 
+`Flask <https://palletsprojects.com/p/flask>`_. It also uses 
+`flup <https://www.saddi.com/software/flup>`_ for its WSGI implementation. 
+The core Bardolph code relies on `lifxlan <https://pypi.org/project/lifxlan>`_.
+You  can install all these with:
+
+.. code-block:: bash
+
+  pip3 install Flask flup lifxlan
+
+
 As of this writing, a default Raspbian distribution defaults to Python 2.7, 
 hence the use of pip3 here. 
 
-### HTTP Server Setup
+HTTP Server Setup
+=================
 Because Bardolph runs as a WSGI application, multiple options exist for
 using a front-end to implement the HTTP protocol. I've settled on lighttpd,
 which ships with a module for FastCGI.
 
 Installation of lighttpd is outside the scope of this document. I recommend
-visting the [lighttpd website](https://www.lighttpd.net/) for more information.
-However, the basic installation can be done with:
-```
-sudo apt-get install lighttpd
-```
+visting the `lighttpd website <https://www.lighttpd.net>`_
+for more information. However, the basic installation can be done with:
+
+.. code-block:: bash
+
+  sudo apt-get install lighttpd
+
+
 This also installs `spawn-fcgi`.
 
 To use the lighttpd configuration supplied in the source distribution,
@@ -261,91 +319,119 @@ the configuration files get updated automatically whenever you refresh
 the source code from github.com.
 
 For example, if you  downloaded the code from github to ~/bardolph:
-```
-cd /etc/lighttpd
-sudo cp lighttpd.conf lighttpd.conf.original
-sudo ln -s ~/bardolph/web/server/rpi/lighttpd.conf .
-sudo ln -s ~/bardolph/web/server/common.conf .
-```
 
-### Logs Directory
+.. code-block:: bash
+
+  cd /etc/lighttpd
+  sudo cp lighttpd.conf lighttpd.conf.original
+  sudo ln -s ~/bardolph/web/server/rpi/lighttpd.conf .
+  sudo ln -s ~/bardolph/web/server/common.conf .
+
+
+Logs Directory
+==============
 The configuration files in the source distribution assume that all
 of the logs, for both the Python app
 and web server will go into the directory `/var/log/lights`. Therefore,
 as part of your setup, you need to do the following:
-```
-sudo mkdir /var/log/lights
-sudo chown lights:lights /var/log/lights
-```
+
+.. code-block:: bash
+
+  sudo mkdir /var/log/lights
+  sudo chown lights:lights /var/log/lights
+
+
 This allows processes owned by the `lights` meta-user to write all of the
 logs in one place.
 
-### Start and Stop the Server
+Start and Stop the Server
+=========================
 To start the server, cd to the directory where you pulled down the source
 from github.com. From there, you need to start two processes:
-1. The web application server, a Python program that implements
-the UI and runs the scripts, plus
-1. The `lighttpd` process, which attaches to the Python app via FCGI and then
-services incoming HTTP requests for web pages.
 
-#### Start the Application Server
+#. The web application server, a Python program that implements
+   the UI and runs the scripts, plus
+#. The `lighttpd` process, which attaches to the Python app via FCGI and then
+   services incoming HTTP requests for web pages.
+
+
+Start the Application Server
+============================
 From the source distribution directory, for example ~/bardolph:
-```
-./start_fcgi
-```
 
-#### Start the HTTP server
+.. code-block:: bash
+
+  ./start_fcgi
+
+
+Start the HTTP Server
+=====================
 By default, the `lighttpd` daemon will already be running. You can restart
-it with:
-```
-sudo /etc/init.d/lighttpd restart
-```
+it using the new configuration with:
+
+.. code-block:: bash
+
+  sudo /etc/init.d/lighttpd restart
+
+
 If all goes well, you should be able to access the home page. Because
 I've named my server "stella" with raspi-config, I access it at
 http://stella.local.
 
-#### Stopping
+Stopping
+========
 To stop and start the HTTP server in separate steps:
-```
-sudo /etc/init.d/lighttpd stop
-sudo /etc/init.d/lighttpd start
-```
-I don't have an elegant way to stop the FCGI process, so:
-```
-killall python3
-```
-or
-```
-killall python
-```
 
-## System Structure
-This section gives a quick overview of the system architecture. It is
+.. code-block:: bash
+
+  sudo /etc/init.d/lighttpd stop
+  sudo /etc/init.d/lighttpd start
+
+
+I don't have an elegant way to stop the FCGI process, so:
+
+.. code-block:: bash
+
+  killall python3
+
+
+or
+
+.. code-block:: bash
+
+  killall python
+
+
+System Structure
+################
+This section gives a quick overview of the system architecture,
 provided here for informational purposes.
 
 The server stack has the following arrangement:
+
 * The core Bardolph code that parses and runs scripts.
 * An application server implemented in Python uses Flask to generate
-HTML pages. In the process of satisfying each page request, the server
-typically launches a lightbulb script.
+  HTML pages. In the process of satisfying each page request, the server
+  typically launches a lightbulb script.
 * A WSGI layer, implemented by flup, which is part of the Python code.
-The Flask framework feeds generated web pages into this layer, which
-then makes them available via the WSGI protocol.
+  The Flask framework feeds generated web pages into this layer, which
+  then makes them available via the WSGI protocol.
 * A FastCGI (FCGI) process, created by spawn-fcgi, which connects to the
-WSGI layer and provides a FCGI interface. As part of its startup, spawn-fcgi
-launches the Python interpreter, runing the code for the Bardolph web server.
+  WSGI layer and provides a FCGI interface. As part of its startup, spawn-fcgi
+  launches the Python interpreter, runing the code for the Bardolph web server.
 * An HTTP server, lighttpd, which is a separate process. It connects to the
-FCGI process and accepts connections over port 80. The HTTP server
-passes requests for web pages to the FCGI process, which gets the
-response from the Python code. While generating that response, the Python
-code will usually either launch or stop a lightbulb script.
+  FCGI process and accepts connections over port 80. The HTTP server
+  passes requests for web pages to the FCGI process, which gets the
+  response from the Python code. While generating that response, the Python
+  code will usually either launch or stop a lightbulb script.
 
 That response is then passed up the chain to the user's browser.
 
-## HTTP Considerations
+HTTP Considerations
+===================
 You can use  a different WSGI container and/or FastCGI integration. 
 For an example, see the integration with flup as implemented in
-```wsgy.py```, in the root of the source distribution.
+`wsgy.py`, in the root of the source distribution.
 
 The files included in the bardolph source tree under `web/server` are
 specific to lighttpd, but may be helpful for other containers. This just

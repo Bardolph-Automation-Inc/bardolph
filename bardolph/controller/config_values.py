@@ -18,4 +18,3 @@ functional = {
     # Ignored unless log_to_console gets overridden to False.
     'log_file_name': '/var/log/lights/lights.log'
 }
-

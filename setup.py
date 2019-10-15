@@ -1,18 +1,17 @@
 from setuptools import setup
 
-with open("README.md", "r") as f:
+with open("README.rst", "r") as f:
     long_description = f.read()
 
 setup(
     name="bardolph",
-    version="0.0.10",
+    version="0.0.11",
     author="Al Fontes",
     author_email="bardolph@fontes.org",
     description="Simple script interpreter for LIFX light bulbs",
+    long_descripttion=long_description,
     url="http://www.bardolph.org",
     license='Apache License 2.0',
-    long_description=long_description,
-    long_description_content_type="text/markdown",
     packages=[
         'bardolph.controller', 'bardolph.parser', 'bardolph.lib',
         'bardolph.fakes'],

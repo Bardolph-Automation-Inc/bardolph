@@ -1,9 +1,12 @@
-![bulb](bulb.png) 
-# Bardolph Python Wrapper
+.. _python_wrapper:
 
-Part of the [Bardolph Project](http://www.bardolph.org)
+Python Wrapper
+##############
 
-## Introduction
+Part of the `Bardolph Project <http://www.bardolph.org>`_
+
+.. image:: bulb.png
+
 I hope that my code is clear and modular enough to be reused in someone else's
 programs. However, if you're just looking to quickly write some Python code to
 control your lights, you can easily run lightbulb scripts using `ls_module.py`. 
@@ -13,24 +16,29 @@ clean entry point for running a script.
 In the source distribution, the `embedded` directory contains example programs
 that show how to embed lightbulb scripts inside Python code.
 
-## Setup
+Setup
+=====
 To be able to use `ls_module`, you first need to add bardolph to your Python
 run-time environment. You can do this with `pip install bardolph`, as long
 as you're set up to download from pypi.org.
 
 To remove the library from your environment, run `pip uninstall bardolph`.
 
-## Usage
+Usage
+=====
 Before running any scripts, the module needs to be initialzed once with
 `configure()`.  After that, you can queue up an arbitrary number of 
 scripts with `queue_script()`. For example:
-```
-from bardolph.controller import ls_module
 
-ls_module.configure()
-ls_module.queue_script('time 10000 all on')
-ls_module.queue_script('time 5000 all off')
-```
+.. code-block:: python
+
+  from bardolph.controller import ls_module
+
+  ls_module.configure()
+  ls_module.queue_script('time 10000 all on')
+  ls_module.queue_script('time 5000 all off')
+
+
 This program waits 10,000 ms., turns on all the lights, and then turns them all off 
 again after 5,000 ms.
 
