@@ -8,7 +8,7 @@ from web.web_app import WebApp
 class WebAppTest(unittest.TestCase):
     def setUp(self):
         injection.configure()
-        settings.using_base({'manifest_name': None}).configure()
+        settings.use_base({'manifest_name': None}).configure()
 
     def test_get_title(self):
         app = WebApp()

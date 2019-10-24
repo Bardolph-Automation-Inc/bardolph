@@ -38,7 +38,7 @@ class LightSet(i_controller.LightSet):
 
     @inject(Settings)
     def discover(self, settings):
-        default_num = settings.get_value('default_num_lights', 0)
+        default_num = int(settings.get_value('default_num_lights', 0))
         num_expected = None if default_num == 0 else default_num
         try:
             light_list = LightSet._broadcast_state_service(num_expected)
@@ -142,7 +142,7 @@ class LightSet(i_controller.LightSet):
 
     @inject(Settings)
     def set_color(self, color, duration, settings):
-        num_expected = settings.get_value('default_num_lights')
+        num_expected = int(settings.get_value('default_num_lights', 0))
         lifx = lifxlan.LifxLAN(num_expected)
         lifx.set_color_all_lights(color, duration, True)
         return True
@@ -165,7 +165,7 @@ class LightSet(i_controller.LightSet):
 
     @inject(Settings)
     def get_lifxlan(self, settings):
-        num_expected = settings.get_value('default_num_lights')
+        num_expected = int(settings.get_value('default_num_lights', 0))
         return lifxlan.LifxLAN(num_expected)
 
 
@@ -177,8 +177,8 @@ def start_light_refresh():
 
 @inject(Settings)
 def light_refresh(settings):
-    success_sleep_time = settings.get_value('refresh_sleep_time')
-    failure_sleep_time = settings.get_value('failure_sleep_time')
+    success_sleep_time = float(settings.get_value('refresh_sleep_time'))
+    failure_sleep_time = float(settings.get_value('failure_sleep_time'))
     complete_success = False
 
     while True:
@@ -201,6 +201,6 @@ def configure(settings):
     bind_instance(lights).to(i_controller.LightSet)
     lights.discover()
 
-    single = settings.get_value('single_light_discover')
+    single = bool(settings.get_value('single_light_discover', False))
     if not single:
         start_light_refresh()

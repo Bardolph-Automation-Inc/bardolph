@@ -6,6 +6,7 @@ from ..lib import injection
 from ..lib import settings
 from ..parser.token_types import TokenTypes
 
+from . import arg_helper
 from . import config_values
 from . import light_module
 from .i_controller import LightSet
@@ -221,6 +222,7 @@ def main():
         '-s', '--script', help='output script format', action='store_true')
     parser.add_argument(
         '-t', '--text', help='output text format', action='store_true')
+    arg_helper.add_n_argument(parser)
     args = parser.parse_args()
     do_script = args.script
     do_dict = args.dict
@@ -229,8 +231,12 @@ def main():
     do_text = args.text or (not (do_py or do_script or do_dict or do_list))
 
     injection.configure()
-    settings.using_base(config_values.functional).and_override(
-        {'single_light_discover': True}).configure()
+    settings_init = settings.use_base(
+        config_values.functional).add_overrides({'single_light_discover': True})
+    overrides = arg_helper.get_overrides(args)
+    if overrides is not None:
+        settings_init.add_overrides(overrides)
+    settings_init.configure()
     light_module.configure()
 
     if do_dict:

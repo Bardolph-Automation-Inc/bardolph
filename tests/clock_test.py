@@ -8,7 +8,7 @@ class ClockTest(unittest.TestCase):
     def setUp(self):
         injection.configure()
         self._precision = 0.1
-        settings.using_base({'sleep_time': self._precision}).configure()
+        settings.use_base({'sleep_time': self._precision}).configure()
 
     def test_clock(self):
         clk = clock.Clock()

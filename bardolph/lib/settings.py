@@ -1,67 +1,44 @@
+import configparser
+
 from . import i_lib
 from . import injection
 
 
 class Settings:
-    _active_config = {}
+    _the_config = {}
 
+    def __init__(self):
+        self._config = Settings._the_config
+        
     def __contains__(self, name):
-        return name in Settings._active_config
+        return name in self._config
 
-    @classmethod
-    def get_value(cls, name, default=None):
-        if cls._active_config is None and default is not None:
-            return default
-        if default is None:
-            return Settings._active_config[name]
-        return cls._active_config.get(name, default)
+    def get_value(self, name, default=None):
+        return self._config.get(name, default)
 
-    @classmethod
-    def configure(cls):
-        cls._active_config = None
+
+class Builder:
+    def __init__(self, initial=None):
+        self._config = initial.copy() if initial is not None else {}
+
+    def add_overrides(self, overrides):
+        self._config.update(overrides)
+        return self
+
+    def apply_file(self, file_name):
+        if self._config is None:
+            self._config = {}
+        config = configparser.ConfigParser()
+        config.read(file_name)
+        for section in config.sections():
+            for key in config[section]:
+                self._config[key] = config[section][key]
+        return self
+
+    def configure(self):
+        Settings._the_config = self._config
         injection.bind(Settings).to(i_lib.Settings)
+        
 
-    @classmethod
-    def specialize(cls, overrides):
-        if cls._active_config is None:
-            cls._active_config = overrides.copy()
-        else:
-            cls._active_config.update(overrides)
-
-    @classmethod
-    def put_config(cls, config):
-        cls._active_config = config
-
-
-class Base:
-    def __init__(self, overrides):
-        self._overrides = overrides
-
-    def and_override(self, override):
-        return Overrider(self, override)
-
-    def configure(self):
-        Settings.configure()
-        Settings.specialize(self._overrides)
-
-
-class Overrider:
-    def __init__(self, base, override):
-        self._base = base
-        self._override = override
-
-    def configure(self):
-        self._base.configure()
-        Settings.specialize(self._override)
-
-
-def using_base(overrides):
-    return Base(overrides)
-
-
-def configure():
-    Settings.configure()
-
-
-def specialize(overrides):
-    return Settings.specialize(overrides)
+def use_base(initial=None):
+    return Builder(initial)

@@ -9,7 +9,7 @@ from bardolph.lib import injection, settings
 class LightSetTest(unittest.TestCase):      
     def setUp(self):
         injection.configure()
-        settings.using_base({'default_num_lights': 5}).configure()
+        settings.use_base({'default_num_lights': 5}).configure()
 
     def get_color_all_lights(self):
         return self._colors
