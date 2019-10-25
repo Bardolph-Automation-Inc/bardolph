@@ -1,4 +1,7 @@
-from enum import auto, Enum
+from enum import Enum
+
+
+from bardolph.lib.auto_repl import auto
 
 
 class OpCode(Enum):

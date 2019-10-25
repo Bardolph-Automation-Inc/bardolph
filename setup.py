@@ -5,7 +5,7 @@ with open("README.rst", "r") as f:
 
 setup(
     name="bardolph",
-    version="0.0.12",
+    version="0.0.13",
     author="Al Fontes",
     author_email="bardolph@fontes.org",
     description="Simple script interpreter for LIFX light bulbs",
@@ -16,7 +16,7 @@ setup(
         'bardolph.controller', 'bardolph.parser', 'bardolph.lib',
         'bardolph.fakes'],
     install_requires=['lifxlan'],
-    python_requires='>=3.7',
+    python_requires='>=3.5',
     entry_points={
         'console_scripts': [
             'lsc=bardolph.controller:lsc.main',
@@ -26,6 +26,7 @@ setup(
         ]
     },
     classifiers=[
+        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",

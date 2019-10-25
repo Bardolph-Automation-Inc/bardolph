@@ -1,12 +1,12 @@
 [
 {  
-  "file_name": "all_off.ls",
+  "file_name": "off-all.ls",
   "path": "off",
   "background": "#222",
   "color": "Linen"
 },
 {  
-  "file_name": "all_on.ls",
+  "file_name": "on-all.ls",
   "path": "on",
   "background": "Linen",
   "color": "#222"
