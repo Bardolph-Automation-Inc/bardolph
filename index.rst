@@ -1,19 +1,23 @@
+.. image:: docs/logo.png
+   :align: center
+ 
 .. _index:
 
-Bardolph documentation
-======================
-.. image:: docs/logo.png 
+Bardolph Project
+================
+
+bardolph@fontes.org
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
    
-   README
+   docs/main
    docs/installation
+   docs/language
    docs/web_server
-   docs/python_wrapper
+   docs/python_interface
    docs/controller
-
 
 Indices and tables
 ==================

@@ -18,5 +18,5 @@ templates_path = ['_templates']
 
 exclude_patterns = []
 
-html_theme = 'bizstyle'
+html_theme = 'nature'
 html_static_path = ['web/static']

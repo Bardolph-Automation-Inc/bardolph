@@ -1,36 +1,40 @@
+.. image:: logo.png
+   :align: center
+
+.. index::
+   single: installation; full instructions
+
 .. _installation:
 
-Bardolph Installation
-#####################
-
-.. image:: logo.png
-
-This page contains the full installation instructions, including use
-of the web server.
-
-Typically, installation takes one of two forms:
+Installation
+############
+This page contains the full installation instructions, including setup
+of the web server. Typically, initial installation takes one of two
+forms:
 
 #. Download and install the package.
 #. Download the source, build the package, and install it.
 
-Note that Python 3.5 or higher is required in all cases. If your system
-defaults to Python 2.x, there's a good chance that you'll need to use
-`pip3` instead of `pip`. Notable culprits here are Raspbian and Debian.
+Note that Python 3.5 or higher is required in all cases. **If your system
+defaults to Python 2.x, you probably need to use
+pip3 instead of pip.** Notable culprits here are Raspbian and Debian.
 
+.. index::
+   single: installation; package
 
 Option 1: Built Package
 =======================
 This is the quickest way to get started. You won't necessarily have the
-latest code, but that shoudln't be a problem. To do this kind of installation:
+latest code, but that shouldn't be a problem. To do this kind of installation:
 
 .. code-block:: bash
 
   pip install bardolph
 
-
-After this intallation, the `lsc`, `lsrun`, and `lscap` commands should be
-available. In addition, if you're planning on using scripts in your Python
-code, the bardolph libraries will be available.
+After this intallation, the `lsc`, `lsrun`, and `lscap` commands will be
+available in your `.local/bin` directory. In addition, if you're planning
+on embedding scripts in your own Python program, the Bardolph support code
+will be importable.
 
 If you want to run the web server, you still need the source distribution:
 
@@ -38,15 +42,18 @@ If you want to run the web server, you still need the source distribution:
 
   git clone https://github.com/al-fontes-jr/bardolph
 
-  
 This distribution also contains some sample scripts that can help you
 get started.
 
+.. index::
+   single: building
+   single: installation; local build
+   
 Option 2: Build and Install
 ===========================
-This option allows you to modify source code, including the configuration that's
-built into the Python code. To do this, you need to have `setuptools` installed.
-If necessary:
+This option allows you to modify source code, notably the configuration that's
+built into the Python code. To do this, you need to have 
+`setuptools <https://pypi.org/project/setuptools>`_ installed. If necessary:
 
 .. code-block:: bash
 
@@ -57,11 +64,42 @@ With `setuptools` on your system:
 .. code-block:: bash
 
   git clone https://github.com/al-fontes-jr/bardolph
+  cd bardolph
   python setup.py bdist 
-  pip install dist/bardolph-0.0.12-py3-none-any.whl 
+  pip install --no-index --find-links ./dist bardolph 
+
+Note that the invocation of `setup.py` creates the `dist` directory. Within
+that directory, it creates a `.whl` file containing the new package. When
+you run `pip`, it finds that file and installs it.
+
+When you get a newer release of the code, you can upgrade it with:
+ 
+.. code-block:: bash
+
+  python setup.py bdist 
+  pip install --upgrade --no-index --find-links ./dist bardolph
+
 
 Testing the Installation
 ========================
+.. note:: The `lsrun`, `lscap`, and `lsc` commands are small Python
+  programs that are installed in `.local/bin` in your home directory.
+  Therefore, they are available only by typing in the full path name,
+  such as:: 
+        
+    ~/.local/bin/lscap
+
+  To make them available from any directory, I recommend adding the
+  the following to your `.bash_profile` (or equivalent)::
+    
+     export PATH=~/.local/bin:${PATH}
+
+  A more brute-force method is to use `sudo pip` when installing,
+  which makes the commands available to every user with no changes
+  to the path. However, that has a system-wide effect that you
+  probably want to avoid. Another alternative is to use
+  `virtualenv <https://virtualenv.pypa.io>`_.
+   
 To do a quick sanity check:
 
 .. code-block:: bash
@@ -89,6 +127,9 @@ don't have any), use the "fakes" option:
 
   lsrun -f scripts/all-on.ls
 
+.. index::
+   single: uninstall
+
 Uninstalling
 ============
 Uninstall with:
@@ -97,6 +138,10 @@ Uninstall with:
 
   pip uninstall bardolph
 
+.. index::
+   single: configuration
+   single: logging configuration
+   
 Modifying the Configuration
 ===========================
 Under most conditions, there should be no need to modify the configuration.
@@ -113,11 +158,10 @@ all accept the `-c` or `--config-file` option. For example:
 
   lsrun -c config.ini scripts/all-on.ls
 
-
 In this case, `lsrun` will first initialize all of its internal settings. It
-will then read the file `config.ini` and replace whateve settings are in that
-file. For example, by default, all logging output is sent to the screen.
-To override that setting and send output to a log file, you would put the
+will then read the file `config.ini` and replace whatever settings are overridden
+by that file. For example, by default, all logging output is sent to the screen.
+To override that setting and send output to a file, you could put the
 following content into `config.ini`::
 
   [logger]
@@ -129,11 +173,15 @@ distribution, in the file `docs/bardolph.ini`. Note that this file is
 for documentation purposes only; no configuration file outside of the
 default Python code should be necessary.
 
+.. index::
+   single: web server; installation
+
 Web Server Installation
 #######################
-These instructions focus on installing on a Raspberry Pi.
+These instructions focus on installing on a Raspberry Pi. However, they
+should be fairly accurate for a typical Debian-based system.
 
-A key goal for theis project is to produce something that's
+A key goal for this project is to produce something that's
 genuinely useful on an everyday basis. For me, that's a
 local web server which is available 24/7. This means it
 should be cheap to buy and consume a small amount of power.
@@ -143,8 +191,9 @@ has been a good fit for my everyday use. Other Raspberry Pi models will
 work as well, but the Zero-W is among the cheapest, and is entirely capable
 enough for this purpose.
 
-The server runs an a basic installation of Raspbian. It also runs on Debian and
-MacOS; basically, you need a Python interpreter version 3.5 or higher.
+The server runs well on a stock installation of Raspbian. It also runs on
+Debian and MacOS; basically, you need a Python interpreter revision 3.5 or
+higher.
 
 O.S. Setup
 ==========
@@ -160,10 +209,11 @@ the scope of this document:
    <https://www.raspberrypi.org/documentation/remote-access/ssh/>`_.
    
 If your device has a physical ethernet port, you can use a wired
-connection, but the bulbs need to be on the same LAN.
+connection instead of WiFi, but it needs to be on the same network
+that the bulbs are on.
 
 By default, Raspbian already has a Python interpreter, so you won't need to
-install it. However, for more infirmation on running Python code,
+install it. However, if you desire more information on running Python code,
 please refer to the
 `Raspberry Pi Python documentation
 <https://www.raspberrypi.org/documentation/usage/python>`_.
@@ -173,12 +223,15 @@ Dedicated User
 A special-purpose user is convenient for running the server.
 It provides you with a home directory for the Bardolph code, and allows
 you to tailor that user's characteristics to running the server.
-Therefore, the first steps are to create a user called `lights` and give it
-sudo access.
+Therefore, the next step is to create a user called `lights`.
 
 .. code-block:: bash
 
   adduser lights
+
+Note that this user doesn't have any special privileges, such as
+being sudo'er. This ensures that the Python code itself is
+run without any special access, thus improving security.
 
 I also change the name of the server. In this example, my server will be
 "vanya", accessed on the command line and in my browser as
@@ -188,12 +241,11 @@ I also change the name of the server. In this example, my server will be
 Bardolph Distribution
 =====================
 The first step is to do the installation as described at the top of
-this doc, using either `setup.py` or `pip`.
+this doc. To run the web server, you'll need also the source distribution,
+which contains the configuration files and templates for the Flask application.
 
-To use the web server, you'll need the source distribution, no matter
-which kind of installation you do. You can download it from
-https://github.com/al-fontes-jr/bardolph.
-As user `lights` from the `/home/lights` directory:
+Via `ssh`, log in to the Pi as user `lights`, and from the `/home/lights`
+directory:
 
 .. code-block:: bash
 
@@ -202,24 +254,38 @@ As user `lights` from the `/home/lights` directory:
 This will create a directory named `bardolph` and put the distribution
 inside that directory.
 
+.. index::
+   single: application server setup
+   single: Flask
+   single: flup
+   single: WSGI
+
 Application Server
 ==================
 The Bardolph web UI runs within 
 `Flask <https://palletsprojects.com/p/flask>`_. It also uses 
-`flup <https://www.saddi.com/software/flup>`_ for its WSGI implementation. 
-The core Bardolph code relies on `lifxlan <https://pypi.org/project/lifxlan>`_.
-You  can install all these with:
+`flup <https://www.saddi.com/software/flup>`_ for its
+`WSGI <https://wsgi.readthedocs.io>`_ implementation. The core Bardolph
+code relies on
+`lifxlan <https://pypi.org/project/lifxlan>`_. You  can install all these with:
 
 .. code-block:: bash
 
   pip install Flask flup lifxlan
 
 As of this writing, a default Raspbian distribution defaults to Python 2.7, 
-so you may need to `pip3` instead of `pip` throughout. 
+so you may need to `pip3` instead of `pip` throughout. Because the Bardolph
+package lists `lifxlan` as a dependency, it may have already been installed,
+in which case `pip` won't attempt to re-download it.
+
+.. index::
+   single: HTTP Server Setup
+   single: lighttpd
 
 HTTP Server Setup
 =================
-Because Bardolph runs as a WSGI application, multiple options exist for
+Because the Bardolph server runs as a
+`WSGI <https://wsgi.readthedocs.io>`_ application, multiple options exist for
 using a front-end to implement the HTTP protocol. I've settled on lighttpd,
 which ships with a module for FastCGI.
 
@@ -231,7 +297,8 @@ for more information. However, the basic installation can be done with:
 
   sudo apt-get install lighttpd
 
-This also installs `spawn-fcgi`.
+This also installs `spawn-fcgi`. Of course, you will need to do this as
+a user with `sudo` access, such as the default `pi` user.
 
 To use the lighttpd configuration supplied in the source distribution,
 you need create symbolic links to the root of the project, or copy the
@@ -239,20 +306,25 @@ congiguration files to `/etc/lighttpd`. I prefer symbolic links, because
 the configuration files get updated automatically whenever you refresh
 the source code from github.com.
 
-For example, if you downloaded the code from github to ~/bardolph:
+For example, if you downloaded the code from github to `~lights/bardolph`:
 
 .. code-block:: bash
 
   cd /etc/lighttpd
   sudo cp lighttpd.conf lighttpd.conf.original
-  sudo ln -s ~/bardolph/web/server/rpi/lighttpd.conf .
-  sudo ln -s ~/bardolph/web/server/common.conf .
+  sudo ln -s /home/lights/bardolph/web/server/rpi/lighttpd.conf .
+  sudo ln -s /home/lights/bardolph/web/server/common.conf .
+  
+Once again, you need to perform these steps while logged in as a user
+with sudo access.
 
-Logs Directory
-==============
-The configuration files in the source distribution assume that all
-of the logs, for both the Python app
-and web server will go into the directory `/var/log/lights`. Therefore,
+.. index::
+   single: web logging configuration
+   
+Log Directory
+=============
+The web site configuration files in the source distribution specify
+that all of the logs reside in the directory `/var/log/lights`. Therefore,
 as part of your setup, you need to do the following:
 
 .. code-block:: bash
@@ -262,6 +334,9 @@ as part of your setup, you need to do the following:
 
 This allows processes owned by the `lights` meta-user to write all of the
 logs in one place.
+
+.. index::
+   single: start server
 
 Start and Stop the Server
 =========================
@@ -281,13 +356,12 @@ From the source distribution directory, for example ~/bardolph:
 
   ./start_fcgi
 
-You should do this as the `lights` user. For security purposes, that user should
-not have any special privileges, such as `sudo`.
+You should do this as the `lights` user.
 
 Start the HTTP Server
 =====================
-By default, the `lighttpd` daemon will already be running. You can restart
-it using the new configuration with:
+By default, the `lighttpd` daemon will already be running. You need to
+restart it to enable the new configuration with:
 
 .. code-block:: bash
 
@@ -298,9 +372,29 @@ If all goes well, you should be able to access the home page. Because
 I've named my server "vanya" with raspi-config, I access it at
 http://vanya.local.
 
+.. index::
+   single: stop server
+
+After a Reboot
+--------------
+Whenever you reboot the computer, you will need to start the FCGI process
+again. To do so, `ssh` to the server as user `lights` and:
+
+.. code-block:: bash
+
+   cd bardolph
+   ./start_fcgi
+   
+If you are clever enough with Linux, you can probably set up an init script
+to do this. I'm investigatng this and will update these docs when it's ready. 
+
+By default, lighttpd is launched when the system boots, so you should not
+need to manually start that process.
+
+
 Stopping
 ========
-To stop and start the HTTP server in separate steps:
+To stop (and, if you want, start) the HTTP server:
 
 .. code-block:: bash
 

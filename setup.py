@@ -1,11 +1,11 @@
 from setuptools import setup
 
-with open("README.rst", "r") as f:
+with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
     name="bardolph",
-    version="0.0.13",
+    version="0.0.14",
     author="Al Fontes",
     author_email="bardolph@fontes.org",
     description="Simple script interpreter for LIFX light bulbs",

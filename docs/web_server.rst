@@ -1,10 +1,10 @@
+.. index::
+   web server; description
+
 .. _web_server:
 
 Web Frontend Server
 ###################
-
-Part of the `Bardolph Project <http://www.bardolph.org>`_
-
 .. image:: web_mobile_small.png
     :align: center
 
@@ -12,14 +12,14 @@ I wrote this application for my own use, and it serves
 as my primary means of controlling my lights. However, it is designed to
 compliment the LIFX mobile app, not to replace it.
 
-In comparison to the LIFX app, this local web server has these 
-differences:
+In comparison to a typical IoT installation, this local web server has
+these  differences:
 
-* Each script has its own URL. This makes it easy to access scripts with
-  bookmarks and a web browser.
-* After the bulbs boot up, there's no need for external Internet connectivity.
-* I can acess the app from any browser in my apartment without logging in
-  to anything.
+* Because each script has its own URL, I can easily launch a script with
+  a browser bookmark.
+* After the bulbs have booted up, there's no dependency on the Internet.
+* I can acess the app from any browser in my apartment.
+* Nobody at Amazon or Google knows when I turn my lights on.
 
 For example, if you want to just turn off the lights, you may
 find that navigating an app complicates a simple task. In my case,
@@ -36,17 +36,15 @@ my phone to dim the lights; I just use the TV.
 .. image:: tv_screenshot.png
     :align: center
 
-It's important to note that while this is a web server, it is not designed to
-work on the public Internet. The server runs entirely within your WiFi
-network. The target configuration is a very inexpensive device which
-runs 24/7 as a headless server. At home I use a dedicated Raspberry Pi W
-that sits in a corner of my apartment.
+The target configuration for hosting the web site is a very inexpensive
+device which runs 24/7 as a headless server. At home I use a dedicated
+Raspberry Pi W that sits in a corner of my apartment.
 
 Running the Server
 ##################
 The server executes within the 
 `Flask framework <https://flask.palletsprojects.com>`_. If you run it,
-you may want to become familiar with Flask.
+you probably should become familiar with Flask.
 
 Development Mode
 ================
@@ -64,38 +62,13 @@ development mode. To do that, first:
 
   pip install Flask flup lifxlan
 
-
 This installs the Python libraries that the Bardolph code relies on.
 
-Log Configuration
-=================
-By default, the logs are written to `/var/log/lights/lights.log`.
-Therefore, you need a directory `/var/log/lights` which is writeable.
+.. index::
+   single: development server
 
-On MacOS, I first create a RAM drive with this command:
-
-.. code-block:: bash
-
-  diskutil erasevolume HFS+ rdisk `hdiutil attach -nomount ram://2048`
-
-
-I then create a symbolic link with:
-
-.. code-block:: bash
-
-  sudo ln -s /var/log/lights` to `/Volumes/rdisk`
-
-
-On a default Raspbian installation, there's already a ram disk, and the
-command is:
-
-.. code-block:: bash
-
-  sudo ln -s /var/log/lights` to `/dev/shm`
-
-
-Starting the Server
-===================
+Starting the Development Server
+===============================
 To start the server in that manner,  cd to the Bardolph
 home directory. Then:
 
@@ -111,16 +84,15 @@ http://localhost:5000.
 
 To stop the server,  press Ctrl-C.
   
-Everyday Configuration
-----------------------
-If you're going to use the web server as an everyday utility, you
-should follow the complete installation instructions.
+
+.. index::
+   single: manifest
 
 Manifest
 ========
-The file `manifest.json` in the `scripts` directory contains the list of
-scripts that should be available on the web site. That list also contains 
-metadata for the scripts, mostly to control the appearance of their links. 
+The file `manifest.json` in the `scripts` directory specifies the list of
+scripts that will be available on the web site. That list also contains 
+metadata for the scripts, mostly to control the appearance of the web page. 
 
 For example:
 
@@ -147,8 +119,9 @@ In this example, you would go to http://localhost:5000/off.
 The string from "Title" appears in a colored box on the web page. That box
 is is filled with the color specified by "background". The title is displayed
 using the value from "color" for the text. In both cases, the strings for
-colors correspond to CSS colors and are basically sanitized and passed
-through to the web page.
+colors derive from
+`the CSS color space <https://developer.mozilla.org/Web/CSS/color_value>`_.
+The strings are sanitized and passed through to the web page as a CSS class.
 
 The manifest file contains standard JSON, as expected by the `json.load`
 function in the Python standard library. The "repeat" value is optional,
@@ -172,12 +145,10 @@ For many scripts, default behaviors can be used to simplify the manifest:
 If no value is supplied for "title", the server will generate it from the
 name of the script. It will replace any underscore or dash with a space, and
 capitalize each word. For example, `reading.ls` yields "Reading", 
-while `all-off.ls` yields "All Off".
+while `all-off.ls` would yield "All Off".
 
-The default for "path" is the base name of the file. In these examples, the URL's
-would be http://localhost:5000/reading and http://localhost:5000/all-off.
-
-The default for "repeat" is false.
+The default for "path" is the base name of the file. In this example, the URL
+would be http://localhost:5000/reading, and the script would not be repeated.
 
 Usage
 =====
@@ -205,6 +176,13 @@ restoring the saved state.
 
 Although the index page has no link to it, a page at http://server.local/status
 lists the status of all the known lights in a very plain output with no CSS.
+
+.. note::
+  Clicking on a script appends it to the end of the queue. This means that
+  you won't see anything happen if a lengthy script is already running. 
+  When this happens, it's easy to conclude that the system is somehow not
+  working. If you want to launch a script and have it start without waiting
+  for the current one to finish, you should first click on the "Stop" link.
 
 LIFX Apps
 =========
