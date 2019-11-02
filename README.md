@@ -4,7 +4,7 @@
  
 Al Fontes - [bardolph@fontes.org](mailto:bardolph@fontes.org)
 
-**Bardolph** is a facility for controlling `LIFX <https://www.lifx.com>`_ lights
+**Bardolph** is a facility for controlling LIFX (https://www.lifx.com) lights
 through a simple scripting language. It is targeted at people who would like
 to control or experiment with their lights in an automated way, but who do not 
 want to learn a programming language or API.
