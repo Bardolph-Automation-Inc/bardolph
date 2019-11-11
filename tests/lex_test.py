@@ -17,29 +17,34 @@ class LexTest(unittest.TestCase):
                           for m in Lex.TOKEN_REGEX.finditer(test_input)]
         self.assertListEqual(actual_strings, expected_strings)
 
+    def test_time_pattern(self):
+        lexer = Lex('12:34')
+        (token_type, _) = lexer.next_token()
+        self.assertEqual(TokenTypes.TIME_PATTERN, token_type)
+    
     def test_all_tokens(self):
-        input_string = 'all and brightness define # comment \n duration hue \
-            off on kelvin saturation set time 01.234\n"Hello There" @'
+        input_string = 'all and at brightness \
+            define # comment \n duration hue \
+            off on or kelvin saturation set time  12:*4 \
+            01.234\n"Hello There"@'
         expected_tokens = [
-            TokenTypes.ALL, TokenTypes.AND,
-            TokenTypes.BRIGHTNESS, TokenTypes.DEFINE, TokenTypes.DURATION,
-            TokenTypes.HUE, TokenTypes.OFF, TokenTypes.ON,
-            TokenTypes.KELVIN, TokenTypes.SATURATION, TokenTypes.SET,
-            TokenTypes.TIME, TokenTypes.NUMBER, TokenTypes.LITERAL,
-            TokenTypes.UNKNOWN
+            TokenTypes.ALL, TokenTypes.AND, TokenTypes.AT,
+            TokenTypes.REGISTER, TokenTypes.DEFINE, TokenTypes.REGISTER,
+            TokenTypes.REGISTER, TokenTypes.OFF, TokenTypes.ON, TokenTypes.OR,
+            TokenTypes.REGISTER, TokenTypes.REGISTER,
+            TokenTypes.SET,TokenTypes.REGISTER, TokenTypes.TIME_PATTERN, 
+            TokenTypes.NUMBER, TokenTypes.LITERAL, TokenTypes.UNKNOWN
         ]
         expected_strings = [
-            "all", "and", "brightness", "define", "duration",
-            "hue", "off", "on", "kelvin", "saturation", "set", "time", "01.234",
-            "Hello There", "@"
+            "all", "and", "at", "brightness", "define", "duration",
+            "hue", "off", "on", "or", "kelvin", "saturation", "set",
+            "time", '12:*4', "01.234", "Hello There", "@"
         ]
         self.lex_and_compare(input_string, expected_tokens, expected_strings)
 
     def test_abbreviations(self):
         input_string = 'h k s b'
-        expected_tokens = [
-            TokenTypes.HUE, TokenTypes.KELVIN, TokenTypes.SATURATION,
-            TokenTypes.BRIGHTNESS]
+        expected_tokens = [TokenTypes.REGISTER for _ in range(0, 4)]
         expected_strings = ["hue", "kelvin", "saturation", "brightness"]
         self.lex_and_compare(input_string, expected_tokens, expected_strings)
 

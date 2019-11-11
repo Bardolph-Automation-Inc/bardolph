@@ -1,7 +1,9 @@
 .. _main:
 
-.. image:: logo.png
-   :align: center 
+.. figure:: logo.png
+   :align: center
+    
+   http://www.bardolph.org
 
 Documentation
 #############
@@ -60,8 +62,8 @@ You run the script with:
 In this case, `lsrun` is a small Python program that becomes available after you
 install Bardolph. It is a thin layer that executes the `run.py` module.
 
-Another example, `on5.ls`, turns on all the lights, waits for 5 minutes, and then turns
-them all off again::
+Another example, `on5.ls`, turns on all the lights, waits for 5 minutes, and
+then turns them all off again::
 
   duration 1500 on all
   time 300000 off all
@@ -95,6 +97,7 @@ turn off all the lights from the keyboard:
 Web Server
 ==========
 .. image:: web.png
+   :align: center
 
 The web server component makes scripts available in a user-friendly manner.
 It implements a simple web page that lists available scripts and provides a

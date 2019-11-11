@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import logging
 import unittest
 from unittest.mock import patch
 
@@ -9,7 +10,7 @@ _log_settings = {
     'log_date_format': 'ldf',
     # Use default for log_file_name.
     'log_format': 'lf',
-    'log_level': 'll'
+    'log_level': 'DEBUG'
 }
 
 class LogConfigTest(unittest.TestCase):
@@ -25,7 +26,7 @@ class LogConfigTest(unittest.TestCase):
         self.assertTrue(info.called)
         basic_config.assert_called_with(
             filename=log_config.logging_defaults['log_file_name'],
-            level='ll',
+            level=logging.DEBUG,
             format='lf',
             datefmt='ldf')
         info.assert_called()

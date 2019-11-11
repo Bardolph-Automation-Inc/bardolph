@@ -1,11 +1,13 @@
 import re
 
+from bardolph.lib.time_pattern import TimePattern
 from .token_types import TokenTypes
 
 
 class Lex:
     TOKEN_REGEX = re.compile(r'#.*$|".*?"|\S+')
     NUMBER_REGEX = re.compile(r'^[0-9]*\.?[0-9]+$')
+    REG_REGEX = re.compile('hue|saturation|brightness|duration|time|kelvin')
 
     def __init__(self, input_string):
         self._lines = iter(input_string.split('\n'))
@@ -45,6 +47,10 @@ class Lex:
                 if token[0] == '"':
                     token = token[1:-1]
                     token_type = TokenTypes.LITERAL
+                elif self.REG_REGEX.search(token):
+                    token_type = TokenTypes.REGISTER
+                elif TimePattern.REGEX.search(token):
+                    token_type = TokenTypes.TIME_PATTERN
                 elif self.NUMBER_REGEX.search(token):
                     token_type = TokenTypes.NUMBER
                 else:

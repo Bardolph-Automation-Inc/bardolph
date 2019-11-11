@@ -1,5 +1,7 @@
-.. image:: logo.png
+.. figure:: logo.png
    :align: center
+   
+   http://www.bardolph.org
 
 .. index::
    single: Python interface; reference

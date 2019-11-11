@@ -1,5 +1,7 @@
-.. image:: logo.png
+.. figure:: logo.png
    :align: center
+   
+   http://www.bardolph.org
 
 .. index::
    single: language reference
@@ -229,9 +231,69 @@ short for the program to keep up, it will simply keep executing
 instructions as fast as it can.
 
 .. index::
+   single:: clock time
+   single:: time of day
+   
+Wait for Time of Day
+=====================
+Instead of waiting for a delay to elapse, you can specify the specific time that
+an action occurs, using the `at` modifier with the `time` command. For example,
+to turn on all the lights at 8:00 a.m.::
+
+  time at 8:00 on all
+
+All times are specified using a 24-hour clock, with midnight at 0:00.
+
+In this context, you can use wildcards to match more than one possible
+time. For example, to turn on the lights on the hour and turn them off on the
+half-hour::
+
+  time at *:00 on all time at *:30 off all
+  
+The pattern used to specify the time can replace one or two digits with the
+asterisk. Here are some examples of valid patterns:
+
+* `2*:00` - matches 21:00, 22:00, and 23:00.
+* `1:*5` - matches 1:05, 1:15, 1:25, 1:35, 1:45 and 1:55.
+* `*:30` - matches any half-hour.
+
+These are not valid patterns:
+
+* `*` or `*:*` - matches anything and is therefore meaningless.
+* `12:8*` - not a valid time.
+* `**:08` - only one asterisk is necessary.
+* '12:5` - minutes need to be expressed as two digits.
+
+Note that the language is procedural, not declarative. This means that the
+script is executed from top to bottom. For example::
+
+  time at 10:00 on all
+  time at 9:00 off all
+  
+This will turn on all the lights at 10:00 a.m., wait 23 hours, and turn them
+off again the next day. If you have a regular set of actions you'd like to
+take, you can launch a script in repeat mode and let it run indefinitely.
+
+You can combine patterns to create more complicated behavior. For example, this
+will turn on the lights the next time it's either 15 or 45 minutes past the
+hour::
+
+  time at *:15 or *:45 on all
+
+This type of script would typically be run in repeat mode.
+
+After a scheduled wait, the delay timer is essentially reset. For example::
+  
+  time at 12:00 on all
+  time 60000 off all
+  
+This would turn on all the lights at noon and then turm them off 60,000 ms.
+later, which would be at 12:01 p.m.
+
+.. index::
    single: pause
    single: keypress
- 
+
 Pause for Keypress
 ==================
 Instead of using timed delays, a script can wait for a key to be pressed. For
@@ -251,7 +313,15 @@ This script will:
 #. Turn the lights red (360).
 
 A script can contain both pauses and timed delays. After a pause, the delay
-timer is reset.
+timer is reset. For example::
+
+  time at 12:00 on all
+  pause off all
+  time 10000 on all
+
+This script turns on all the lights at 12:00 noon. It then waits
+for the user to press a key at the keyboard. When a key has been pressed,
+it turns off all the lights, waits 10,000 ms., and turns them on again.
 
 .. index::
    single: groups

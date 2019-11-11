@@ -5,8 +5,10 @@ import logging
 import re
 
 from ..controller.instruction import Instruction, OpCode, Operand
+from ..controller.instruction import Register, TimePatternOp
 from ..controller.units import UnitMode, Units
 from . import lex
+from ..lib.time_pattern import TimePattern
 from .token_types import TokenTypes
 
 
@@ -69,26 +71,22 @@ class Parser:
 
     def _command(self):
         return {
-            TokenTypes.BRIGHTNESS: self._set_reg,
             TokenTypes.DEFINE: self._definition,
-            TokenTypes.DURATION: self._set_reg,
             TokenTypes.GET: self._get,
-            TokenTypes.HUE: self._set_reg,
-            TokenTypes.KELVIN: self._set_reg,
             TokenTypes.OFF: self._power_off,
             TokenTypes.ON: self._power_on,
             TokenTypes.PAUSE: self._pause,
-            TokenTypes.SATURATION: self._set_reg,
+            TokenTypes.REGISTER: self._set_reg,
             TokenTypes.SET: self._set,
-            TokenTypes.TIME: self._set_reg,
             TokenTypes.UNITS: self._set_units,
         }.get(self._current_token_type, self._syntax_error)()
 
     def _set_reg(self):
         self._name = self._current_token
-        reg = self._current_token_type
+        if Register.TIME.name.lower() == self._name:
+            return self._time()
+                
         self._next_token()
-
         if self._current_token_type == TokenTypes.NUMBER:
             try:
                 value = round(float(self._current_token))
@@ -100,22 +98,25 @@ class Parser:
             value = self._symbol_table[self._current_token]
         else:
             return self._token_error('Unknown parameter value: "{}"')
+        
+        self._add_reg_instruction(self._name, value)
+        return self._next_token()
 
+    def _add_reg_instruction(self, name, value):
+        reg_name = Register[name.upper()]
         units = Units()
         if self._unit_mode == UnitMode.LOGICAL:
-            value = units.as_raw(reg, value)
-            if units.has_range(reg):
-                (min_val, max_val) = units.get_range(reg)
+            value = units.as_raw(reg_name, value)
+            if units.has_range(reg_name):
+                (min_val, max_val) = units.get_range(reg_name)
                 if value < min_val or value > max_val:
                     if self._unit_mode == UnitMode.LOGICAL:
-                        min_val = units.as_logical(reg, min_val)
-                        max_val = units.as_logical(reg, max_val)
+                        min_val = units.as_logical(reg_name, min_val)
+                        max_val = units.as_logical(reg_name, max_val)
                     return self._trigger_error(
                         '{} must be between {} and {}'.format(
-                            reg.name.lower(), min_val, max_val))
-
-        self._add_instruction(OpCode.SET_REG, self._name, value)
-        return self._next_token()
+                            reg_name.lower(), min_val, max_val))
+        self._add_instruction(OpCode.SET_REG, reg_name, value)
 
     def _set_units(self):
         self._next_token()
@@ -138,16 +139,54 @@ class Parser:
         return self._action(OpCode.GET_COLOR)
 
     def _power_on(self):
-        self._add_instruction(OpCode.SET_REG, 'power', True)
+        self._add_instruction(OpCode.SET_REG, Register.POWER, True)
         return self._action(OpCode.POWER)
 
     def _power_off(self):
-        self._add_instruction(OpCode.SET_REG, 'power', False)
+        self._add_instruction(OpCode.SET_REG, Register.POWER, False)
         return self._action(OpCode.POWER)
 
     def _pause(self):
         self._add_instruction(OpCode.PAUSE)
         self._next_token()
+        return True
+    
+    def _time(self):
+        name = self._current_token
+        self._next_token()
+        
+        if self._current_token_type == TokenTypes.AT:
+            return self._process_time_patterns()
+        if self._current_token_type == TokenTypes.NUMBER:
+            self._add_reg_instruction(name, int(self._current_token))
+            return self._next_token()
+        
+        return self._time_spec_error()
+    
+    def _process_time_patterns(self):
+        self._next_token()
+        if self._current_token_type != TokenTypes.TIME_PATTERN:
+            return self.time_spec_error()  
+
+        if not self._time_pattern_inst(TimePatternOp.INIT):
+            return False
+        
+        self._next_token()
+        while self._current_token_type == TokenTypes.OR:
+            self._next_token()
+            if self._current_token_type != TokenTypes.TIME_PATTERN:
+                return self.time_spec_error()
+            if not self._time_pattern_inst(TimePatternOp.UNION):
+                return False
+            self._next_token()
+
+        return True;
+    
+    def _time_pattern_inst(self, time_pattern_op):
+        pattern = TimePattern.from_string(self._current_token)
+        if pattern is None:
+            return self._token_error("Invalid time pattern: {}")
+        self._add_instruction(OpCode.TIME_PATTERN, time_pattern_op, pattern)
         return True
 
     def _action(self, op_code):
@@ -155,20 +194,24 @@ class Parser:
         self._next_token()
 
         if self._current_token_type == TokenTypes.GROUP:
-            self._add_instruction(OpCode.SET_REG, 'operand', Operand.GROUP)
+            self._add_instruction(
+                OpCode.SET_REG, Register.OPERAND, Operand.GROUP)
             self._next_token()
         elif self._current_token_type == TokenTypes.LOCATION:
-            self._add_instruction(OpCode.SET_REG, 'operand', Operand.LOCATION)
+            self._add_instruction(
+                OpCode.SET_REG, Register.OPERAND, Operand.LOCATION)
             self._next_token()
-        else:
-            self._add_instruction(OpCode.SET_REG, 'operand', Operand.LIGHT)
+        elif self._current_token_type != TokenTypes.ALL:
+            self._add_instruction(
+                OpCode.SET_REG, Register.OPERAND, Operand.LIGHT)
 
         return self._operand_list()
 
     def _operand_list(self):
         if self._current_token_type == TokenTypes.ALL:
-            self._add_instruction(OpCode.SET_REG, 'name', None)
-            self._add_instruction(OpCode.SET_REG, 'operand', Operand.ALL)
+            self._add_instruction(OpCode.SET_REG, Register.NAME, None)
+            self._add_instruction(
+                OpCode.SET_REG, Register.OPERAND, Operand.ALL)
             if self._op_code != OpCode.GET_COLOR:
                 self._add_instruction(OpCode.TIME_WAIT)
             self._add_instruction(self._op_code)
@@ -177,7 +220,7 @@ class Parser:
         if not self._operand_name():
             return False
 
-        self._add_instruction(OpCode.SET_REG, 'name', self._name)
+        self._add_instruction(OpCode.SET_REG, Register.NAME, self._name)
         if self._op_code != OpCode.GET_COLOR:
             self._add_instruction(OpCode.TIME_WAIT)
         self._add_instruction(self._op_code)
@@ -199,7 +242,7 @@ class Parser:
         self._next_token()
         if not self._operand_name():
             return False
-        self._add_instruction(OpCode.SET_REG, 'name', self._name)
+        self._add_instruction(OpCode.SET_REG, Register.NAME, self._name)
         self._add_instruction(self._op_code)
         return True
 
@@ -224,8 +267,8 @@ class Parser:
         self._next_token()
         return True
 
-    def _add_instruction(self, op_code, name=None, param=None):
-        self._code.append(Instruction(op_code, name, param))
+    def _add_instruction(self, op_code, param0=None, param1=None):
+        self._code.append(Instruction(op_code, param0, param1))
 
     def _add_message(self, message):
         self._error_output += '{}\n'.format(message)
@@ -237,21 +280,27 @@ class Parser:
         self._add_message(full_message)
         return False
 
-    def _token_error(self, message_format):
-        return self._trigger_error(message_format.format(self._current_token))
-
     def _next_token(self):
         (self._current_token_type,
          self._current_token) = self._lexer.next_token()
         return True
 
+    def _token_error(self, message_format):
+        return self._trigger_error(message_format.format(self._current_token))
+
     def _syntax_error(self):
         return self._token_error('Unexpected input "{}"')
 
+    def _time_spec_error(self):
+        return self._token_error('Invalid time specification: {}')  
+
     def _optimize(self):
         """
-        Eliminate an instruction if it would _set a register to the same value
-        that was assigned to it in the previous SET_REG instruction.
+        Eliminate SET_REG if it has the same value as the previous SET_REG
+        instruction.
+        
+        For this instruction, param0 is the name of the register, and param1 is
+        the value to which the register is set.
 
         Any GET_COLOR instruction clears out the previous value cache.
         """
@@ -263,10 +312,10 @@ class Parser:
             if inst.op_code != OpCode.SET_REG:
                 opt.append(inst)
             else:
-                if inst.name not in prev_value or (
-                        prev_value[inst.name] != inst.param):
+                key = str(inst.param0)
+                if key not in prev_value or prev_value[key] != inst.param1:
                     opt.append(inst)
-                    prev_value[inst.name] = inst.param
+                    prev_value[key] = inst.param1
         self._code = opt
 
 
@@ -305,12 +354,19 @@ if __name__ == '__main__':
         | "saturation" <set_reg>
         | "_set" <set>
         | "units" <set_units>
-        | "time" <set_reg>
+        | "time" <time_spec>
     <set_reg> ::= <name> <number> | <name> <literal> | <name> <symbol>
     <set> ::= <action>
+    <set_units> ::= "logical" | "raw"
     <get> ::= <action>
     <power_off> ::= <action>
     <power_on> ::= <action>
+    <time_spec> ::= <number> | <time_pattern_set>
+    <time_pattern_set> ::= <time_pattern> | <time_pattern> "or" <time_pattern>
+    <time_pattern> ::= <hour_pattern> ":" <minute_pattern>
+    <hour_pattern> ::= <digit> | <digit><digit> | "*" <digit> |
+                        <digit> "*" | "*"
+    <minute_pattern> ::= <digit><digit> | <digit> "*" | "*" <digit> | "*"
     <action> ::= <op_code> <operand_list>
     <operand_list> ::= "all" | <operand_name> | <operand_name> <and> *
     <operand_name> ::= <token>

@@ -4,11 +4,11 @@ import argparse
 
 from ..lib import injection
 from ..lib import settings
-from ..parser.token_types import TokenTypes
 
 from . import arg_helper
 from . import config_values
 from . import light_module
+from .instruction import Register
 from .i_controller import LightSet
 from .lsc import Compiler
 from .units import Units
@@ -62,8 +62,8 @@ class ScriptSnapshot(Snapshot):
 
     def handle_color(self, color):
         params = zip([
-            TokenTypes.HUE, TokenTypes.SATURATION, TokenTypes.BRIGHTNESS,
-            TokenTypes.KELVIN
+            Register.HUE, Register.SATURATION, Register.BRIGHTNESS,
+            Register.KELVIN
             ], color)
         units = Units()
         for param in params:
@@ -159,8 +159,8 @@ class TextSnapshot(Snapshot):
 
     def handle_color(self, color):
         params = zip([
-            TokenTypes.HUE, TokenTypes.SATURATION, TokenTypes.BRIGHTNESS,
-            TokenTypes.KELVIN
+            Register.HUE, Register.SATURATION, Register.BRIGHTNESS,
+            Register.KELVIN
             ], color)
         units = Units()
         for param in params:

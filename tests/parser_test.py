@@ -3,7 +3,7 @@
 import logging
 import unittest
 
-from bardolph.controller.instruction import Instruction, OpCode
+from bardolph.controller.instruction import Instruction, OpCode, Register
 from bardolph.parser.parse import Parser
 
 class ParserTest(unittest.TestCase):
@@ -38,11 +38,12 @@ class ParserTest(unittest.TestCase):
         self.assertIn("Unknown parameter value", self.parser.get_errors())
 
     def test_logical_units(self):
-        input_string = 'hue 0 saturation 0 brightness 0'
+        input_string = 'hue 0 saturation 0 brightness 0 kelvin 0'
         expected = [
-            Instruction(OpCode.SET_REG, "hue", 0),
-            Instruction(OpCode.SET_REG, "saturation", 0),
-            Instruction(OpCode.SET_REG, "brightness", 0)
+            Instruction(OpCode.SET_REG, Register.HUE, 0),
+            Instruction(OpCode.SET_REG, Register.SATURATION, 0),
+            Instruction(OpCode.SET_REG, Register.BRIGHTNESS, 0),
+            Instruction(OpCode.SET_REG, Register.KELVIN, 0),
         ]
         actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual,
@@ -51,9 +52,9 @@ class ParserTest(unittest.TestCase):
 
         input_string = 'hue 360.0 saturation 100.0 brightness 100.0'
         expected = [
-            Instruction(OpCode.SET_REG, "hue", 0),
-            Instruction(OpCode.SET_REG, "saturation", 65535),
-            Instruction(OpCode.SET_REG, "brightness", 65535)
+            Instruction(OpCode.SET_REG, Register.HUE, 0),
+            Instruction(OpCode.SET_REG, Register.SATURATION, 65535),
+            Instruction(OpCode.SET_REG, Register.BRIGHTNESS, 65535)
         ]
         actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual,
@@ -62,9 +63,9 @@ class ParserTest(unittest.TestCase):
 
         input_string = 'hue 180.0 saturation 20 brightness 40'
         expected = [
-            Instruction(OpCode.SET_REG, "hue", 32768),
-            Instruction(OpCode.SET_REG, "saturation", 13107),
-            Instruction(OpCode.SET_REG, "brightness", 26214)
+            Instruction(OpCode.SET_REG, Register.HUE, 32768),
+            Instruction(OpCode.SET_REG, Register.SATURATION, 13107),
+            Instruction(OpCode.SET_REG, Register.BRIGHTNESS, 26214)
         ]
         actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual,
@@ -75,12 +76,12 @@ class ParserTest(unittest.TestCase):
         input_string = """hue 360 saturation 100 units raw hue 5 brightness 10
             units logical hue 90 saturation 50"""
         expected = [
-            Instruction(OpCode.SET_REG, "hue", 0),
-            Instruction(OpCode.SET_REG, "saturation", 65535),
-            Instruction(OpCode.SET_REG, "hue", 5),
-            Instruction(OpCode.SET_REG, "brightness", 10),
-            Instruction(OpCode.SET_REG, "hue", 16384),
-            Instruction(OpCode.SET_REG, "saturation", 32768),
+            Instruction(OpCode.SET_REG, Register.HUE, 0),
+            Instruction(OpCode.SET_REG, Register.SATURATION, 65535),
+            Instruction(OpCode.SET_REG, Register.HUE, 5),
+            Instruction(OpCode.SET_REG, Register.BRIGHTNESS, 10),
+            Instruction(OpCode.SET_REG, Register.HUE, 16384),
+            Instruction(OpCode.SET_REG, Register.SATURATION, 32768),
         ]
         actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual,
@@ -90,9 +91,9 @@ class ParserTest(unittest.TestCase):
     def test_optimizer(self):
         input_string = 'units raw hue 5 saturation 10 hue 5 brightness 20'
         expected = [
-            Instruction(OpCode.SET_REG, "hue", 5),
-            Instruction(OpCode.SET_REG, "saturation", 10),
-            Instruction(OpCode.SET_REG, "brightness", 20)
+            Instruction(OpCode.SET_REG, Register.HUE, 5),
+            Instruction(OpCode.SET_REG, Register.SATURATION, 10),
+            Instruction(OpCode.SET_REG, Register.BRIGHTNESS, 20)
         ]
         actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual,

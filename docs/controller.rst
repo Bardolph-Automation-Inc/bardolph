@@ -1,10 +1,16 @@
 .. _controller:
 
-.. image:: logo.png
+.. figure:: logo.png
    :align: center
+   
+   http://www.bardolph.org
+
+.. epigraph::
+  "I mean...I tried everything, you know, I put on soft music and my red light 
+  bulb..." (Allen & Joffee, 1977)
 
 Controller Module
-#################
+#################    
 This document is the first draft of an description of Bardolph's core module
 that interprets a script and accesses the lights.
 

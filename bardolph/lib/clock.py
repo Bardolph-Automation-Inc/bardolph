@@ -1,9 +1,9 @@
+from datetime import datetime
 import threading
 import time
 
 from . import injection
 from . import i_lib
-
 
 def now():
     # seconds
@@ -60,3 +60,15 @@ class Clock(i_lib.Clock):
         self._cue_time += delay
         while self.et() < self._cue_time:
             self.wait()
+
+    def wait_until(self, time_pattern):
+        hour, minute = Clock._hour_minute()
+        while not time_pattern.match(hour, minute):
+            self.wait()
+            hour, minute = Clock._hour_minute()
+        self.reset()
+    
+    @classmethod
+    def _hour_minute(cls):
+        now = datetime.now()
+        return (now.hour, now.minute)

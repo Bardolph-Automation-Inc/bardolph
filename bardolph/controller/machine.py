@@ -1,12 +1,12 @@
 import logging
 
-from ..lib.i_lib import Clock
+from ..lib.i_lib import Clock, TimePattern
 from ..lib.color import average_color
 from ..lib.injection import inject, provide
 
 from .get_key import getch
 from .i_controller import LightSet
-from .instruction import OpCode, Operand
+from .instruction import OpCode, Operand, TimePatternOp
 
 
 class Registers:
@@ -46,6 +46,7 @@ class Machine:
             OpCode.POWER: self._power,
             OpCode.SET_REG: self._set_reg,
             OpCode.STOP: self.stop,
+            OpCode.TIME_PATTERN: self._time_pattern,
             OpCode.TIME_WAIT: self._time_wait
         }
 
@@ -186,15 +187,25 @@ class Machine:
 
     def _check_wait(self):
         time = self._reg.time
-        if time > 0:
+        if isinstance(time, TimePattern):
+            self._clock.wait_until(self._reg.time)
+        elif time > 0:
             self._clock.pause_for(time / 1000.0)
 
     def _end(self):
         self.stop()
 
     def _set_reg(self):
+        # param0 is the name of the register, param1 is its value.
         inst = self._program[self._pc]
-        setattr(self._reg, inst.name, inst.param)
+        setattr(self._reg, inst.param0.name.lower(), inst.param1)
+
+    def _time_pattern(self):
+        inst = self._program[self._pc]
+        if inst._param0 == TimePatternOp.INIT:
+            self._reg.time = inst._param1
+        else:
+            self._reg.time.union(inst._param1)
 
     def _time_wait(self):
         self._check_wait()

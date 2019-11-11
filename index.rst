@@ -1,13 +1,12 @@
-.. image:: docs/logo.png
+.. figure:: docs/logo.png
    :align: center
+   
+   http://www.bardolph.org
  
 .. _index:
 
 Bardolph Project
 ================
-
-bardolph@fontes.org
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -19,6 +18,4 @@ bardolph@fontes.org
    docs/python_interface
    docs/controller
 
-Indices and tables
-==================
 * :ref:`search`

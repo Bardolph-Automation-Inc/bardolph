@@ -5,8 +5,10 @@
 
 Web Frontend Server
 ###################
-.. image:: web_mobile_small.png
-    :align: center
+http://www.bardolph.org
+
+.. :: web_mobile_small.png
+   :align: center
 
 I wrote this application for my own use, and it serves
 as my primary means of controlling my lights. However, it is designed to
@@ -27,18 +29,23 @@ I simply unlock the phone and turn off the lights off with a single
 tap on a home screen shortcut.
 
 .. image:: home.png
-    :align: center
+   :align: center
 
 It's also convenient to access the lights from my smart TV's web
 browser. When I sit down to watch a movie, I don't have to find
 my phone to dim the lights; I just use the TV.
 
 .. image:: tv_screenshot.png
-    :align: center
+   :align: center
 
 The target configuration for hosting the web site is a very inexpensive
 device which runs 24/7 as a headless server. At home I use a dedicated
 Raspberry Pi W that sits in a corner of my apartment.
+
+.. figure:: server.jpg
+   :align: center
+   
+   This is my server.
 
 Running the Server
 ##################

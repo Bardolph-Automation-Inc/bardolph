@@ -3,7 +3,8 @@
 import unittest
 
 from bardolph.controller.i_controller import LightSet
-from bardolph.controller.instruction import Instruction, OpCode, Operand
+from bardolph.controller.instruction import Instruction
+from bardolph.controller.instruction import OpCode, Operand, Register
 from bardolph.controller.machine import Machine
 from bardolph.lib.injection import provide
 
@@ -33,8 +34,8 @@ class MachineTest(unittest.TestCase):
     @classmethod
     def code_for_get(cls, name, operand):
         return [
-            Instruction(OpCode.SET_REG, "name", name),
-            Instruction(OpCode.SET_REG, "operand", operand),
+            Instruction(OpCode.SET_REG, Register.NAME, name),
+            Instruction(OpCode.SET_REG, Register.OPERAND, operand),
             Instruction(OpCode.GET_COLOR)
         ]
 
@@ -61,12 +62,12 @@ class MachineTest(unittest.TestCase):
     @classmethod
     def code_for_set(cls, name, operand, params):
         return [
-            Instruction(OpCode.SET_REG, "hue", params[0]),
-            Instruction(OpCode.SET_REG, "saturation", params[1]),
-            Instruction(OpCode.SET_REG, "brightness", params[2]),
-            Instruction(OpCode.SET_REG, "kelvin", params[3]),
-            Instruction(OpCode.SET_REG, "name", name),
-            Instruction(OpCode.SET_REG, "operand", operand),
+            Instruction(OpCode.SET_REG, Register.HUE, params[0]),
+            Instruction(OpCode.SET_REG, Register.SATURATION, params[1]),
+            Instruction(OpCode.SET_REG, Register.BRIGHTNESS, params[2]),
+            Instruction(OpCode.SET_REG, Register.KELVIN, params[3]),
+            Instruction(OpCode.SET_REG, Register.NAME, name),
+            Instruction(OpCode.SET_REG, Register.OPERAND, operand),
             Instruction(OpCode.COLOR)
         ]
 
