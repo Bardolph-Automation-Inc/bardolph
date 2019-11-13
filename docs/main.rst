@@ -132,7 +132,7 @@ another 5 seconds:
   from bardolph.controller import ls_module
   
   ls_module.configure()
-  ls_module.queue_script('time 5000 duration 1500 off all on all')
+  ls_module.queue_script('time 5 duration 1.5 off all on all')
 
 
 More information on using scripts in Python code is available in
@@ -298,7 +298,7 @@ off again, you can do the following from the command line:
 
 .. code-block:: bash
 
-  lsrun -s 'on all time 60000 off all'
+  lsrun -s 'on all time 60 off all'
   
 .. index::
    single: lsc

@@ -20,7 +20,7 @@ by non-programmers.
 ## Quick Examples
 Here is a script, named `all_on.ls`, that will turn on all your lights:
 ```
-duration 1500 on all
+duration 1.5 on all
 ```
 You run it with:
 ```
@@ -30,12 +30,12 @@ In this case, `lsrun` is a bash shell script that become available after you
 install Bardolph.
 
 The `duration` parameter says to slowly shut off the
-lights over a period 1500 ms., which is a much nicer experience than abruptly turning
-them off with no dimming.
+lights over a period of 1.5 seconds, which is a much nicer experience than
+abruptly turning them off with no dimming.
 
 Another example, `red.ls`, sets all the lights to a deep shade of red:
 ```
-duration 1500 hue 350 saturation 80 brightness 80 kelvin 2700 
+duration 1.5 hue 350 saturation 80 brightness 80 kelvin 2700 
 set all
 ```
 To run it:
@@ -79,7 +79,7 @@ another 5 seconds:
 from bardolph.controller import ls_module
   
 ls_module.configure()
-ls_module.queue_script('time 5000 duration 1500 off all on all')
+ls_module.queue_script('time 5 off all on all')
 ```
 
 ## System Requirements

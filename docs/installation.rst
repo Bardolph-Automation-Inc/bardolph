@@ -197,6 +197,13 @@ The server runs well on a stock installation of Raspbian. It also runs on
 Debian and MacOS; basically, you need a Python interpreter revision 3.5 or
 higher.
 
+On a typical installation, two separate process will run:
+
+#. The web application server, a Python program that implements
+   the UI and runs the scripts, plus
+#. The `lighttpd` process, which attaches to the Python app via FCGI and then
+   services incoming HTTP requests for web pages.
+
 O.S. Setup
 ==========
 This overview assumes you have already done the following, which are outside
@@ -298,7 +305,7 @@ For example, if you downloaded the code from github to `~lights/bardolph`:
    single: web logging configuration
    
 Log Directory
-=============
+-------------
 This is another step you take as a user with `sudo` access, such as the
 `pi` default user.
 
@@ -317,19 +324,14 @@ logs in one place.
 .. index::
    single: start HTTP server
    
-Start the HTTP Server
-=====================
+Restart HTTP Server With New Configuration
+------------------------------------------
 By default, the `lighttpd` daemon will already be running. You need to
 restart it to enable the new configuration with:
 
 .. code-block:: bash
 
   sudo /etc/init.d/lighttpd restart
-
-
-If all goes well, you should be able to access the home page. Because
-I've named my server "vanya" with raspi-config, I access it at
-http://vanya.local.
 
 .. index::
    single: application server setup
@@ -355,18 +357,9 @@ so you may need to `pip3` instead of `pip` throughout. Because the Bardolph
 package lists `lifxlan` as a dependency, it may have already been installed,
 in which case `pip` won't attempt to re-download it.
 
-Start and Stop the Server
-=========================
-To start the server, cd to the directory where you pulled down the source
-from github.com. From there, you need to start two processes:
-
-#. The web application server, a Python program that implements
-   the UI and runs the scripts, plus
-#. The `lighttpd` process, which attaches to the Python app via FCGI and then
-   services incoming HTTP requests for web pages.
 
 Start the Application Server
-============================
+----------------------------
 From the source distribution directory, for example ~/bardolph:
 
 .. code-block:: bash
@@ -374,6 +367,10 @@ From the source distribution directory, for example ~/bardolph:
   ./start_fcgi
 
 You should do this as the `lights` user.
+
+If all goes well, you should be able to access the home page. Because
+I've named my server "vanya" with raspi-config, I access it at
+http://vanya.local.
 
 After a Reboot
 --------------
@@ -404,7 +401,7 @@ To stop (and, if you want, start) the HTTP server:
   sudo /etc/init.d/lighttpd start
 
 
-I don't have an elegant way to stop the FCGI process, so:
+I don't have an elegant way to stop the FCGI process, so, as the `lights` user:
 
 .. code-block:: bash
 
