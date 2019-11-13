@@ -1,2 +1,2 @@
-duration 1500 on all
+duration 1.5 on all
  

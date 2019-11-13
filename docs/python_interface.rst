@@ -38,12 +38,12 @@ scripts with `queue_script()`. For example:
   from bardolph.controller import ls_module
 
   ls_module.configure()
-  ls_module.queue_script('time 10000 all on')
-  ls_module.queue_script('time 5000 all off')
+  ls_module.queue_script('time 1 all on')
+  ls_module.queue_script('time 5 all off')
 
 
-This program waits 10,000 ms., turns on all the lights, and then turns them all off 
-again after 5,000 ms.
+This program waits 10 seconds, turns on all the lights, and then turns them all off 
+again after 5 seconds.
 
 The `configure()` function performs a bunch of internal initialization, and 
 then discovers the lights out on the network. After that, It spawns a thread 

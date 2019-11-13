@@ -83,13 +83,17 @@ class Parser:
 
     def _set_reg(self):
         self._name = self._current_token
-        if Register.TIME.name.lower() == self._name:
+        register = Register[self._name.upper()]
+        if register == Register.TIME:
             return self._time()
                 
         self._next_token()
         if self._current_token_type == TokenTypes.NUMBER:
             try:
-                value = round(float(self._current_token))
+                if register == Register.DURATION:
+                    value = self._normalized_time()
+                else:
+                    value = round(float(self._current_token))
             except ValueError:
                 return self._token_error('Invalid number: "{}"')
         elif self._current_token_type == TokenTypes.LITERAL:
@@ -99,11 +103,10 @@ class Parser:
         else:
             return self._token_error('Unknown parameter value: "{}"')
         
-        self._add_reg_instruction(self._name, value)
+        self._add_reg_instruction(register, value)
         return self._next_token()
 
-    def _add_reg_instruction(self, name, value):
-        reg_name = Register[name.upper()]
+    def _add_reg_instruction(self, reg_name, value):
         units = Units()
         if self._unit_mode == UnitMode.LOGICAL:
             value = units.as_raw(reg_name, value)
@@ -122,7 +125,7 @@ class Parser:
         self._next_token()
         mode = {
             TokenTypes.RAW: UnitMode.RAW,
-            TokenTypes.LOGICAL:UnitMode.LOGICAL
+            TokenTypes.LOGICAL: UnitMode.LOGICAL
         }.get(self._current_token_type, None)
 
         if mode is None:
@@ -152,43 +155,49 @@ class Parser:
         return True
     
     def _time(self):
-        name = self._current_token
         self._next_token()
-        
         if self._current_token_type == TokenTypes.AT:
             return self._process_time_patterns()
-        if self._current_token_type == TokenTypes.NUMBER:
-            self._add_reg_instruction(name, int(self._current_token))
-            return self._next_token()
-        
-        return self._time_spec_error()
-    
-    def _process_time_patterns(self):
-        self._next_token()
-        if self._current_token_type != TokenTypes.TIME_PATTERN:
-            return self.time_spec_error()  
 
-        if not self._time_pattern_inst(TimePatternOp.INIT):
-            return False
+        if self._current_token_type == TokenTypes.NUMBER:
+            value = self._normalized_time()
+        elif self._current_token in self._symbol_table:
+            value = self._symbol_table[self._current_token]
+        else:
+            return self._time_spec_error()
         
+        self._add_reg_instruction(Register.TIME, value)
+        return self._next_token()
+        
+    def _process_time_patterns(self):
+        time_pattern = self._next_time_pattern()
+        if time_pattern is None:
+            return self._time_spec_error()
+        self._add_instruction(
+            OpCode.TIME_PATTERN, TimePatternOp.INIT, time_pattern)
         self._next_token()
+
         while self._current_token_type == TokenTypes.OR:
-            self._next_token()
-            if self._current_token_type != TokenTypes.TIME_PATTERN:
-                return self.time_spec_error()
-            if not self._time_pattern_inst(TimePatternOp.UNION):
-                return False
+            time_pattern = self._next_time_pattern()
+            if time_pattern is None:
+                return self._time_spec_error()  
+            self._add_instruction(
+                OpCode.TIME_PATTERN, TimePatternOp.UNION, time_pattern)
             self._next_token()
 
         return True;
-    
-    def _time_pattern_inst(self, time_pattern_op):
-        pattern = TimePattern.from_string(self._current_token)
-        if pattern is None:
-            return self._token_error("Invalid time pattern: {}")
-        self._add_instruction(OpCode.TIME_PATTERN, time_pattern_op, pattern)
-        return True
 
+    def _next_time_pattern(self):
+        self._next_token()
+        if self._current_token_type == TokenTypes.TIME_PATTERN:
+            pattern_string = self._current_token
+        else:
+            pattern_string = self._symbol_table.get(self._current_token, None)
+        if pattern_string is None:
+            return None
+        time_pattern = TimePattern.from_string(pattern_string)
+        return time_pattern  
+    
     def _action(self, op_code):
         self._op_code = op_code
         self._next_token()
@@ -249,7 +258,7 @@ class Parser:
     def _definition(self):
         self._next_token()
         if self._current_token_type in [
-                TokenTypes.LITERAL, TokenTypes.NUMBER]:
+                TokenTypes.LITERAL, TokenTypes.NUMBER, TokenTypes.TIME_PATTERN]:
             return self._token_error('Unexpected literal: {}')
 
         var_name = self._current_token
@@ -258,6 +267,10 @@ class Parser:
             value = int(self._current_token)
         elif self._current_token_type == TokenTypes.LITERAL:
             value = self._current_token
+        elif self._current_token_type == TokenTypes.TIME_PATTERN:
+            value = TimePattern.from_string(self._current_token)
+            if value is None:
+                return self._time_spec_error()
         elif self._current_token in self._symbol_table:
             value = self._symbol_table[self._current_token]
         else:
@@ -294,6 +307,14 @@ class Parser:
     def _time_spec_error(self):
         return self._token_error('Invalid time specification: {}')  
 
+    def _normalized_time(self):
+        if self._current_token_type == TokenTypes.NUMBER:
+            if self._unit_mode == UnitMode.LOGICAL:
+                value = round(float(self._current_token) * 1000.0)
+            else:
+                value = int(self._current_token)
+        return value
+    
     def _optimize(self):
         """
         Eliminate SET_REG if it has the same value as the previous SET_REG

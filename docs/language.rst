@@ -82,22 +82,8 @@ setting the color of any lights. Or, consider starting your script with
 `get all` (the `get` command is described below).
 
 .. index::
-   single: raw units
-   single: logical units
-
-If you prefer to send unmodified numbers to the bulbs as specified by the 
-`LIFX API <https://lan.developer.lifx.com>`_, you can use "raw" values
-(and switch back to "logical" units as desired). "Raw" refers to
-an integer between 0 and 65535 that gets transmitted unmodified to the bulbs::
-
-  units raw
-  hue 30000 saturation 65535 brightness 32767 kelvin 2700 set all
-  units logical
-  hue 165 saturation 100 brightness 50 kelvin 2700 set all
-
-.. index::
    single: individual lights
-   
+  
 Individual Lights
 =================
 Scripts can control individual lights by name. For example, if you have a light
@@ -159,23 +145,25 @@ lines do the same thing::
 Timing Color Changes
 ====================
 Scripts can contain time delays and durations, both of which are are expressed 
-in milliseconds. A time delay designates the amount of time to wait before
+in seconds. A time delay designates the amount of time to wait before
 transmitting the next command to the lights. The duration value is passed
 through to the bulbs, and its interpretation is defined by the 
 `LIFX API <https://lan.developer.lifx.com>`_. Basically, by setting a duration,
 you determine how long it should take the bulb to transition to its new
 state. For example::
 
-  off all time 5000 duration 2000 on all off "Table"
+  off all time 5 duration 1.5 on all off "Table"
 
 This will:
 
 #. Immediately turn off all lights instantaneously.
-#. Wait 5,000 ms.
-#. Turn on all the lights, but ramp up the brightness over a period of 2,000 ms.
-#. Wait 5,000 ms. again.
-#. Dim down the light named "Table" over a period of 2,000 ms. until it is off. 
+#. Wait 5 seconds.
+#. Turn on all the lights, but ramp up the brightness over a period of 1.5 seconds.
+#. Wait 5 seconds again.
+#. Dim down the light named "Table" over a period of 1.5 seconds until it is off. 
 
+The underlying API has a precision down to milliseconds. For example, all digits
+are significant in a `time` parameter of `1.234`.
 
 As mentioned above, the existing values for `time` and `duration` are re-used
 with each command. In this example, `time` is set only
@@ -184,23 +172,22 @@ once, but there will be the same delay between every action.
 If you want to set multiple lights at the same time, you can specify them using
 `and`::
 
-  time 1000 on "Table" and "Chair Side"  # Uses "and".
+  time 2 on "Table" and "Chair Side"  # Uses "and".
 
 This script will:
 
-#. Wait 1000 ms. 
+#. Wait 2 seconds. 
 #. Turns both lights on *simultaneously*. 
-
 
 This contrasts with::
 
-  time 1000 on "Table" on "Chair Side"   # Does not use "and".
+  time 2 on "Table" on "Chair Side"   # Does not use "and".
 
 This script will:
 
-#. Wait 1,000 ms. 
+#. Wait 2 seconds. 
 #. Turn on the light named "Table".
-#. Wait 1,000 ms.
+#. Wait 2 seconds.
 #. Turn on the light named "Chair Side". 
 
 The `and` keyword works with `set`, `on`, and `off`. When multiple lights are
@@ -215,7 +202,7 @@ time of the previous instruction.
 
 For example::
 
-  time 2000
+  time 2
   on all
   # Do a lot of slow stuff.
   off all
@@ -231,8 +218,8 @@ short for the program to keep up, it will simply keep executing
 instructions as fast as it can.
 
 .. index::
-   single:: clock time
-   single:: time of day
+   single: clock time
+   single: time of day
    
 Wait for Time of Day
 =====================
@@ -317,11 +304,11 @@ timer is reset. For example::
 
   time at 12:00 on all
   pause off all
-  time 10000 on all
+  time 10 on all
 
 This script turns on all the lights at 12:00 noon. It then waits
 for the user to press a key at the keyboard. When a key has been pressed,
-it turns off all the lights, waits 10,000 ms., and turns them on again.
+it turns off all the lights, waits 10 s, and turns them on again.
 
 .. index::
    single: groups
@@ -351,7 +338,7 @@ Definitions
 Symbols can be defined to hold a  commonly-used name or number::
 
   define blue 240 define deep 100 define dim 20 
-  define gradual 4000
+  define gradual 4
   define ceiling "Ceiling Light in the Living Room"
   hue blue saturation deep brightness dim duration gradual
   set ceiling
@@ -393,3 +380,38 @@ commands::
 
   get all
 
+Raw and Logical Units
+=====================
+.. index::
+   single: raw units
+   single: logical units
+
+By default, numerical values in scripts are given in units that should be
+convenient to humans. However, those numbers are mapped to 16-bit integer
+values that are sent to the bulbs as specified by the
+`LIFX API <https://lan.developer.lifx.com>`_.
+
+If you prefer to send unmodified numbers to the bulbs as specified by that 
+API, you can use `raw` values (and switch back to `logical` units as desired).
+"Raw" refers to an integer between 0 and 65535 that gets transmitted unmodified
+to the bulbs::
+
+  units raw
+  time 10000 duration 2500
+  hue 30000 saturation 65535 brightness 32767 kelvin 2700 set all
+
+  units logical
+  time 10 duration 2.5
+  hue 165 saturation 100 brightness 50 kelvin 2700 set all
+
+Note that with raw units, `time` and `duration` are expressed as an integer
+number of milliseconds. With logical units, `time` and `duration` are given
+as a floating-point quantity of seconds.
+
+There's no limit to the precision of the floating-point value, but because it
+will be converted to milliseconds, any digits more than 3 places to the right
+of the decimal point will be rounded off. For example, durations of `2` and
+`1.9999` are equivalent, while `3` and `2.999` will differ by one millisecond.
+However, in practice, none of the timing is precise or accurate enough for you
+to see any difference in behavior for these examples. In my experience,
+you can't expect precision much better than 1/10 of a second.

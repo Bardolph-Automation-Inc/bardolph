@@ -15,7 +15,7 @@ from .units import Units
 
 
 def _quote_if_string(param):
-    return '{}'.format(param) if isinstance(param, str) else param
+    return ('{}' if isinstance(param, str) else "{:0.0f").foramt(param)
 
 class Snapshot:
     def start_snapshot(self): pass
@@ -45,7 +45,7 @@ class Snapshot:
 
 
 class ScriptSnapshot(Snapshot):
-    """ Generate a .ls _script. Ignore _power on/off. """
+    """ Generate a .ls _script. """
     def __init__(self):
         self._light_name = ''
         self._power = True
@@ -77,7 +77,7 @@ class ScriptSnapshot(Snapshot):
 
     def end_light(self):
         self._script += 'set "{}"\n'.format(self._light_name)
-        fmt = 'on "{}"\n' if self._power else 'off "{}"\n'
+        fmt = 'time 2000 on "{}"\n' if self._power else 'time 2000 off "{}"\n'
         self._script += fmt.format(self._light_name)
 
     @property
@@ -121,13 +121,13 @@ class InstructionSnapshot(Snapshot):
 class TextSnapshot(Snapshot):
     """ Generate plain text. """
     def __init__(self):
-        self._field_width = len('saturation  ')
+        self._field_width = 10
         self._text = ''
-        self._add_field('name')._add_field('hue')
-        self._add_field('saturation')._add_field('brightness')
-        self._add_field('kelvin')._add_field('power')
+        self._add_field('name ')._add_field(' hue')
+        self._add_field(' sat')._add_field(' brt')
+        self._add_field(' kel')._add_field('power')
         self._text += '\n'
-        self._text += '-' * ((self._field_width - 1) * 6)
+        self._text += '-' * ((self._field_width) * 6 - 5)
         self._text += '\n'
 
     def _add_field(self, data):
@@ -142,7 +142,7 @@ class TextSnapshot(Snapshot):
 
     def _add_set(self, heading, names, get_fn):
         self._text += '\n{}\n'.format(heading)
-        self._text += '-' * 17
+        self._text += '-' * 15
         self._text += '\n'
         for name in names:
             self._text += '{}\n'.format(name)
@@ -165,7 +165,7 @@ class TextSnapshot(Snapshot):
         units = Units()
         for param in params:
             self._add_field(
-                '{:>6.2f}'.format(units.as_logical(param[0], param[1])))
+                '{:>4.0f}'.format(units.as_logical(param[0], param[1])))
 
     def handle_power(self, power):
         self._add_field('{:>5d}'.format(power))

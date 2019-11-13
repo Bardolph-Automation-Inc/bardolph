@@ -1,1 +1,1 @@
-duration 1500 off all
+duration 1.5 off all

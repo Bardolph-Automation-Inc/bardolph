@@ -1,9 +1,9 @@
-time 0 duration 2000 on all
+time 0 duration 2 on all
 
-duration 120000 
+duration 120 
 hue 30 saturation 75 brightness 65 set all
 
-time 120000
+time 120
 hue 60 set all
 hue 90 set all
 hue 120 set all

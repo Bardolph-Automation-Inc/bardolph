@@ -13,7 +13,7 @@ Documentation
    :caption: Contents:
 
 **Bardolph** is a facility for controlling `LIFX <https://www.lifx.com>`_ lights
-through a simple scripting language. It can be used to
+through a simple scripting language. It can be used
 to control lights in an automated way with a minimal
 syntax. The intended audience is people who are pretty good with command-line 
 tools and have some kind of experience with scripting and/or software
@@ -47,10 +47,10 @@ description of the scripting langage, please see
 
 Here is a script, named `all_on.ls`, that will turn on all your lights::
 
-  duration 1500 on all
+  duration 1.5 on all
 
 The `duration` parameter, which is described below, works to slowly turn on the
-lights over a period 1500 ms., which is a much nicer experience than abruptly
+lights over a period 1.5 seconds, which is a much nicer experience than abruptly
 turning them on with no ramp-up.
 
 You run the script with:
@@ -65,8 +65,8 @@ install Bardolph. It is a thin layer that executes the `run.py` module.
 Another example, `on5.ls`, turns on all the lights, waits for 5 minutes, and
 then turns them all off again::
 
-  duration 1500 on all
-  time 300000 off all
+  duration 1.5 on all
+  time 300 off all
 
 To run it:
 

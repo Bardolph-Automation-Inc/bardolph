@@ -1,10 +1,10 @@
-kelvin 2700 time 0 duration 1500
+kelvin 2700 duration 1.5
 
 hue 54 saturation 40 brightness 60
 set all
 
-time 120000 duration 120000
-# time 0 duration 1500
+time 120 duration 120
+# time 0 duration 1.5
 
 kelvin 2500 hue 42 saturation 80 brightness 40 # pause 
 set all

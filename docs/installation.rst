@@ -229,11 +229,11 @@ Therefore, the next step is to create a user called `lights`.
 
 .. code-block:: bash
 
-  adduser lights
+   sudo adduser lights
 
-Note that this user doesn't have any special privileges, such as
-being sudo'er. This ensures that the Python code itself is
-run without any special access, thus improving security.
+Note that this user doesn't have any special privileges. This ensures that
+the Python code itself is run without any special access, thus improving
+security.
 
 I also change the name of the server. In this example, my server will be
 "vanya", accessed on the command line and in my browser as
@@ -242,11 +242,10 @@ I also change the name of the server. In this example, my server will be
 
 Bardolph Distribution
 =====================
-The first step is to do the installation as described at the top of
-this doc. To run the web server, you'll need also the source distribution,
+To run the web server, you'll need the source distribution,
 which contains the configuration files and templates for the Flask application.
 
-Via `ssh`, log in to the Pi as user `lights`, and from the `/home/lights`
+Via `ssh`, log in to the Pi as the new user `lights`, and from the `/home/lights`
 directory:
 
 .. code-block:: bash
@@ -255,6 +254,82 @@ directory:
 
 This will create a directory named `bardolph` and put the distribution
 inside that directory.
+
+.. index::
+   single: HTTP Server Setup
+   single: lighttpd
+
+HTTP Server Setup
+=================
+This is the first of several steps that need to be done while logged in as
+a user with `sudo` access, such as the default `pi` user.
+
+Because the Bardolph server runs as a
+`WSGI <https://wsgi.readthedocs.io>`_ application, multiple options exist for
+using a front-end to implement the HTTP protocol. I've settled on lighttpd,
+which ships with a module for FastCGI.
+
+Installation of lighttpd is outside the scope of this document. I recommend
+visting the `lighttpd website <https://www.lighttpd.net>`_
+for more information. However, the basic installation can be done with
+
+.. code-block:: bash
+
+  sudo apt-get install lighttpd
+
+This also installs `spawn-fcgi`.
+
+To use the lighttpd configuration supplied in the Bardolph source 
+distribution, you need create symbolic links to the root of the project,
+or copy the configuration files to `/etc/lighttpd`. I prefer symbolic
+links, because the configuration files get updated automatically 
+whenever you refresh the source code from github.com.
+
+For example, if you downloaded the code from github to `~lights/bardolph`:
+
+.. code-block:: bash
+
+  cd /etc/lighttpd
+  sudo cp lighttpd.conf lighttpd.conf.original
+  sudo ln -s /home/lights/bardolph/web/server/rpi/lighttpd.conf .
+  sudo ln -s /home/lights/bardolph/web/server/common.conf .
+
+.. index::
+   single: web logging configuration
+   
+Log Directory
+=============
+This is another step you take as a user with `sudo` access, such as the
+`pi` default user.
+
+The web site configuration files in the source distribution specify
+that all of the logs reside in the directory `/var/log/lights`. Therefore,
+as part of your setup, you need to do the following:
+
+.. code-block:: bash
+
+  sudo mkdir /var/log/lights
+  sudo chown lights:lights /var/log/lights
+
+This allows processes owned by the `lights` meta-user to write all of the
+logs in one place.
+
+.. index::
+   single: start HTTP server
+   
+Start the HTTP Server
+=====================
+By default, the `lighttpd` daemon will already be running. You need to
+restart it to enable the new configuration with:
+
+.. code-block:: bash
+
+  sudo /etc/init.d/lighttpd restart
+
+
+If all goes well, you should be able to access the home page. Because
+I've named my server "vanya" with raspi-config, I access it at
+http://vanya.local.
 
 .. index::
    single: application server setup
@@ -280,66 +355,6 @@ so you may need to `pip3` instead of `pip` throughout. Because the Bardolph
 package lists `lifxlan` as a dependency, it may have already been installed,
 in which case `pip` won't attempt to re-download it.
 
-.. index::
-   single: HTTP Server Setup
-   single: lighttpd
-
-HTTP Server Setup
-=================
-Because the Bardolph server runs as a
-`WSGI <https://wsgi.readthedocs.io>`_ application, multiple options exist for
-using a front-end to implement the HTTP protocol. I've settled on lighttpd,
-which ships with a module for FastCGI.
-
-Installation of lighttpd is outside the scope of this document. I recommend
-visting the `lighttpd website <https://www.lighttpd.net>`_
-for more information. However, the basic installation can be done with:
-
-.. code-block:: bash
-
-  sudo apt-get install lighttpd
-
-This also installs `spawn-fcgi`. Of course, you will need to do this as
-a user with `sudo` access, such as the default `pi` user.
-
-To use the lighttpd configuration supplied in the source distribution,
-you need create symbolic links to the root of the project, or copy the
-congiguration files to `/etc/lighttpd`. I prefer symbolic links, because
-the configuration files get updated automatically whenever you refresh
-the source code from github.com.
-
-For example, if you downloaded the code from github to `~lights/bardolph`:
-
-.. code-block:: bash
-
-  cd /etc/lighttpd
-  sudo cp lighttpd.conf lighttpd.conf.original
-  sudo ln -s /home/lights/bardolph/web/server/rpi/lighttpd.conf .
-  sudo ln -s /home/lights/bardolph/web/server/common.conf .
-  
-Once again, you need to perform these steps while logged in as a user
-with sudo access.
-
-.. index::
-   single: web logging configuration
-   
-Log Directory
-=============
-The web site configuration files in the source distribution specify
-that all of the logs reside in the directory `/var/log/lights`. Therefore,
-as part of your setup, you need to do the following:
-
-.. code-block:: bash
-
-  sudo mkdir /var/log/lights
-  sudo chown lights:lights /var/log/lights
-
-This allows processes owned by the `lights` meta-user to write all of the
-logs in one place.
-
-.. index::
-   single: start server
-
 Start and Stop the Server
 =========================
 To start the server, cd to the directory where you pulled down the source
@@ -360,23 +375,6 @@ From the source distribution directory, for example ~/bardolph:
 
 You should do this as the `lights` user.
 
-Start the HTTP Server
-=====================
-By default, the `lighttpd` daemon will already be running. You need to
-restart it to enable the new configuration with:
-
-.. code-block:: bash
-
-  sudo /etc/init.d/lighttpd restart
-
-
-If all goes well, you should be able to access the home page. Because
-I've named my server "vanya" with raspi-config, I access it at
-http://vanya.local.
-
-.. index::
-   single: stop server
-
 After a Reboot
 --------------
 Whenever you reboot the computer, you will need to start the FCGI process
@@ -393,6 +391,8 @@ to do this. I'm investigatng this and will update these docs when it's ready.
 By default, lighttpd is launched when the system boots, so you should not
 need to manually start that process.
 
+.. index::
+   single: stop server
 
 Stopping
 ========

@@ -84,7 +84,7 @@ class WebApp:
 
     @inject(LightSet)
     def get_status(self, lights):
-        last_discover_time = lights.get_last_discover()
+        last_discover_time = lights.last_discover
         if last_discover_time is not None:
             last_discover = time.strftime(
                 "%A %m/%d %I:%M:%S %p", last_discover_time)
