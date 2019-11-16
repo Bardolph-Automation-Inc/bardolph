@@ -53,15 +53,15 @@ The server executes within the
 `Flask framework <https://flask.palletsprojects.com>`_. If you run it,
 you probably should become familiar with Flask.
 
+Normally, you would want to run the web server in production mode,
+with an HTTP server for the front end. Instructions for setting that
+up are in :ref:`web_install`. However, if you're just experimenting,
+the server can be run in development mode.
+
 Development Mode
 ================
-You can run the server in so-called "development mode". Because the
-server will run on a local network, the issues around security and
-scalability are less of a concern. However, I would still recommend that
-you run the server with some kind of a HTTP tier on port 80. Below you
-can find instructions on configuring lighthttpd do fulfill that role on
-a Raspberry Pi.
-
+Because the server will run on a local network, the issues around
+security and scalability are less of a concern.
 For experimenting and development, you may just want to stick with
 development mode. To do that, first:
 
@@ -76,8 +76,8 @@ This installs the Python libraries that the Bardolph code relies on.
 
 Starting the Development Server
 ===============================
-To start the server in that manner,  cd to the Bardolph
-home directory. Then:
+To start the server in that manner, cd to the root directory of the
+source tree (ex: `~/bardolph`). Then:
 
 .. code-block:: bash
 
@@ -97,6 +97,10 @@ To stop the server,  press Ctrl-C.
 
 Manifest
 ========
+The UI is controlled by the contents of the manifest. Using the list of
+scripts, the web app builds a list of colored boxes, each of which is
+a link to URL that, when accessed, causes a script to be run.
+
 The file `manifest.json` in the `scripts` directory specifies the list of
 scripts that will be available on the web site. That list also contains 
 metadata for the scripts, mostly to control the appearance of the web page. 
@@ -121,7 +125,8 @@ This snippet is used to launch the script "all-off.ls". Because "repeat" is
 false, the script is run only once when you access the URL. 
 
 The "path" setting determines the path on the web site that runs this script.
-In this example, you would go to http://localhost:5000/off.
+In this example, the manifest specifies that the URL
+will be http://localhost:5000/off.
 
 The string from "Title" appears in a colored box on the web page. That box
 is is filled with the color specified by "background". The title is displayed

@@ -13,7 +13,9 @@ Bardolph Project
    
    docs/main
    docs/installation
+   docs/command_line
    docs/language
+   docs/web_install
    docs/web_server
    docs/python_interface
    docs/controller

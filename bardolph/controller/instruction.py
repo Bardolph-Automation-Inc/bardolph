@@ -41,15 +41,15 @@ class Register(Enum):
 
 
 class Instruction:
-    def __init__(self, op_code=OpCode.NOP, param0=None, param1=None):
+    def __init__(self, op_code, param0=None, param1=None):
         self._op_code = op_code
         self._param0 = param0
         self._param1 = param1
 
     def __repr__(self):
         if self._op_code == OpCode.TIME_PATTERN:
-            return 'Instruction(OpCode.TIME_PATTERN, {}, {})'.format(
-                self.param0, repr(self.param1))
+            return 'Instruction({}, {}, {})'.format(
+                OpCode.TIME_PATTERN, self.param0, repr(self.param1))
         if self._param1 is None:
             if self._param0 is None:
                 return 'Instruction({}, None, None)'.format(self._op_code)
@@ -81,13 +81,12 @@ class Instruction:
         return self._param1
     
     def as_list_text(self):
-        if self._op_code != OpCode.SET_REG:
-            return 'OpCode.{}'.format(self._op_code._param0)
-        if isinstance(self._param1, 'str'):
-            param1_str = '"{}"'.format(self._param1)
-        else:
-            param1_str = str(self._param1)
-        return 'OpCode.set_reg, "{}", {}'.format(self._param0, param1_str)
+        if self._op_code not in (OpCode.SET_REG, OpCode.TIME_PATTERN):
+            return '{}'.format(self._op_code)
+        return '{}, {}, {}'.format(
+            self._op_code,
+            Instruction.quote_if_string(self._param0),
+            Instruction.quote_if_string(self._param1))
 
     @classmethod
     def quote_if_string(cls, obj):

@@ -10,26 +10,26 @@ from . import config_values
 from . import light_module
 from .instruction import Register
 from .i_controller import LightSet
-from .lsc import Compiler
+from . import lsc
 from .units import Units
 
 
 def _quote_if_string(param):
-    return ('{}' if isinstance(param, str) else "{:0.0f").foramt(param)
+    return ('{}' if isinstance(param, str) else "{:0.0f}").format(param)
 
 class Snapshot:
     def start_snapshot(self): pass
     def start_light(self, light): pass
-    def handle_setting(self, name, value): pass
+    def record_setting(self, name, value): pass
     def handle_power(self, power): pass
     def end_light(self): pass
     def end_snapshot(self): pass
 
     def handle_color(self, color):
-        self.handle_setting('hue', color[0])
-        self.handle_setting('saturation', color[1])
-        self.handle_setting('brightness', color[2])
-        self.handle_setting('kelvin', color[3])
+        self.record_setting(Register.HUE, color[0])
+        self.record_setting(Register.SATURATION, color[1])
+        self.record_setting(Register.BRIGHTNESS, color[2])
+        self.record_setting(Register.KELVIN, color[3])
 
     @injection.inject(LightSet)
     def generate(self, light_set):
@@ -52,13 +52,13 @@ class ScriptSnapshot(Snapshot):
         self._script = ''
 
     def start_snapshot(self):
-        self._script = 'duration 1500\n'
+        self._script = 'time 0 duration 1.5\n'
 
     def start_light(self, light):
         self._light_name = light.get_label()
 
-    def handle_setting(self, name, value):
-        self._script += '{} {} '.format(name, value)
+    def record_setting(self, reg, value):
+        self._script += '{} {} '.format(reg, value)
 
     def handle_color(self, color):
         params = zip([
@@ -68,7 +68,7 @@ class ScriptSnapshot(Snapshot):
         units = Units()
         for param in params:
             reg, value = param
-            fmt = '{} {:.2f} ' if units.requires_conversion(reg) else '{} {} '
+            fmt = '{} {:.0f} ' if units.requires_conversion(reg) else '{} {} '
             self._script += fmt.format(
                 reg.name.lower(), units.as_logical(reg, value))
 
@@ -77,7 +77,7 @@ class ScriptSnapshot(Snapshot):
 
     def end_light(self):
         self._script += 'set "{}"\n'.format(self._light_name)
-        fmt = 'time 2000 on "{}"\n' if self._power else 'time 2000 off "{}"\n'
+        fmt = 'on "{}"\n' if self._power else 'off "{}"\n'
         self._script += fmt.format(self._light_name)
 
     @property
@@ -98,20 +98,20 @@ class InstructionSnapshot(Snapshot):
     def start_light(self, light):
         self._light_name = light.get_label()
 
-    def handle_setting(self, name, value):
-        self._snapshot += 'OpCode.set_reg, "{}", {},\n'.format(
-            name, _quote_if_string(value))
+    def record_setting(self, reg, value):
+        self._snapshot += 'OpCode.SET_REG, {}, {},\n'.format(
+            reg, _quote_if_string(value))
 
     def handle_power(self, power):
         self._power = power
 
     def end_light(self):
-        self._snapshot += 'OpCode.set_reg, "_name", "{}",\n'.format(
+        self._snapshot += 'OpCode.SET_REG, Register.NAME, "{}",\n'.format(
             self._light_name)
-        self._snapshot += 'OpCode.set_reg, "operand", Operand.light,\n'
-        self._snapshot += 'OpCode.color,\n'
-        self._snapshot += 'OpCode.set_reg, "power", {},\n'.format(self._power)
-        self._snapshot += 'OpCode.power,\n'
+        self._snapshot += 'OpCode.SET_REG, Register.OPERAND, Operand.LIGHT,\n'
+        self._snapshot += 'OpCode.COLOR,\n'
+        self._snapshot += 'OpCode.SET_REG, Register.POWER, {},\n'.format(self._power)
+        self._snapshot += 'OpCode.POWER,\n'
 
     @property
     def text(self):
@@ -191,7 +191,7 @@ class DictSnapshot(Snapshot):
     def start_light(self, light):
         self._current_dict = {'_name': light.get_label()}
 
-    def handle_setting(self, name, value):
+    def record_setting(self, name, value):
         self._current_dict[name] = value
 
     def end_light(self):
@@ -216,13 +216,13 @@ def main():
         '-l', '--list', help='output instruction list', action='store_true')
     parser.add_argument(
         '-d', '--dict', help='output dictionary format', action='store_true')
+    arg_helper.add_n_argument(parser)
     parser.add_argument(
-        '-p', '--py', help='output Python file', action='store_true')
+        '-p', '--py', help='output Python code', action='store_true')
     parser.add_argument(
         '-s', '--script', help='output script format', action='store_true')
     parser.add_argument(
         '-t', '--text', help='output text format', action='store_true')
-    arg_helper.add_n_argument(parser)
     args = parser.parse_args()
     do_script = args.script
     do_dict = args.dict
@@ -233,9 +233,9 @@ def main():
     injection.configure()
     settings_init = settings.use_base(
         config_values.functional).add_overrides({'single_light_discover': True})
-    overrides = arg_helper.get_overrides(args)
-    if overrides is not None:
-        settings_init.add_overrides(overrides)
+    n_arg = arg_helper.get_overrides(args)
+    if n_arg is not None:
+        settings_init.add_overrides(n_arg)
     settings_init.configure()
     light_module.configure()
 
@@ -248,8 +248,8 @@ def main():
     if do_text:
         _do_gen(TextSnapshot)
     if do_py:
-        text = InstructionSnapshot().generate().text
-        Compiler().generate_from(text)
+        instructions = InstructionSnapshot().generate().text
+        lsc.output_python(lsc.program_code(instructions))
 
 
 if __name__ == '__main__':

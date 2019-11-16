@@ -3,16 +3,20 @@
 import argparse
 import logging
 
-from ..lib import injection
-from ..lib import settings
+from bardolph.lib import injection
+from bardolph.lib import settings
+from bardolph.lib.time_pattern import TimePattern
 
-from . import config_values
-from .instruction import Instruction, OpCode, Operand
-from . import light_module
-from . import machine
+from bardolph.controller import arg_helper
+from bardolph.controller import config_values
+from bardolph.controller.instruction import Instruction, OpCode
+from bardolph.controller.instruction import Operand, Register, TimePatternOp
+from bardolph.controller import light_module
+from bardolph.controller import machine
 
 instructions = [
     #instructions
+
 ]
 
 current_instruction = 0
@@ -29,23 +33,14 @@ def build_instructions():
     program = []
     op_code = next_instruction()
     while op_code != None:
-        if op_code == OpCode.SET_REG:
-            name = next_instruction()
-            value = next_instruction()
-            program.append(Instruction(OpCode.SET_REG, name, value))
+        if op_code in (OpCode.SET_REG, OpCode.TIME_PATTERN):
+            param0 = next_instruction()
+            param1 = next_instruction()
+            program.append(Instruction(op_code, param0, param1))
         else:
             program.append(Instruction(op_code))
         op_code = next_instruction()
     return program
-
-def run_script(overrides = None):
-    injection.configure()
-    settings.using_base(config_values.functional).configure()
-    if overrides != None:
-        settings.specialize(overrides)
-
-    light_module.configure()
-    machine.Machine().run(build_instructions())
 
 def main():
     ap = argparse.ArgumentParser()
@@ -53,15 +48,26 @@ def main():
         '-d', '--debug', help='do debug-level logging', action='store_true')
     ap.add_argument(
         '-f', '--fakes', help='use fake lights', action='store_true')
+    arg_helper.add_n_argument(ap)
     args = ap.parse_args()
 
-    overrides = {'sleep_time': 0.1}
+    injection.configure()
+    settings_init = settings.use_base(config_values.functional)    
+    overrides = {
+        'sleep_time': 0.1
+    }
     if args.debug:
         overrides['log_level'] = logging.DEBUG
         overrides['log_to_console'] = True
     if args.fakes:
-        overrides['use_fakes'] = True
-    run_script(overrides)
+        overrides['use_fakes'] = True    
+    n_arg = arg_helper.get_overrides(args)
+    if n_arg is not None and not args.fakes:
+        overrides.update(n_arg)
+
+    settings_init.add_overrides(overrides).configure()
+    light_module.configure()    
+    machine.Machine().run(build_instructions())
 
 
 if __name__ == '__main__':

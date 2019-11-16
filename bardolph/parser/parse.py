@@ -305,7 +305,7 @@ class Parser:
         return self._token_error('Unexpected input "{}"')
 
     def _time_spec_error(self):
-        return self._token_error('Invalid time specification: {}')  
+        return self._token_error('Invalid time specification: "{}"')  
 
     def _normalized_time(self):
         if self._current_token_type == TokenTypes.NUMBER:

@@ -4,8 +4,8 @@ from . import i_lib
 
 
 class TimePattern(i_lib.TimePattern):
-    HOURS_24 = frozenset(range(0, 24))
-    MINUTES_60 = frozenset(range(0, 60))
+    HOURS_24 = set(range(0, 24))
+    MINUTES_60 = set(range(0, 60))
     REGEX = re.compile(r'^(\*|\*\d|\d\*|\d\d?):(\d\d|\d\*|\*\d|\*)$')
     
     def __init__(self, hours, minutes):
@@ -71,7 +71,7 @@ class TimePattern(i_lib.TimePattern):
 
     def _init_hour_set(self, pattern):
         if pattern == '*':
-            self._hour_set=TimePattern.HOURS_24
+            self._hour_set=TimePattern.HOURS_24.copy()
         elif len(pattern) == 1:
             self._hour_set = set([int(pattern)])
         else:
@@ -82,7 +82,7 @@ class TimePattern(i_lib.TimePattern):
 
     def _init_minute_set(self, pattern):
         if pattern == '*':
-            self._minute_set = TimePattern.MINUTES_60
+            self._minute_set = TimePattern.MINUTES_60.copy()
         else:
             self._minute_set = set()
             for minute in range(0, 59):

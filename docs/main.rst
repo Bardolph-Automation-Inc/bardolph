@@ -5,8 +5,8 @@
     
    http://www.bardolph.org
 
-Documentation
-#############
+Introduction
+############
  
 .. toctree::
    :maxdepth: 1
@@ -143,10 +143,9 @@ More information on using scripts in Python code is available in
 
 Quick Installation
 ##################
-This section explains how to instll Bardolph quickly and try it out. For more
+This section explains how to do an install for a quick tryout. For more
 complete installation instructions, please see
-:ref:`installation`. If you
-want to run the web server, you will need to follow those instructions.
+:ref:`installation`. If you want to run the web server, see :ref:`web_install`.
 
 Note that Python 3 is required in all cases. If your system defaults to
 Python 2.x, there's a good chance that you'll need to use `pip3` instead of
@@ -205,188 +204,10 @@ of those you do have, use the "fakes" option:
 
 The fake bulbs sent output to `stdout` that indiciates what commands 
 would normally be sent to the actual devices.
+
+For full documentation on the command-line tools, please see
+:ref:`command_line`.
  
-.. index::
-   single: command-line tools
-
-Executing Scripts
-#################
-This section contains more detailed information about the commands introduced
-above. Of these commands, `lsrun` is probably the one you'll use most often.
-
-.. index::
-   single: discovery delay
-
-.. note:: During initialization, the process of discovering bulbs can take a 
-  while. Basically, a "report" message gets broadcast over the WiFi network,
-  and each bulb announces its presence. If the number
-  of bulbs is unknown, the discover process has no choice but to wait a
-  specific amount of time  for them to stop answering. To minimize any delay,
-  use the optional `-n` or `--num-bulbs` flag to specify the actual number
-  of bulbs. For example:
-  
-  .. code-block:: bash
-  
-    # I have 5 bulbs in my apartment.
-    lscap -n 5
-    lsrun --num-bulbs 5 scripts/on-all.ls
-    
-  With this option, discovery stops as soon as the expected
-  number has been found, which is usually much faster.
-
-.. index::
-   single: lsrun
-
-lsrun - Run a Lightbulb Script
-==============================
-To run a script from the command line:
-
-.. code-block:: bash
-
-  lsrun name.ls
-
- 
-In this context, "name" contains the name of a script. This is essentially
-equivalent to:
-
-.. code-block:: bash
-
-  python -m bardolph.controller.run name.ls
-
-
-You can queue up multiple scripts. If you specify more than one on the
-command line, it will queue them in that order and execute them sequentially:
-
-
-.. code-block:: bash
-
-  lsrun light.ls dark.ls
-
- 
-This would run `light.ls`, and upon completion, execute `dark.ls`.
-
-Command Line Options
---------------------
-Command-line flags modify how a script is run. Each option has a long and a short
-syntax. For example:
-
-.. code-block:: bash
-
-  lsrun --verbose test.ls
-  lsrun -v color_cycle.ls
-
-Available options:
-
-* `-r` or `--repeat`: Repeat the scripts indefinitely, until Ctrl-C is pressed.
-* `-s` or `--script`: Run text from the command line as a script.
-* `-v` or `--verbose`: Generate full debugging output while running.
-* `-f` or `--fake`: Don't operate on real lights. Instead, use "fake" lights that
-  just send output to stdout. This can be helpful for debugging and testing.
-* `-n` or `--num-lights`: Specify the number of lights that are on the network.
-
-With the -f option, there will be 5 fake lights, and their name are fixed as
-"Table", "Top", "Middle", "Bottom", and "Chair". Two fake groups are
-available: "Pole" and "Table". One location named "Home" contains all
-of the fake lights, as well. If you want to use a different set of fake lights,
-you will need to edit some Python code. Specificlly, you'll need to modify
-`LightSet.discover` in `tests/fake_light_set.py`.
-
-Use of the -s option requires the use of ticks or quotation marks
-to contain the script, which will always contain more than one word. For example to
-turn on all the lights, wait 60 seconds, and turn them
-off again, you can do the following from the command line:
-
-.. code-block:: bash
-
-  lsrun -s 'on all time 60 off all'
-  
-.. index::
-   single: lsc
-   single: compiler
-   single: lightbulb script compiler
-
-lsc - Lightbulb Script Compiler
-===============================
-The lightbulb script compiler writes a  parsed and encoded version of the script
-to file  `__generated__.py`.
-
-The syntax is:
-
-.. code-block:: bash
-
-  lsc name.ls 
-
-This is equivalent to:
- 
-.. code-block:: bash
-
-  python -m bardolph.controller.lsc
-
-Only one file name may be provided. The generated file can be run from the
-command line like any other Python module:
-
-.. code-block:: bash
-
-  lsc scripts/evening.ls
-  python -m __generated__
-
-The generated Python module relies on Bardolph's Python modules, which
-should be available after installation.
-
-If you want to use this module in your own Python code, you can import the
-and call the function `run_script()`.
-
-Command Line Options
---------------------
-The generated program has two options:
-
-* `-f` or `--fakes`: Instead of accessing the lights, use "fake" lights that
-  just send output to the log.
-* `-d` or `--debug`: Use debug-level logging.
-
-
-For example, after you've generated the python program:
-
-.. code-block:: bash
-
-  python -m __generated__ -fd
-
-
-This would not affect any physical lights, but would send text to the screen
-indicating what the script would do.
-
-.. index::
-   single: capture
-   single: lscap
-
-lscap - Capture Light State
-===========================
-This program captures the current state of the lights and generates the
-requested type of output. The default output is a human-readable listing
-of the lights. With the -s option, it can give you a convenient
-starting point for creating a new script. This command is also helpful for
-taking a quick look at the state of your bulbs.
-
-The `lscap` command is equivalent to `python -m bardoolph.controller.snapshot`.
-
-Command Line Options
---------------------
-Command-line options control the operation of the command and the type of
-output it produces, notably:
-
-* `-s` or `--script`: outputs a lightbulb script to `stdout`. If you redirect
-  that output to a file and run it as a script, it will restore the lights to
-  the same state, including color and power.
-* `-t` or `--text`: outputs text to `stdout`, in a human-friendly listing of all
-  the known bulbs, groups, and locations.
-* `-p` or `--py`: builds file `__generated__.py` based on the current state of
-  all discovered bulbs. The resulting file is very similar to the output
-  generated by the `lsc` command, and can be run with `python -m __generated__`.
-* `-n` or `--num-lights`: Specify the number of lights that are on the network.
-
-.. index:
-   single: system requirements
-
 System Requirements
 ###################
 The program has been tested on Python versions at or above 3.5.1. I

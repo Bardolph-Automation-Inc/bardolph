@@ -11,7 +11,8 @@
 Lightbulb Script Reference
 ##########################
 This page describes the syntax and capabilities of Bardolph's scripting
-language.
+language. For information on how to run a script, please see
+:ref:`command_line`.
 
 Internally, launching a script is a two-step process. First, a parser reads the
 source file and compiles it into a sequence of encoded instructions. Next, a
@@ -272,9 +273,9 @@ This type of script would typically be run in repeat mode.
 After a scheduled wait, the delay timer is essentially reset. For example::
   
   time at 12:00 on all
-  time 60000 off all
+  time 60 off all
   
-This would turn on all the lights at noon and then turm them off 60,000 ms.
+This would turn on all the lights at noon and then turm them off 60 seconds
 later, which would be at 12:01 p.m.
 
 .. index::
