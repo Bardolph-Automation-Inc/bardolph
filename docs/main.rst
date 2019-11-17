@@ -49,11 +49,11 @@ Here is a script, named `all_on.ls`, that will turn on all your lights::
 
   duration 1.5 on all
 
-The `duration` parameter, which is described below, works to slowly turn on the
-lights over a period 1.5 seconds, which is a much nicer experience than abruptly
-turning them on with no ramp-up.
+The `duration` parameter causes the lights to power up over a period 1.5
+seconds, which is a much nicer experience than abruptly turning them on
+with no ramp-up.
 
-You run the script with:
+This file is in the "scripts" directory, and you can run it with:
 
 .. code-block:: bash
 
@@ -195,6 +195,12 @@ For example:
 
   lsrun scripts/on-all.ls
 
+For a more colorful demonstration:
+
+.. code-block:: bash
+
+  lsrun scripts/cycle-color.ls
+
 If you don't have any bulbs, or prefer not to change the color
 of those you do have, use the "fakes" option:
 
@@ -207,6 +213,12 @@ would normally be sent to the actual devices.
 
 For full documentation on the command-line tools, please see
 :ref:`command_line`.
+
+Uninstall
+=========
+.. code-block:: bash
+
+  pip uninstall bardolph
  
 System Requirements
 ###################

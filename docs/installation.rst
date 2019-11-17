@@ -23,6 +23,10 @@ Note that Python 3.5 or higher is required in all cases. If your system
 defaults to Python 2.x, you probably need to use
 pip3 instead of pip. Notable culprits here are Raspbian and Debian.
 
+Because the Bardolph wheel designates 
+`lifxlan <https://pypi.org/project/lifxlan>`_ as a dependency,
+it may also be downloaded and installed.
+
 .. index::
    single: installation; package
 
@@ -67,8 +71,8 @@ With `setuptools` on your system:
 
   git clone https://github.com/al-fontes-jr/bardolph
   cd bardolph
-  python setup.py bdist 
-  pip install --no-index --find-links ./dist bardolph 
+  python setup.py bdist_wheel 
+  pip install --find-links ./dist bardolph 
 
 Note that the invocation of `setup.py` creates the `dist` directory. Within
 that directory, it creates a `.whl` file containing the new package. When
@@ -79,7 +83,7 @@ When you get a newer release of the code, you can upgrade it with:
 .. code-block:: bash
 
   python setup.py bdist 
-  pip install --upgrade --no-index --find-links ./dist bardolph
+  pip install --upgrade --find-links ./dist bardolph
 
 
 Testing the Installation
@@ -120,14 +124,14 @@ named `scripts`. For example:
 
 .. code-block:: bash 
 
-  lsrun scripts/all-on.ls
+  lsrun scripts/on-all.ls
 
 To run a script without attempting to access any bulbs (for example, if you
 don't have any), use the "fakes" option:
 
 .. code-block:: bash 
 
-  lsrun -f scripts/all-on.ls
+  lsrun -f scripts/on-all.ls
 
 .. index::
    single: uninstall
@@ -141,7 +145,6 @@ Uninstall with:
   pip uninstall bardolph
 
 .. index::
-   single: configuration
    single: logging configuration
    
 Modifying the Configuration
@@ -158,7 +161,7 @@ all accept the `-c` or `--config-file` option. For example:
 
 .. code-block:: bash 
 
-  lsrun -c config.ini scripts/all-on.ls
+  lsrun -c config.ini scripts/on-all.ls
 
 In this case, `lsrun` will first initialize all of its internal settings. It
 will then read the file `config.ini` and replace whatever settings are overridden

@@ -266,7 +266,6 @@ so you may need to `pip3` instead of `pip` throughout. Because the Bardolph
 package lists `lifxlan` as a dependency, it may have already been installed,
 in which case `pip` won't attempt to re-download it.
 
-
 Start the Application Server
 ----------------------------
 From the source distribution directory, for example ~/bardolph:
@@ -323,7 +322,7 @@ or
   killall python
 
 .. index::
-   single: uninstall
+   single: web uninstall
 
 Uninstalling
 ============
@@ -333,6 +332,3 @@ Uninstall with:
 
   pip uninstall bardolph
 
-.. index::
-   single: configuration
-   single: logging configuration

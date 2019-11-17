@@ -9,7 +9,7 @@ setup(
     author="Al Fontes",
     author_email="bardolph@fontes.org",
     description="Simple script interpreter for LIFX light bulbs",
-    long_descripttion=long_description,
+    long_description=long_description,
     url="http://www.bardolph.org",
     license='Apache License 2.0',
     packages=[

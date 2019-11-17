@@ -18,5 +18,6 @@ templates_path = ['_templates']
 
 exclude_patterns = []
 
+html_favicon = 'www/logo_ico.png'
 html_theme = 'nature'
 html_static_path = ['web/static']
