@@ -1,4 +1,4 @@
-![logo](docs/logo.png) 
+![logo](https://www.bardolph.org/logo.png) 
 
 # Bardolph Project
  
@@ -54,7 +54,7 @@ lsrun -s 'off all'
 ```
 
 ## Web Server
-![web screenshot](docs/web.png)
+![web screenshot](https://www.bardolph.org/web_mobile.png)
 
 The web server component makes scripts available in a user-friendly manner.
 It implements a simple web page that lists available scripts and provides a
