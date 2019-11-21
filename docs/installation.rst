@@ -14,26 +14,15 @@ This page contains instructions for setting up only the interpreter and
 other command-line tools. This is a much simpler installation than setting
 up the web server, which is described in :ref:`web_install`.
 
-Typically, installation takes one of two forms:
-
-#. Download and install the package.
-#. Download the source, build the package, and install it.
-
 Note that Python 3.5 or higher is required in all cases. If your system
 defaults to Python 2.x, you probably need to use
 pip3 instead of pip. Notable culprits here are Raspbian and Debian.
+This is likely to be the problem if you get the message
+`Could not find a version that satisfies the requirement bardolph`.
 
 Because the Bardolph wheel designates 
 `lifxlan <https://pypi.org/project/lifxlan>`_ as a dependency,
 it may also be downloaded and installed.
-
-.. index::
-   single: installation; package
-
-Option 1: Built Package
-=======================
-This is the quickest way to get started. You won't necessarily have the
-latest code, but that shouldn't be a problem. To do this kind of installation:
 
 .. code-block:: bash
 
@@ -50,41 +39,6 @@ source tree.
 .. code-block:: bash
 
   git clone https://github.com/al-fontes-jr/bardolph
-
-.. index::
-   single: building
-   single: installation; local build
-   
-Option 2: Build and Install
-===========================
-This option allows you to modify source code, notably the configuration that's
-built into the Python code. To do this, you need to have 
-`setuptools <https://pypi.org/project/setuptools>`_ installed. If necessary:
-
-.. code-block:: bash
-
-  pip install setuptools 
-
-With `setuptools` on your system:
-
-.. code-block:: bash
-
-  git clone https://github.com/al-fontes-jr/bardolph
-  cd bardolph
-  python setup.py bdist_wheel 
-  pip install --find-links ./dist bardolph 
-
-Note that the invocation of `setup.py` creates the `dist` directory. Within
-that directory, it creates a `.whl` file containing the new package. When
-you run `pip`, it finds that file and installs it.
-
-When you get a newer release of the code, you can upgrade it with:
- 
-.. code-block:: bash
-
-  python setup.py bdist 
-  pip install --upgrade --find-links ./dist bardolph
-
 
 Testing the Installation
 ========================

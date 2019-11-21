@@ -10,15 +10,15 @@
 
 Web Server Installation
 #######################
-This page contains instructions for installation of the web server. 
-If you just want to run scripts from the command
-line, you can refer to :ref:`installation`.
-   
 .. index::
    single: web server; installation
 
-These instructions focus on installing on a Raspberry Pi. However, they
-should be fairly accurate for a typical Debian-based system.
+This page contains instructions for installation of the web server. 
+If you just want to run scripts from the command
+lline, please refer to the simpler instructions in :ref:`installation`.
+
+The focus here is installation on a Raspberry Pi. However, the
+instructions should be fairly accurate for a typical Debian-based system.
 
 A key goal for this project is to produce something that's
 genuinely useful on an everyday basis. For me, that's a
@@ -84,15 +84,7 @@ I also change the name of the server. In this example, my server will be
 "vanya.local". This can be done with
 `raspi-config <https://www.raspberrypi.org/documentation/configuration/raspi-config.md>`_.
 
-
-#. Download and install the package.
-#. Download the source, build the package, and install it.
-
-Note that Python 3.5 or higher is required in all cases. **If your system
-defaults to Python 2.x, you probably need to use
-pip3 instead of pip.** Notable culprits here are Raspbian and Debian.
-
-Download Source Code
+Download Source Tree
 ====================
 The web server relies on many non-Python files that are not part of the
 packaged distribution. As a result, you'll need to clone the entire source
@@ -104,51 +96,23 @@ tree with
 
 Install Python Modules
 ======================
-You can install the Bardolph modules with:
-
 .. code-block:: bash
 
   pip install bardolph
-
-This is a bit faster than running a local build. You won't necessarily run the
-latest code, but that shouldn't be a problem.
+  
+.. note:: Python 3.5 or higher is required in all cases. If your system
+   defaults to Python 2.x, you probably need to use
+   `pip3` instead of `pip` throughout these instructions. Notable
+   culprits here are Raspbian and Debian.
 
 After this intallation, the `lsc`, `lsrun`, and `lscap` commands will be
-available in your `~/.local/bin` directory. In addition, if you're planning
-on embedding scripts in your own Python program, the Bardolph support code
-will be importable.
+placed into your `~/.local/bin` directory, which you should add to your
+path. Consider::
 
-Alternative: Build and Install
-------------------------------
-Instead of downloading binaries via pip, you can build and install them
-from a local file. You would do this as the `lights` user.
+  export PATH="~/.local/bin:${PATH}"
 
-You need to have 
-`setuptools <https://pypi.org/project/setuptools>`_ installed. If necessary:
-
-.. code-block:: bash
-
-  pip install setuptools 
-
-With `setuptools` on your system, from the directory where you downloaded the
-code (ex: `/home/lights/bardolph`):
-
-.. code-block:: bash
-
-  python setup.py bdist 
-  pip install --no-index --find-links ./dist bardolph 
-
-Note that the invocation of `setup.py` creates the `dist` directory. Within
-that directory, it creates a `.whl` file containing the new package. When
-you run `pip`, it finds that file and installs it.
-
-When you get a newer release of the code, you can upgrade it with:
- 
-.. code-block:: bash
-
-  python setup.py bdist 
-  pip install --upgrade --no-index --find-links ./dist bardolph
-
+This installation also publishes Python modules for parsing and executing
+scripts.
 
 Testing the Installation
 ======================== 
@@ -156,7 +120,7 @@ To do a quick sanity check:
 
 .. code-block:: bash
 
-  ~/.local/bin/lsrun -h
+  lsrun -h
 
 This should display a help screen. To make sure Bardolph is able to access
 your actual bulbs:
@@ -210,12 +174,12 @@ For example, if you downloaded the code from github to `~lights/bardolph`:
 .. index::
    single: web logging configuration
    
-Log Directory
--------------
+Log Directory Setup
+-------------------
 This is another step you take as a user with `sudo` access, such as the
 `pi` default user.
 
-The web site configuration files in the source distribution specify
+The web site configuration files in the source tree specify
 that all of the logs reside in the directory `/var/log/lights`. Therefore,
 as part of your setup, you need to do the following:
 
@@ -247,8 +211,9 @@ restart it to enable the new configuration with:
 
 Application Server
 ==================
-The HTTP server communicates with the outside world, but all of the program
-logic and UI impelemtation is in a web app, contained in a Python module.
+The HTTP server communicates with the outside world via HTTP on port 80,
+but all of the program logic and UI implemtation is in a web app, 
+ontained in a Python module.
 
 That web app runs within 
 `Flask <https://palletsprojects.com/p/flask>`_. It also uses 
@@ -261,10 +226,8 @@ code relies on
 
   pip install Flask flup lifxlan
 
-As of this writing, a default Raspbian distribution defaults to Python 2.7, 
-so you may need to `pip3` instead of `pip` throughout. Because the Bardolph
-package lists `lifxlan` as a dependency, it may have already been installed,
-in which case `pip` won't attempt to re-download it.
+Because the Bardolph package lists `lifxlan` as a dependency, it may have
+already been installed, in which case `pip` won't attempt to re-download it.
 
 Start the Application Server
 ----------------------------
@@ -332,3 +295,4 @@ Uninstall with:
 
   pip uninstall bardolph
 
+Aside from that un-install, you can also recursively delete the source tree.
