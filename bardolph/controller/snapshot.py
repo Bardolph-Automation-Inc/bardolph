@@ -30,15 +30,24 @@ class Snapshot:
         self.record_setting(Register.SATURATION, color[1])
         self.record_setting(Register.BRIGHTNESS, color[2])
         self.record_setting(Register.KELVIN, color[3])
-
+        
+    def handle_zones(self, light):
+        for zone in light.get_color_zones():
+            self.start_light(light)
+            self.handle_color(zone)
+            self.end_light()
+ 
     @injection.inject(LightSet)
     def generate(self, light_set):
         self.start_snapshot()
         for name in light_set.light_names:
             light = light_set.get_light(name)
             self.start_light(light)
-            self.handle_color(light.get_color())
-            self.handle_power(light.get_power())
+            if light.supports_multizone():
+                self.handle_zones(light)
+            else:
+                self.handle_color(light.get_color())
+                self.handle_power(light.get_power())
             self.end_light()
         self.end_snapshot()
         return self
@@ -216,6 +225,8 @@ def main():
         '-l', '--list', help='output instruction list', action='store_true')
     parser.add_argument(
         '-d', '--dict', help='output dictionary format', action='store_true')
+    parser.add_argument(
+        '-f', '--use-fakes', help='use fake lights', action='store_true')
     arg_helper.add_n_argument(parser)
     parser.add_argument(
         '-p', '--py', help='output Python code', action='store_true')
@@ -233,6 +244,8 @@ def main():
     injection.configure()
     settings_init = settings.use_base(
         config_values.functional).add_overrides({'single_light_discover': True})
+    if args.use_fakes:
+        settings_init.add_overrides({'use_fakes': True})
     n_arg = arg_helper.get_overrides(args)
     if n_arg is not None:
         settings_init.add_overrides(n_arg)

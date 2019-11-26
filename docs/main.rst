@@ -112,7 +112,7 @@ browser bookmark or desktop shortcut.
 
 This is currently a somewhat experimental feature, as getting it to
 run can be a bit of a chore. I describe the process for setting up a server
-in :ref:`installation`.
+in :ref:`web_install`.
 
 The theory of operation for the web server can be found in :ref:`web_server`.
 
@@ -162,7 +162,8 @@ code, the Bardolph modules should be importable.
 
 To be able to use these commands later on, I would recommend that you modify
 your `.bash_profile` (or equivalent, depending on your shell) to
-add `~/.local/bin` to your path.
+add `~/.local/bin` to your path. If you're running on a Raspberry Pi,
+the default `.profile` may already take care of this.
 
 To get a copy of the sample scripts, you still need to download the source:
 
@@ -242,6 +243,10 @@ bulb. All the bulbs I own are multi-colored, which means that I haven't done
 any testing with "Day and Dusk" or "White" bulbs. I would expect them to
 work ok, although I don't really know.
 
+I've also done some preliminary testing with the Z LED strip. It seems to
+work well, although there's no support for zones, yet. If you set the
+color of the strip, the entire set of LED's will have that same color.
+
 Given the wide-open nature of their API, I plan to start work on supporting other
 LIFX devices, including those that can display more than one color at a time,
 as soon as I get around to buying them.
@@ -251,10 +256,11 @@ Missing Features
 These are among the missing features that I'll be working on, in no particular
 order:
 
+* Access to zones on multi-zone devices.
 * Easy-to-use web server.
 * Flow of control, such as loops, branching, and subroutines.
 * Mathematical expressions.
-* Support for other devices (I don't own anything but multi-color bulbs).
+* Support for tiles.
 
 Project Name Source
 ###################

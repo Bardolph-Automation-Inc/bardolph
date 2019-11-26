@@ -1,13 +1,14 @@
 import logging
 
+from lifxlan.errors import WorkflowException
+
 from ..lib.i_lib import Clock, TimePattern
 from ..lib.color import average_color
 from ..lib.injection import inject, provide
 
 from .get_key import getch
 from .i_controller import LightSet
-from .instruction import OpCode, Operand, TimePatternOp
-
+from .instruction import OpCode, Operand, SetOp
 
 class Registers:
     def __init__(self):
@@ -19,6 +20,7 @@ class Registers:
         self.power = False
         self.name = None
         self.operand = None
+        self.zones = None
         self.time = 0 # ms.
 
     def get_color(self):
@@ -79,7 +81,8 @@ class Machine:
         Operand.ALL: self._color_all,
         Operand.LIGHT: self._color_light,
         Operand.GROUP: self._color_group,
-        Operand.LOCATION: self._color_location
+        Operand.LOCATION: self._color_location,
+        Operand.MZ_LIGHT: self._color_mz_light
     }[self._reg.operand]()
 
     @inject(LightSet)
@@ -93,6 +96,17 @@ class Machine:
             Machine._report_missing(self._reg.name)
         else:
             light.set_color(self._reg.get_color(), self._reg.duration, True)
+            
+    @inject(LightSet)
+    def _color_mz_light(self, light_set):
+        light = light_set.get_light(self._reg.name)
+        if light is None:
+            Machine._report_missing(self._reg.name)
+        elif self._zone_check(light):
+            start_index, end_index = self._reg.zones
+            light.set_zone_color(
+                start_index, end_index, 
+                self._reg.get_color(), self._reg.duration, True)
 
     @inject(LightSet)
     def _color_group(self, light_set):
@@ -124,7 +138,7 @@ class Machine:
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            light.set_power(self._reg.get_power(), self._reg.duration)
+            light.set_power(self._reg.get_power(), self._reg.duration, True)
 
     @inject(LightSet)
     def _power_group(self, light_set):
@@ -139,39 +153,19 @@ class Machine:
         for light in lights:
             light.set_power(power, self._reg.duration)
 
-    def _get_color(self): {
-        Operand.ALL: self._get_overall_color,
-        Operand.LIGHT: self._get_light_color,
-        Operand.GROUP: self._get_group_color,
-        Operand.LOCATION: self._get_location_color
-    }[self._reg.operand]()
-
     @inject(LightSet)
-    def _get_overall_color(self, light_set):
-        colors = [light.get_color() for light in light_set.lights]
-        self.color_to_reg(average_color(colors))
-
-    @inject(LightSet)
-    def _get_light_color(self, light_set):
+    def _get_color(self, light_set):
         light = light_set.get_light(self._reg.name)
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            self.color_to_reg(light.get_color())
-
-    @inject(LightSet)
-    def _get_group_color(self, light_set):
-        colors = [
-            light.get_color() for light in light_set.get_group(self._reg.name)]
-        self.color_to_reg(average_color(colors))
-
-    @inject(LightSet)
-    def _get_location_color(self, light_set):
-        colors = [
-            light.get_color() for light in
-            light_set.get_location(self._reg.name)]
-        self.color_to_reg(average_color(colors))
-
+            if self._reg.operand == Operand.MZ_LIGHT:
+                if self._zone_check(light):
+                    zone = self._reg.zones[0]
+                    self.color_to_reg(light.get_color_zones(zone, zone + 1))[0]
+            else:
+                self.color_to_reg(light.get_color())
+            
     def _nop(self): pass
 
     def _pause(self):
@@ -202,13 +196,25 @@ class Machine:
 
     def _time_pattern(self):
         inst = self._program[self._pc]
-        if inst._param0 == TimePatternOp.INIT:
+        if inst._param0 == SetOp.INIT:
             self._reg.time = inst._param1
         else:
             self._reg.time.union(inst._param1)
 
     def _time_wait(self):
         self._check_wait()
+
+    def _zone_check(self, light):
+        try:
+            if not light.supports_multizone():
+                logging.warning(
+                    'Light "{}" is not multi-zone.'.format(light.get_label()))
+                return False
+        except WorkflowException:
+            name = light.get_label()
+            logging.warning(
+                'Exception checking capability of "{}"'.format(name))
+        return True
 
     @classmethod
     def _report_missing(cls, name):

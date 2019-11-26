@@ -26,3 +26,4 @@ class TokenTypes(Enum):
     TIME_PATTERN = auto()
     UNITS = auto()
     UNKNOWN = auto()
+    ZONE = auto()

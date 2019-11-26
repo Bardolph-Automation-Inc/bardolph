@@ -8,10 +8,11 @@ from bardolph.controller import i_controller
 
 
 class Light:
-    def __init__(self, name, group, location, color):
+    def __init__(self, name, group, location, color, multizone):
         self._name = name
         self._group = group
         self._location = location
+        self._multizone = multizone
         self._power = 12345
         self._color = color if color is not None else [0, 0, 0, 0]
 
@@ -29,6 +30,13 @@ class Light:
         self._color = color
         logging.info('Color "{}" {}, {}'.format(self._name, color, duration))
 
+    def set_zone_color(self, start_index, end_index, color, duration, _=False):
+        logging.info('Multizone color "{}" {}, {}, {}, {}'.format(
+            self._name, start_index, end_index, color, duration))
+
+    def supports_multizone(self):
+        return self._multizone
+    
     def set_return_color(self, color):
         self._color = color
 
@@ -38,6 +46,9 @@ class Light:
 
     def get_power(self):
         return self._power
+
+    def get_color_zones(self, start=0, end=7):
+        return [[self._color]] * (end - start)
 
     def set_return_power(self, power):
         self._power = power
@@ -71,9 +82,10 @@ class LightSet:
                 'Bottom', 'Pole', 'Home', [1000, 2000, 3000, 4000])
             self.add_light(
                 'Chair', 'Furniture', 'Home', [10000, 20000, 30000, 40000])
+            self.add_light('Strip', 'Furniture', 'Home', [4, 3, 2, 1], True)
 
-    def add_light(self, name, group, location, color=None):
-        new_light = Light(name, group, location, color)
+    def add_light(self, name, group, location, color=None, multizone=False):
+        new_light = Light(name, group, location, color, multizone)
         self._lights[name] = new_light
         if group is not None:
             if group in self._groups:

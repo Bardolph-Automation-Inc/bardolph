@@ -6,16 +6,20 @@ Al Fontes - [bardolph@fontes.org](mailto:bardolph@fontes.org)
 
 **Bardolph** is a facility for controlling LIFX (https://www.lifx.com) lights
 through a simple scripting language. It is targeted at people who would like
-to control or experiment with their lights in an automated way, but who do not 
-want to learn a programming language or API.
+to control or experiment with their lights in an automated way, using a minimal
+amount of coding.
 
+Using their names, you can control individual lights, groups or locations. Or,
+just pick a color for all the lights on your network. If you have any multi-zone
+lights, the language allows you to set colors for specific zones.
+ 
 The program does not use the Internet to access the bulbs, and no login is 
 required; all of its  communication occurs over the local WiFi network. You 
 can edit scripts with a basic text editor and run them from the command line.
 
-The language is missing quite a lot of what you might expect, as it's still
-under development. However, it is also very simple, and should be usable
-by non-programmers.
+The language may be missing some constructs you might expect, such as loops and
+arithmetic expressons, as it's still under development. However, it is also
+very simple, and should be usable by non-programmers.
 
 ## Quick Examples
 Here is a script, named `all_on.ls`, that will turn on all your lights:

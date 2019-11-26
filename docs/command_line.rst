@@ -174,9 +174,9 @@ output it produces, notably:
   the same state, including color and power.
 * `-t` or `--text`: outputs text to `stdout`, in a human-friendly listing of all
   the known bulbs, groups, and locations.
-* `-p` or `--py`: builds file `__generated__.py` based on the current state of
-  all discovered bulbs. The resulting file is a Python program that can be
-  run later to restore those setttings.
+* `-p` or `--py`: generates Python code based on the current state of
+  all discovered bulbs. If you save that output in a Python file, 
+  you can run it later to restore those setttings.
 * `-n` or `--num-lights`: Specify the number of lights that are on the network.
 
 .. index:

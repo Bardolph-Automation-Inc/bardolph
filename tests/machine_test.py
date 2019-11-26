@@ -39,25 +39,11 @@ class MachineTest(unittest.TestCase):
             Instruction(OpCode.GET_COLOR)
         ]
 
-    def test_get_single_color(self):
+    def test_get_color(self):
         program = MachineTest.code_for_get(self.names[0], Operand.LIGHT)
         machine = Machine()
         machine.run(program)
         self.assertListEqual(machine.color_from_reg(), self.colors[0])
-
-    def test_get_group_color(self):
-        program = MachineTest.code_for_get("Group1", Operand.GROUP)
-        machine = Machine()
-        machine.run(program)
-        avg = [14, 18, 22, 26]
-        self.assertListEqual(machine.color_from_reg(), avg)
-
-    def test_get_location_color(self):
-        program = MachineTest.code_for_get("Loc2", Operand.LOCATION)
-        machine = Machine()
-        machine.run(program)
-        avg = [44, 48, 52, 56]
-        self.assertListEqual(machine.color_from_reg(), avg)
 
     @classmethod
     def code_for_set(cls, name, operand, params):

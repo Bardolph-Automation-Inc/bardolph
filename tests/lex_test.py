@@ -25,27 +25,27 @@ class LexTest(unittest.TestCase):
     def test_all_tokens(self):
         input_string = 'all and at brightness \
             define # comment \n duration hue \
-            off on or kelvin saturation set time  12:*4 \
+            off on or kelvin saturation set time zone 12:*4 \
             01.234\n"Hello There"@'
         expected_tokens = [
-            TokenTypes.ALL, TokenTypes.AND, TokenTypes.AT,
-            TokenTypes.REGISTER, TokenTypes.DEFINE, TokenTypes.REGISTER,
-            TokenTypes.REGISTER, TokenTypes.OFF, TokenTypes.ON, TokenTypes.OR,
-            TokenTypes.REGISTER, TokenTypes.REGISTER,
-            TokenTypes.SET,TokenTypes.REGISTER, TokenTypes.TIME_PATTERN, 
-            TokenTypes.NUMBER, TokenTypes.LITERAL, TokenTypes.UNKNOWN
+            TokenTypes.ALL, TokenTypes.AND, TokenTypes.AT, TokenTypes.REGISTER,
+            TokenTypes.DEFINE, TokenTypes.REGISTER, TokenTypes.REGISTER,
+            TokenTypes.OFF, TokenTypes.ON, TokenTypes.OR, TokenTypes.REGISTER,
+            TokenTypes.REGISTER, TokenTypes.SET, TokenTypes.REGISTER,
+            TokenTypes.ZONE, TokenTypes.TIME_PATTERN, TokenTypes.NUMBER,
+            TokenTypes.LITERAL, TokenTypes.UNKNOWN
         ]
         expected_strings = [
-            "all", "and", "at", "brightness", "define", "duration",
-            "hue", "off", "on", "or", "kelvin", "saturation", "set",
-            "time", '12:*4', "01.234", "Hello There", "@"
+            'all', 'and', 'at', 'brightness', 'define', 'duration',
+            'hue', 'off', 'on', 'or', 'kelvin', 'saturation', 'set',
+            'time', 'zone', '12:*4', '01.234', 'Hello There', '@'
         ]
         self.lex_and_compare(input_string, expected_tokens, expected_strings)
 
     def test_abbreviations(self):
         input_string = 'h k s b'
         expected_tokens = [TokenTypes.REGISTER for _ in range(0, 4)]
-        expected_strings = ["hue", "kelvin", "saturation", "brightness"]
+        expected_strings = ['hue', 'kelvin', 'saturation', 'brightness']
         self.lex_and_compare(input_string, expected_tokens, expected_strings)
 
     def lex_and_compare(self, input_string, expected_tokens, expected_strings):

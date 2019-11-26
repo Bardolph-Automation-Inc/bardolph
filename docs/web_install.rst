@@ -88,7 +88,7 @@ Download Source Tree
 ====================
 The web server relies on many non-Python files that are not part of the
 packaged distribution. As a result, you'll need to clone the entire source
-tree with
+tree. First, log in as the `lights` user, then:
 
 .. code-block:: bash
 
@@ -96,6 +96,8 @@ tree with
 
 Install Python Modules
 ======================
+Still logged in as the `lights` user:
+
 .. code-block:: bash
 
   pip install bardolph
@@ -107,12 +109,21 @@ Install Python Modules
 
 After this intallation, the `lsc`, `lsrun`, and `lscap` commands will be
 placed into your `~/.local/bin` directory, which you should add to your
-path. Consider::
-
-  export PATH="~/.local/bin:${PATH}"
+path. 
 
 This installation also publishes Python modules for parsing and executing
 scripts.
+
+As of this writing, the default `.profile` on in Raspbian adds `~/.local/bin`
+to your path, but only if it exists. Therefore, either log out and back in
+again, or:
+
+.. code-block:: bash
+  
+  source ~/.profile 
+
+If you are using a different operating system, or your `.profile` doesn't
+add the path, you'll need to do so yourself.
 
 Testing the Installation
 ======================== 
@@ -167,7 +178,7 @@ For example, if you downloaded the code from github to `~lights/bardolph`:
 .. code-block:: bash
 
   cd /etc/lighttpd
-  sudo cp lighttpd.conf lighttpd.conf.original
+  sudo mv lighttpd.conf lighttpd.conf.original
   sudo ln -s /home/lights/bardolph/web/server/rpi/lighttpd.conf .
   sudo ln -s /home/lights/bardolph/web/server/common.conf .
 
@@ -211,9 +222,11 @@ restart it to enable the new configuration with:
 
 Application Server
 ==================
+From this step forward, you should be logged in as user `lights`.
+
 The HTTP server communicates with the outside world via HTTP on port 80,
 but all of the program logic and UI implemtation is in a web app, 
-ontained in a Python module.
+contained in a Python module.
 
 That web app runs within 
 `Flask <https://palletsprojects.com/p/flask>`_. It also uses 
@@ -242,6 +255,9 @@ You should do this as the `lights` user.
 If all goes well, you should be able to access the home page. Because
 I've named my server "vanya" with raspi-config, I access it at
 http://vanya.local.
+
+For more information on using the web server, please see
+:ref:`web_server`.
 
 After a Reboot
 --------------

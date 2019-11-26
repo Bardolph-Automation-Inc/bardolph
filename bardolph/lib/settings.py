@@ -32,7 +32,11 @@ class Builder:
         config.read(file_name)
         for section in config.sections():
             for key in config[section]:
-                self._config[key] = config[section][key]
+                value = config[section][key]
+                self._config[key] = {
+                    'True': True,
+                    'False': False
+                }.get(value, value)
         return self
 
     def configure(self):

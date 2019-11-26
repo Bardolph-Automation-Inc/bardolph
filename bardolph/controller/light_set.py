@@ -38,10 +38,11 @@ class LightSet(i_controller.LightSet):
 
     @inject(Settings)
     def discover(self, settings):
+        logging.debug("discover()")
         default_num = int(settings.get_value('default_num_lights', 0))
         num_expected = None if default_num == 0 else default_num
         try:
-            light_list = LightSet._broadcast_state_service(num_expected)
+            light_list = lifxlan.LifxLAN(num_expected).get_lights()
             new_dict = {}
             for light in light_list:
                 new_dict[light.get_label()] = light
@@ -62,22 +63,6 @@ class LightSet(i_controller.LightSet):
                 "Expected {} devices, found {}".format(num_expected, actual))
             return False
         return True
-
-    @classmethod
-    def _broadcast_state_service(cls, num_expected):
-        lifx = lifxlan.LifxLAN(num_expected)
-        responses = lifx.broadcast_with_resp(
-            lifxlan.msgtypes.GetService, lifxlan.msgtypes.StateService,
-            max_attempts=5)
-
-        light_list = list()
-        for response in responses:
-            new_light = lifxlan.light.Light(
-                response.target_addr, response.ip_addr, response.service,
-                response.port, lifx.source_id, lifx.verbose)
-            light_list.append(new_light)
-
-        return light_list
 
     @classmethod
     def _build_set(cls, light_list, fn):

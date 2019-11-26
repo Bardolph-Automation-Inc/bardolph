@@ -35,7 +35,7 @@ class Lex:
     def next_token(self):
         token_type = None
         while token_type is None:
-            match = next(self._tokens, None)
+            match = None if self._tokens is None else next(self._tokens, None)
             while match is None:
                 self._next_line()
                 if self._tokens is None:

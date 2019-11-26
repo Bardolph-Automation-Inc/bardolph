@@ -14,6 +14,7 @@ class OpCode(Enum):
     STOP = auto()
     TIME_PATTERN = auto()
     TIME_WAIT = auto()
+    ZONE = auto()
 
 
 class Operand(Enum):
@@ -21,9 +22,11 @@ class Operand(Enum):
     LIGHT = auto()
     GROUP = auto()
     LOCATION = auto()
+    MZ_LIGHT = auto()
 
 
-class TimePatternOp(Enum):
+class SetOp(Enum):
+    """ Used with TimePattern """
     INIT = auto()
     UNION = auto()
     
@@ -38,6 +41,7 @@ class Register(Enum):
     NAME = auto()
     OPERAND = auto()
     TIME = auto()
+    ZONES = auto()
 
 
 class Instruction:

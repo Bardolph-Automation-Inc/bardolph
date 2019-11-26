@@ -2,17 +2,13 @@
 
 import argparse
 import logging
-import re
 
 from ..controller.instruction import Instruction, OpCode, Operand
-from ..controller.instruction import Register, TimePatternOp
+from ..controller.instruction import Register, SetOp
 from ..controller.units import UnitMode, Units
 from . import lex
 from ..lib.time_pattern import TimePattern
 from .token_types import TokenTypes
-
-
-WORD_REGEX = re.compile(r"\w+")
 
 
 class Parser:
@@ -86,14 +82,13 @@ class Parser:
         register = Register[self._name.upper()]
         if register == Register.TIME:
             return self._time()
+        if register == Register.DURATION:
+            return self._duration()
                 
         self._next_token()
         if self._current_token_type == TokenTypes.NUMBER:
             try:
-                if register == Register.DURATION:
-                    value = self._normalized_time()
-                else:
-                    value = round(float(self._current_token))
+                value = round(float(self._current_token))
             except ValueError:
                 return self._token_error('Invalid number: "{}"')
         elif self._current_token_type == TokenTypes.LITERAL:
@@ -106,20 +101,20 @@ class Parser:
         self._add_reg_instruction(register, value)
         return self._next_token()
 
-    def _add_reg_instruction(self, reg_name, value):
+    def _add_reg_instruction(self, reg, value):
         units = Units()
         if self._unit_mode == UnitMode.LOGICAL:
-            value = units.as_raw(reg_name, value)
-            if units.has_range(reg_name):
-                (min_val, max_val) = units.get_range(reg_name)
+            value = units.as_raw(reg, value)
+            if units.has_range(reg):
+                (min_val, max_val) = units.get_range(reg)
                 if value < min_val or value > max_val:
                     if self._unit_mode == UnitMode.LOGICAL:
-                        min_val = units.as_logical(reg_name, min_val)
-                        max_val = units.as_logical(reg_name, max_val)
+                        min_val = units.as_logical(reg, min_val)
+                        max_val = units.as_logical(reg, max_val)
                     return self._trigger_error(
                         '{} must be between {} and {}'.format(
-                            reg_name.lower(), min_val, max_val))
-        self._add_instruction(OpCode.SET_REG, reg_name, value)
+                            reg.name.lower(), min_val, max_val))
+        self._add_instruction(OpCode.SET_REG, reg, value)
 
     def _set_units(self):
         self._next_token()
@@ -139,7 +134,30 @@ class Parser:
         return self._action(OpCode.COLOR)
 
     def _get(self):
-        return self._action(OpCode.GET_COLOR)
+        self._next_token()
+        if self._current_token_type == TokenTypes.LITERAL:
+            self._name = self._current_token
+        elif self._current_token in self._symbol_table:
+            self._name = self._symbol_table[self._current_token]
+        else:
+            return self._token_error('Needed light or zone for "get", got {}.')
+        
+        self._next_token()
+        if self._current_token_type == TokenTypes.ZONE:
+            operand = Operand.MZ_LIGHT
+            self._next_token()
+            if self._current_token_type != TokenTypes.NUMBER:
+                return self._token_error('Expected zone number, got "{}"')
+            self._add_instruction(
+                OpCode.SET_REG, Register.ZONES, (self._current_int(), None))
+            self._next_token()
+        else:
+            operand = Operand.LIGHT
+
+        self._add_instruction(OpCode.SET_REG, Register.NAME, self._name)
+        self._add_instruction(OpCode.SET_REG, Register.OPERAND, operand)
+        self._add_instruction(OpCode.GET_COLOR)
+        return True
 
     def _power_on(self):
         self._add_instruction(OpCode.SET_REG, Register.POWER, True)
@@ -162,11 +180,24 @@ class Parser:
         if self._current_token_type == TokenTypes.NUMBER:
             value = self._normalized_time()
         elif self._current_token in self._symbol_table:
-            value = self._symbol_table[self._current_token]
+            value = self._normalized_time(
+                self._symbol_table[self._current_token])
         else:
             return self._time_spec_error()
-        
         self._add_reg_instruction(Register.TIME, value)
+        return self._next_token()
+        
+    def _duration(self):
+        print("duration")
+        self._next_token()
+        if self._current_token_type == TokenTypes.NUMBER:
+            value = self._normalized_time()
+        elif self._current_token in self._symbol_table:
+            value = self._normalized_time(
+                self._symbol_table[self._current_token])
+        else:
+            return self._token_error("Expected number for duration, got {}.")
+        self._add_reg_instruction(Register.DURATION, value)
         return self._next_token()
         
     def _process_time_patterns(self):
@@ -174,7 +205,7 @@ class Parser:
         if time_pattern is None:
             return self._time_spec_error()
         self._add_instruction(
-            OpCode.TIME_PATTERN, TimePatternOp.INIT, time_pattern)
+            OpCode.TIME_PATTERN, SetOp.INIT, time_pattern)
         self._next_token()
 
         while self._current_token_type == TokenTypes.OR:
@@ -182,7 +213,7 @@ class Parser:
             if time_pattern is None:
                 return self._time_spec_error()  
             self._add_instruction(
-                OpCode.TIME_PATTERN, TimePatternOp.UNION, time_pattern)
+                OpCode.TIME_PATTERN, SetOp.UNION, time_pattern)
             self._next_token()
 
         return True;
@@ -199,53 +230,84 @@ class Parser:
         return time_pattern  
     
     def _action(self, op_code):
+        """ op_code: COLOR, GET_COLOR, or POWER """
         self._op_code = op_code
-        self._next_token()
-
-        if self._current_token_type == TokenTypes.GROUP:
-            self._add_instruction(
-                OpCode.SET_REG, Register.OPERAND, Operand.GROUP)
-            self._next_token()
-        elif self._current_token_type == TokenTypes.LOCATION:
-            self._add_instruction(
-                OpCode.SET_REG, Register.OPERAND, Operand.LOCATION)
-            self._next_token()
-        elif self._current_token_type != TokenTypes.ALL:
-            self._add_instruction(
-                OpCode.SET_REG, Register.OPERAND, Operand.LIGHT)
-
-        return self._operand_list()
-
-    def _operand_list(self):
-        if self._current_token_type == TokenTypes.ALL:
-            self._add_instruction(OpCode.SET_REG, Register.NAME, None)
-            self._add_instruction(
-                OpCode.SET_REG, Register.OPERAND, Operand.ALL)
-            if self._op_code != OpCode.GET_COLOR:
-                self._add_instruction(OpCode.TIME_WAIT)
-            self._add_instruction(self._op_code)
-            return self._next_token()
-
-        if not self._operand_name():
-            return False
-
-        self._add_instruction(OpCode.SET_REG, Register.NAME, self._name)
         if self._op_code != OpCode.GET_COLOR:
             self._add_instruction(OpCode.TIME_WAIT)
-        self._add_instruction(self._op_code)
-        while self._current_token_type == TokenTypes.AND:
-            if not self._and():
-                return False
-        return True
 
-    def _operand_name(self):
+        self._next_token()
+        if self._current_token_type == TokenTypes.ALL:
+            return self._all_operand()
+        return self._operand_list()
+    
+    def _all_operand(self):
+        self._add_instruction(OpCode.SET_REG, Register.NAME, None)
+        self._add_instruction(OpCode.SET_REG, Register.OPERAND, Operand.ALL)
+        self._add_instruction(self._op_code)
+        return self._next_token()
+
+    def _operand_list(self):
+        if not self._operand():
+            return self._syntax_error()
+
+        self._add_instruction(self._op_code)
+                
+        while self._current_token_type == TokenTypes.AND:
+            self._next_token()
+            if not self._operand():
+                return False
+            self._add_instruction(self._op_code)
+        return True
+    
+    def _operand(self):
+        """ A group, location, or light with an optional set of zones. """
+        if self._current_token_type == TokenTypes.GROUP:
+            operand = Operand.GROUP
+            self._next_token()
+        elif self._current_token_type == TokenTypes.LOCATION:
+            operand = Operand.LOCATION
+            self._next_token()
+        else:
+            operand = Operand.LIGHT
+            
         if self._current_token_type == TokenTypes.LITERAL:
             self._name = self._current_token
         elif self._current_token in self._symbol_table:
             self._name = self._symbol_table[self._current_token]
         else:
             return self._token_error('Unknown variable: {}')
-        return self._next_token()
+        self._add_instruction(OpCode.SET_REG, Register.NAME, self._name)
+
+        self._next_token()
+        if self._current_token_type == TokenTypes.ZONE:
+            if not self._zone_range():
+                return False
+            operand = Operand.MZ_LIGHT
+
+        self._add_instruction(OpCode.SET_REG, Register.OPERAND, operand)
+        return True
+
+    def _zone_range(self):
+        if self._op_code != OpCode.COLOR:
+            return self._trigger_error('Zones not supported for {}'.format(
+                self._op_code.name.tolower()))
+
+        self._next_token()
+        if self._current_token_type != TokenTypes.NUMBER:
+            return self._token_error('Expected zone number, got "{}"')
+
+        start_zone = self._current_int()
+        self._next_token()
+
+        if self._current_token_type == TokenTypes.NUMBER:
+            end_zone = self._current_int()
+            self._next_token()
+        else:
+            end_zone = start_zone + 1
+            
+        self._add_instruction(
+            OpCode.SET_REG, Register.ZONES, (start_zone, end_zone))
+        return True
 
     def _and(self):
         self._next_token()
@@ -297,6 +359,11 @@ class Parser:
         (self._current_token_type,
          self._current_token) = self._lexer.next_token()
         return True
+    
+    def _current_int(self):
+        if self._current_token_type != TokenTypes.NUMBER:
+            return None
+        return round(float(self._current_token))
 
     def _token_error(self, message_format):
         return self._trigger_error(message_format.format(self._current_token))
@@ -307,12 +374,13 @@ class Parser:
     def _time_spec_error(self):
         return self._token_error('Invalid time specification: "{}"')  
 
-    def _normalized_time(self):
-        if self._current_token_type == TokenTypes.NUMBER:
-            if self._unit_mode == UnitMode.LOGICAL:
-                value = round(float(self._current_token) * 1000.0)
-            else:
-                value = int(self._current_token)
+    def _normalized_time(self, token=None):
+        if token is None:
+            token = self._current_token
+        if self._unit_mode == UnitMode.LOGICAL:
+            value = round(float(token) * 1000.0)
+        else:
+            value = int(token)            
         return value
     
     def _optimize(self):
@@ -330,6 +398,7 @@ class Parser:
         for inst in self._code:
             if inst.op_code == OpCode.GET_COLOR:
                 prev_value = {}
+                opt.append(inst)
             if inst.op_code != OpCode.SET_REG:
                 opt.append(inst)
             else:
@@ -388,9 +457,10 @@ if __name__ == '__main__':
     <hour_pattern> ::= <digit> | <digit><digit> | "*" <digit> |
                         <digit> "*" | "*"
     <minute_pattern> ::= <digit><digit> | <digit> "*" | "*" <digit> | "*"
-    <action> ::= <op_code> <operand_list>
-    <operand_list> ::= "all" | <operand_name> | <operand_name> <and> *
-    <operand_name> ::= <token>
+    <action> ::= <op_code> <operand_list> | <op_code> "all"
+    <operand_list> ::= <operand> | <operand> <and> *
+    <operand> ::= <name> | "group" <name> | "location" <name>
+    <name> ::= <literal> | <token>
     <and> ::= "and" <operand_name>
     <definition> ::= <token> <number> | <token> <literal>
     <literal> ::= "\"" <token> "\""

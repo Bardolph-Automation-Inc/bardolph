@@ -4,12 +4,12 @@
    http://www.bardolph.org
 
 .. index::
-   single: installation; full instructions
+   single: basic installation; full instructions
 
 .. _installation:
 
-Installation
-############
+Basic Installation
+##################
 This page contains instructions for setting up only the interpreter and
 other command-line tools. This is a much simpler installation than setting
 up the web server, which is described in :ref:`web_install`.

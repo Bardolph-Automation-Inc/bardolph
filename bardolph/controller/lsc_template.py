@@ -10,7 +10,7 @@ from bardolph.lib.time_pattern import TimePattern
 from bardolph.controller import arg_helper
 from bardolph.controller import config_values
 from bardolph.controller.instruction import Instruction, OpCode
-from bardolph.controller.instruction import Operand, Register, TimePatternOp
+from bardolph.controller.instruction import Operand, Register, SetOp
 from bardolph.controller import light_module
 from bardolph.controller import machine
 

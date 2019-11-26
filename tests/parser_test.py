@@ -3,7 +3,8 @@
 import logging
 import unittest
 
-from bardolph.controller.instruction import Instruction, OpCode, Register
+from bardolph.controller.instruction import Instruction, OpCode, Operand 
+from bardolph.controller.instruction import Register
 from bardolph.parser.parse import Parser
 
 class ParserTest(unittest.TestCase):
@@ -22,7 +23,8 @@ class ParserTest(unittest.TestCase):
             'define table "Table" set table',
             'hue 5 saturation 10 set "Table"',
             'hue 5 set all',
-            'get all get "Table" get group "group" get location "location"'
+            'get "Table"',
+            'get "Table" zone 0'
         ]
         for string in input_strings:
             self.assertIsNotNone(self.parser.parse(string), string)
@@ -71,6 +73,19 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(expected, actual,
                          "Unit conversion failed: {} {}".format(
                              expected, actual))
+        
+    def test_multi_zone(self):
+        input_string = 'set "Strip" zone 3 5'
+        expected = [
+            Instruction(OpCode.TIME_WAIT, None, None),
+            Instruction(OpCode.SET_REG, Register.NAME, "Strip"),
+            Instruction(OpCode.SET_REG, Register.ZONES, (3, 5)),
+            Instruction(OpCode.SET_REG, Register.OPERAND, Operand.MZ_LIGHT),
+            Instruction(OpCode.COLOR, None, None)
+        ]
+        actual = self.parser.parse(input_string)
+        self.assertEqual(expected, actual,
+                         "Multi-zone failed: {} {}".format(expected, actual))
 
     def test_unit_switch(self):
         input_string = """hue 360 saturation 100 units raw hue 5 brightness 10

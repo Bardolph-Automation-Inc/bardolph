@@ -110,11 +110,37 @@ otherwise unavailable, an error is sent to the log, but execution of the script
 continues. 
 
 .. index::
+   single: multi-zone
+
+Multi-Zone Lights
+=================
+With multiple-zone lights, the `set` command works the same, 
+but you can limit which zones it affects. It can set all of 
+them to the same color, set the color of a single zone, or set
+it for a range of them. For example, I have a Z LED strip, which
+I named "Strip". I can set the entire device to one color with::
+
+  hue 150 saturation 100 brightness 50 kelvin 2700 duration 1.5
+  set "Strip"
+  
+To set only one zone, add a `zone` clause with a single number::
+
+  set "Strip" zone 5
+  
+To set multiple zones, specify a range with starting and ending
+zone numbers::
+
+  set "Strip" zone 0 8
+
+Note that the zone numbers start with zero. If you try use a zone on
+a light that doesn't have that capability, an error will be sent to
+the log, and the light will not be accessed.
+
+.. index::
    single: power
 
 Power Command
 =============
-
 The commands to turn the lights on or off resemble the `set` command::
 
   off all
@@ -127,6 +153,10 @@ When "on" executes, each light will have whatever its color was when
 it was turned off. If a light is already on or off, an otherwise 
 redundant power operation will have no visible effect, although the
 VM does send the power command to the bulbs.
+
+When applied to a multi-zone light, the entire device is powered
+on or off; you can't set the power for individual zones (although you
+can set the brightness to zero).
 
 .. index::
    single: abbreviations
@@ -194,6 +224,19 @@ This script will:
 The `and` keyword works with `set`, `on`, and `off`. When multiple lights are
 specified this way, the interpreter attempts to change all of the lights at 
 once, with (theoretically) no delay between each one.
+
+If a script specifies zones, the `and` comes after the zone numbers. This
+can be convenient for coordinating a multi-zone light with single-zone
+bulbs. For example, with a multi-zone light named "Strip" and a bulb named
+"Table"::
+
+  hue 120 saturation 75 brightness 75 kelvin 2700 duration 1.5
+  set "Strip" zone 0 5 and "Table"
+
+Here's an example of simultaneously setting multiple zones on the
+same light::
+
+  set "Strip" zone 2 and "Strip" zone 13 15
 
 How Time Is Measured
 ====================
@@ -330,6 +373,10 @@ Continuing the same example, you can also set the color of all the lights in the
 
   set group "Reading Lights"
 
+You can combine lights, groups, and locations with the `and` keyword:
+
+  set location "Living Room" and "Table" and group "Reading Lights"
+
 .. index::
    single: define
    single: symbols
@@ -353,40 +400,45 @@ Definitions may refer to other existing symbols::
    single: get
    single: retrieving colors
 
-Retrieving Current Colors
-=========================
-The `get` command retrieves  the current settings from a bulb::
+Retrieving Current Color
+========================
+The `get` command retrieves the current settings from a single light::
 
   get "Table Lamp"
   hue 20
   set all
 
-This script retrieves the values of  `hue`, `saturation`, `brightness`,
-and `kelvin`  from the bulb named "Table Lamp". It then
-overrides only  `hue`. The `set` command then sets all the lights to
-the resulting color.
+This script retrieves the values of `hue`, `saturation`, `brightness`,
+and `kelvin` from the bulb named "Table Lamp". It then
+overrides only `hue`. The `set` command then sets all the 
+other lights to the resulting color.
 
-You can retrieve the colors of all the lights, or the members of a group
-or location. In this case, each setting is the arithmetic mean across all the
-lights. For example::
+From a multi-zone light, you can retrieve the color of a single zone or
+the entire device::
 
-  get group "Reading Lights"
+  get "Strip" zone 5
+  get "Strip"
 
-This gets the average hue from all of the lights in this group, and that becomes
-the hue used in any subsequent `set` action. The same calculation is done on
-saturation, brightness, and kelvin, as well.
+Note that you cannot get values for locations, groups, multiple zones,
+or multiple lights::
 
-To retrieve the average values from all known lights and use them in subsequent
-commands::
-
+  # Errors
+  get "Table Lamp" and "Chair Side"
   get all
+  
+  # Errors
+  get location "Living Room"
+  get group "Reading Lights"
+  
+  # Error
+  get "Strip" zone 5 6
 
-Raw and Logical Units
-=====================
 .. index::
    single: raw units
    single: logical units
 
+Raw and Logical Units
+=====================
 By default, numerical values in scripts are given in units that should be
 convenient to humans. However, those numbers are mapped to 16-bit integer
 values that are sent to the bulbs as specified by the
