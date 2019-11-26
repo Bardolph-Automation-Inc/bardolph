@@ -188,7 +188,6 @@ class Parser:
         return self._next_token()
         
     def _duration(self):
-        print("duration")
         self._next_token()
         if self._current_token_type == TokenTypes.NUMBER:
             value = self._normalized_time()

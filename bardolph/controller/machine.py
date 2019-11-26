@@ -3,7 +3,6 @@ import logging
 from lifxlan.errors import WorkflowException
 
 from ..lib.i_lib import Clock, TimePattern
-from ..lib.color import average_color
 from ..lib.injection import inject, provide
 
 from .get_key import getch
