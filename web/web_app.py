@@ -9,14 +9,16 @@ from bardolph.lib.injection import inject
 from bardolph.lib.job_control import JobControl
 
 from bardolph.controller.i_controller import LightSet
-from bardolph.controller.script_runner import ScriptRunner
+from bardolph.controller.script_job import ScriptJob
 from bardolph.controller.snapshot import DictSnapshot, ScriptSnapshot
 
 
 class Script:
-    def __init__(self, file_name, repeat, title, path, background, color, icon):
+    def __init__(self, file_name, repeat, run_background, title, path,
+                 background, color, icon):
         self.file_name = html.escape(file_name)
         self.repeat = repeat
+        self.run_background = run_background
         self.path = html.escape(path)
         self.title = html.escape(title)
         self.background = html.escape(background)
@@ -44,31 +46,28 @@ class WebApp:
         for script_info in script_list:
             file_name = script_info['file_name']
             repeat = script_info.get('repeat', False)
+            run_background = script_info.get('run_background', False)
             title = self.get_script_title(script_info)
             path = self.get_script_path(script_info)
             background = script_info['background']
             color = script_info['color']
             icon = script_info.get('icon', 'litBulb')
             new_script = Script(
-                file_name, repeat, title, path, background, color, icon)
+                file_name, repeat, run_background, title, path, background,
+                color, icon)
             self._scripts[path] = new_script
             self._scripts_list.append(new_script)
 
     @inject(Settings)
     def queue_script(self, script, settings):
-        """
-        If a repeating script is to be queued up, first clear the entire
-        queue. For a non-repeating script, append the incoming script and turn
-        off repeating, but allow the current cycle of the running script
-        to complete.
-        """
-        if script.repeat:
-            self.request_stop()
-            self._jobs.set_repeat(True)
-        else:
-            self._jobs.set_repeat(False)
+        self._jobs.request_stop()
         fname = join(settings.get_value("script_path", "."), script.file_name)
-        self._jobs.add_job(ScriptRunner.from_file(fname))
+        job = ScriptJob.from_file(fname)
+        if script.run_background:
+            self._jobs.spawn_job(job, script.repeat)
+        else:
+            self._jobs.set_repeat(script.repeat)
+            self._jobs.add_job(job)
 
     def get_script(self, path):
         return self._scripts.get(path, None)
@@ -123,7 +122,9 @@ class WebApp:
         self._jobs.request_finish()
 
     def request_stop(self):
-        self._jobs.request_stop()
+        # Stop everything, including background scripts.
+        stop_background = True
+        self._jobs.request_stop(stop_background)
 
     @inject(Settings)
     def snapshot(self, settings):

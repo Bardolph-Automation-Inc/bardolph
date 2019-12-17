@@ -46,3 +46,7 @@ class Builder:
 
 def use_base(initial=None):
     return Builder(initial)
+
+
+def empty():
+    return Builder(None)

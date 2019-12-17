@@ -1,3 +1,4 @@
+class Lifx: pass
 class Light: pass
 class LightSet: pass
 class CueHandler: pass

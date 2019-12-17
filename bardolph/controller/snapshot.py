@@ -24,6 +24,9 @@ class Snapshot:
     def handle_power(self, power): pass
     def end_light(self): pass
     def end_snapshot(self): pass
+    def start_multizone(self, light): pass
+    def handle_zone(self, light, number, color): pass
+    def end_multizone(self, light): pass
 
     def handle_color(self, color):
         self.record_setting(Register.HUE, color[0])
@@ -32,23 +35,23 @@ class Snapshot:
         self.record_setting(Register.KELVIN, color[3])
         
     def handle_zones(self, light):
-        for zone in light.get_color_zones():
-            self.start_light(light)
-            self.handle_color(zone)
-            self.end_light()
- 
+        for number, color in enumerate(light.get_color_zones()):
+            self.handle_zone(light, number, color)
+        
     @injection.inject(LightSet)
     def generate(self, light_set):
         self.start_snapshot()
         for name in light_set.light_names:
             light = light_set.get_light(name)
-            self.start_light(light)
-            if light.supports_multizone():
+            if light.multizone:
+                self.start_multizone(light)
                 self.handle_zones(light)
+                self.end_multizone(light)
             else:
+                self.start_light(light)
                 self.handle_color(light.get_color())
                 self.handle_power(light.get_power())
-            self.end_light()
+                self.end_light()
         self.end_snapshot()
         return self
 
@@ -64,7 +67,7 @@ class ScriptSnapshot(Snapshot):
         self._script = 'time 0 duration 1.5\n'
 
     def start_light(self, light):
-        self._light_name = light.get_label()
+        self._light_name = light.name
 
     def record_setting(self, reg, value):
         self._script += '{} {} '.format(reg, value)
@@ -89,6 +92,14 @@ class ScriptSnapshot(Snapshot):
         fmt = 'on "{}"\n' if self._power else 'off "{}"\n'
         self._script += fmt.format(self._light_name)
 
+    def start_multizone(self, light):
+        self._light_name = light.name
+        self._power = light.get_power()
+        
+    def handle_zone(self, light, number, color):
+        self.handle_color(color)
+        self._script += 'set "{}" zone {}\n'.format(light.name, number)
+
     @property
     def text(self):
         return '{}\n'.format(self._script)
@@ -105,7 +116,7 @@ class InstructionSnapshot(Snapshot):
         self._snapshot = ''
 
     def start_light(self, light):
-        self._light_name = light.get_label()
+        self._light_name = light.name
 
     def record_setting(self, reg, value):
         self._snapshot += 'OpCode.SET_REG, {}, {},\n'.format(
@@ -156,7 +167,7 @@ class TextSnapshot(Snapshot):
         for name in names:
             self._text += '{}\n'.format(name)
             for light in get_fn(name):
-                self._text += '   {}\n'.format(light.get_label())
+                self._text += '   {}\n'.format(light.name)
 
     def generate(self):
         super().generate()
@@ -164,7 +175,19 @@ class TextSnapshot(Snapshot):
         return self
 
     def start_light(self, light):
-        self._add_field(light.get_label())
+        self._add_field(light.name)
+        
+    def start_zones(self, light):
+        self._text += '{:>45}'.format(light.get_power())
+        self._text += '\nZone #\n'
+        
+    def handle_zone(self, _, number, color):
+        self._add_field('{:>5d}'.format(number))
+        self.handle_color(color)
+        self._text += '\n'
+        
+    def end_zones(self, _):
+        self._text += '\n'
 
     def handle_color(self, color):
         params = zip([
@@ -177,7 +200,7 @@ class TextSnapshot(Snapshot):
                 '{:>4.0f}'.format(units.as_logical(param[0], param[1])))
 
     def handle_power(self, power):
-        self._add_field('{:>5d}'.format(power))
+        self._add_field('{:d}'.format(power))
 
     def end_light(self):
         self._text += '\n'
@@ -198,7 +221,7 @@ class DictSnapshot(Snapshot):
         self._current_dict = {}
 
     def start_light(self, light):
-        self._current_dict = {'_name': light.get_label()}
+        self._current_dict = {'_name': light.name}
 
     def record_setting(self, name, value):
         self._current_dict[name] = value

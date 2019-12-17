@@ -1,7 +1,5 @@
 import logging
 
-from lifxlan.errors import WorkflowException
-
 from ..lib.i_lib import Clock, TimePattern
 from ..lib.injection import inject, provide
 
@@ -94,7 +92,7 @@ class Machine:
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            light.set_color(self._reg.get_color(), self._reg.duration, True)
+            light.set_color(self._reg.get_color(), self._reg.duration)
             
     @inject(LightSet)
     def _color_mz_light(self, light_set):
@@ -105,20 +103,28 @@ class Machine:
             start_index, end_index = self._reg.zones
             light.set_zone_color(
                 start_index, end_index, 
-                self._reg.get_color(), self._reg.duration, True)
+                self._reg.get_color(), self._reg.duration)
 
     @inject(LightSet)
     def _color_group(self, light_set):
-        self._color_multiple(light_set.get_group(self._reg.name))
+        lights = light_set.get_group(self._reg.name)
+        if lights is None:
+            logging.warning("Unknown group: {}".format(self._reg.name))
+        else:
+            self._color_multiple(lights)
 
     @inject(LightSet)
     def _color_location(self, light_set):
-        self._color_multiple(light_set.get_location(self._reg.name))
+        lights = light_set.get_location(self._reg.name)
+        if lights is None:
+            logging.warning("Unknown location: {}".format(self._reg.name))
+        else:
+            self._color_multiple(lights)
 
     def _color_multiple(self, lights):
         color = self._reg.get_color()
         for light in lights:
-            light.set_color(color, self._reg.duration, True)
+            light.set_color(color, self._reg.duration)
 
     def _power(self): {
         Operand.ALL: self._power_all,
@@ -137,7 +143,7 @@ class Machine:
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            light.set_power(self._reg.get_power(), self._reg.duration, True)
+            light.set_power(self._reg.get_power(), self._reg.duration)
 
     @inject(LightSet)
     def _power_group(self, light_set):
@@ -204,20 +210,15 @@ class Machine:
         self._check_wait()
 
     def _zone_check(self, light):
-        try:
-            if not light.supports_multizone():
-                logging.warning(
-                    'Light "{}" is not multi-zone.'.format(light.get_label()))
-                return False
-        except WorkflowException:
-            name = light.get_label()
+        if not light.multizone:
             logging.warning(
-                'Exception checking capability of "{}"'.format(name))
+                'Light "{}" is not multi-zone.'.format(light.name))
+            return False
         return True
 
     @classmethod
     def _report_missing(cls, name):
         logging.warning("Light \"{}\" not found.".format(name))
-
+            
     def _power_param(self):
         return 65535 if self._reg.power else 0

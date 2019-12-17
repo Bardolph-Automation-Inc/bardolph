@@ -2,11 +2,12 @@
 
 import unittest
 
-from bardolph.controller.i_controller import LightSet
 from bardolph.controller.instruction import Instruction
 from bardolph.controller.instruction import OpCode, Operand, Register
+from bardolph.controller import i_controller
 from bardolph.controller.machine import Machine
 from bardolph.lib.injection import provide
+
 
 from . import test_module
 
@@ -14,23 +15,29 @@ class MachineTest(unittest.TestCase):
     def setUp(self):
         test_module.configure()
 
-        self.light_set = provide(LightSet)
-        self.light_set.clear_lights()
-        self.colors = [
+        self._group0 = 'Group 0'
+        self._group1 = 'Group 1'
+        
+        self._location0 = 'Location 0'
+        self._location1 = 'Location 1'
+                
+        self._colors = [
             [4, 8, 12, 16], [24, 28, 32, 36], [44, 48, 52, 56], [64, 68, 72, 76]
         ]
-        self.names = [
+        self._names = [
             "Test g1 l1", "Test g1 l2", "Test g2 l1", "Test g2 l2"
-        ]
-        self.light_set.add_light(
-            self.names[0], "Group1", "Loc1", self.colors[0])
-        self.light_set.add_light(
-            self.names[1], "Group1", "Loc2", self.colors[1])
-        self.light_set.add_light(
-            self.names[2], "Group2", "Loc1", self.colors[2])
-        self.light_set.add_light(
-            self.names[3], "Group2", "Loc2", self.colors[3])
+        ]        
 
+        lifx = provide(i_controller.Lifx)
+        lifx.init_from([
+            (self._names[0], self._group0, self._location0, self._colors[0]),  
+            (self._names[1], self._group0, self._location1, self._colors[1]),
+            (self._names[2], self._group1, self._location0, self._colors[2]),
+            (self._names[3], self._group1, self._location1, self._colors[3])
+        ])
+        light_set = provide(i_controller.LightSet)
+        light_set.discover()
+        
     @classmethod
     def code_for_get(cls, name, operand):
         return [
@@ -38,12 +45,6 @@ class MachineTest(unittest.TestCase):
             Instruction(OpCode.SET_REG, Register.OPERAND, operand),
             Instruction(OpCode.GET_COLOR)
         ]
-
-    def test_get_color(self):
-        program = MachineTest.code_for_get(self.names[0], Operand.LIGHT)
-        machine = Machine()
-        machine.run(program)
-        self.assertListEqual(machine.color_from_reg(), self.colors[0])
 
     @classmethod
     def code_for_set(cls, name, operand, params):
@@ -57,12 +58,23 @@ class MachineTest(unittest.TestCase):
             Instruction(OpCode.COLOR)
         ]
 
+    def test_get_color(self):
+        program = MachineTest.code_for_get(self._names[0], Operand.LIGHT)
+        machine = Machine()
+        machine.run(program)
+        self.assertTrue(machine.color_from_reg(), self._colors[0])
+
     def test_set_single_color(self):
         color = [1, 2, 3, 4]
-        program = MachineTest.code_for_set(self.names[0], Operand.LIGHT, color)
+        name = self._names[0]
+        
+        program = MachineTest.code_for_set(name, Operand.LIGHT, color)
         machine = Machine()
         machine.run(program)
         self.assertListEqual(machine.color_from_reg(), color)
+        light_set = provide(i_controller.LightSet)
+        light = light_set.get_light(name)._impl
+        self.assertTrue(light.was_set(color))
 
 if __name__ == '__main__':
     unittest.main()

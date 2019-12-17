@@ -10,7 +10,7 @@ from ..lib import settings
 from . import arg_helper
 from . import light_module
 from . import config_values
-from .script_runner import ScriptRunner
+from .script_job import ScriptJob
 
 _epilog = """The -n parameter is optional, but if you don't specify it,
 discovery of the lights will take several seconds, and there will
@@ -67,9 +67,9 @@ def main():
 
     jobs = job_control.JobControl(args.repeat)
     if args.script is not None:
-        jobs.add_job(ScriptRunner.from_string(args.script))
+        jobs.add_job(ScriptJob.from_string(args.script))
     for file_name in args.file:
-        jobs.add_job(ScriptRunner.from_file(file_name))
+        jobs.add_job(ScriptJob.from_file(file_name))
 
 
 if __name__ == "__main__":

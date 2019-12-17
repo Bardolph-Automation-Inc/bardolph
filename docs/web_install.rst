@@ -48,7 +48,9 @@ the scope of this document:
 
 #. Install Raspbian on your device. For more information, please refer to the
    `Raspbian installation instructions
-   <https://www.raspberrypi.org/documentation/installation>`_.
+   <https://www.raspberrypi.org/documentation/installation>`_. For this
+   application, I recommend the "Lite" installation, which is appropriate
+   for a headless server.
 #. Enable WiFi and `ssh` on your device. The server will run without a monitor
    or keyboard attached. For more information, see the
    `Raspberry Pi remote access documentation
@@ -105,7 +107,8 @@ Still logged in as the `lights` user:
 .. note:: Python 3.5 or higher is required in all cases. If your system
    defaults to Python 2.x, you probably need to use
    `pip3` instead of `pip` throughout these instructions. Notable
-   culprits here are Raspbian and Debian.
+   culprits here are Raspbian and Debian. You may even have to install
+   `pip3` itself with `sudo apt-get install python3-pip`.
 
 After this intallation, the `lsc`, `lsrun`, and `lscap` commands will be
 placed into your `~/.local/bin` directory, which you should add to your

@@ -5,7 +5,7 @@ from .machine import Machine
 from ..parser.parse import Parser
 
 
-class ScriptRunner(Job):
+class ScriptJob(Job):
     def __init__(self):
         self._program = None
         self._parser = Parser()
@@ -13,13 +13,13 @@ class ScriptRunner(Job):
 
     @classmethod
     def from_file(cls, file_name):
-        new_instance = ScriptRunner()
+        new_instance = ScriptJob()
         new_instance.load_file(file_name)
         return new_instance
 
     @classmethod
     def from_string(cls, script):
-        new_instance = ScriptRunner()
+        new_instance = ScriptJob()
         new_instance.load_string(script)
         return new_instance
 
