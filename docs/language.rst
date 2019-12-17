@@ -358,6 +358,23 @@ it turns off all the lights, waits 10 s, and turns them on again.
    single: groups
    single: locations
    
+Wait with No Action
+===================
+To wait for the next time interval without doing anything::
+
+  wait
+
+This can be useful to keep a script active until the last command has been
+executed. for example:
+
+  time 0 hue 120 saturation 90 brightness 50 kelvin 2700
+  duration 200 set all
+  time 200 wait
+  
+Because the `set` command will take 200 seconds to fully take effect, this
+script adds a 200-second wait to the end. If multiple scripts are in the
+queue, this prevents the next script in line from stepping on the current one.
+   
 Groups and Locations
 ====================
 The `set`, `on`, and `off` commands can be applied to groups and locations.

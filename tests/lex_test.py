@@ -25,20 +25,20 @@ class LexTest(unittest.TestCase):
     def test_all_tokens(self):
         input_string = 'all and at brightness \
             define # comment \n duration hue \
-            off on or kelvin saturation set time zone 12:*4 \
+            off on or kelvin saturation set time wait zone 12:*4 \
             01.234\n"Hello There"@'
         expected_tokens = [
             TokenTypes.ALL, TokenTypes.AND, TokenTypes.AT, TokenTypes.REGISTER,
             TokenTypes.DEFINE, TokenTypes.REGISTER, TokenTypes.REGISTER,
             TokenTypes.OFF, TokenTypes.ON, TokenTypes.OR, TokenTypes.REGISTER,
             TokenTypes.REGISTER, TokenTypes.SET, TokenTypes.REGISTER,
-            TokenTypes.ZONE, TokenTypes.TIME_PATTERN, TokenTypes.NUMBER,
-            TokenTypes.LITERAL, TokenTypes.UNKNOWN
+            TokenTypes.WAIT, TokenTypes.ZONE, TokenTypes.TIME_PATTERN,
+            TokenTypes.NUMBER, TokenTypes.LITERAL, TokenTypes.UNKNOWN
         ]
         expected_strings = [
             'all', 'and', 'at', 'brightness', 'define', 'duration',
             'hue', 'off', 'on', 'or', 'kelvin', 'saturation', 'set',
-            'time', 'zone', '12:*4', '01.234', 'Hello There', '@'
+            'time', 'wait', 'zone', '12:*4', '01.234', 'Hello There', '@'
         ]
         self.lex_and_compare(input_string, expected_tokens, expected_strings)
 

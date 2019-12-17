@@ -75,6 +75,7 @@ class Parser:
             TokenTypes.REGISTER: self._set_reg,
             TokenTypes.SET: self._set,
             TokenTypes.UNITS: self._set_units,
+            TokenTypes.WAIT: self._wait
         }.get(self._current_token_type, self._syntax_error)()
 
     def _set_reg(self):
@@ -128,6 +129,10 @@ class Parser:
                 'Invalid parameter "{}" for units.'.format(self._current_token))
 
         self._unit_mode = mode
+        return self._next_token()
+
+    def _wait(self):
+        self._add_instruction(OpCode.TIME_WAIT)
         return self._next_token()
 
     def _set(self):
