@@ -5,7 +5,9 @@ from ..lib.injection import inject, provide
 
 from .get_key import getch
 from .i_controller import LightSet
-from .instruction import OpCode, Operand, SetOp
+from .instruction import OpCode, Operand, SeriesOp, SetOp
+from .series import Series
+
 
 class Registers:
     def __init__(self):
@@ -17,11 +19,17 @@ class Registers:
         self.power = False
         self.name = None
         self.operand = None
+        self.series = None
         self.zones = None
         self.time = 0 # ms.
 
     def get_color(self):
-        return [self.hue, self.saturation, self.brightness, self.kelvin]
+        return [
+            round(self.hue),
+            round(self.saturation),
+            round(self.brightness), 
+            round(self.kelvin)
+        ]
 
     def get_power(self):
         return 65535 if self.power else 0
@@ -35,6 +43,7 @@ class Machine:
         self._variables = {}
         self._program = []
         self._reg = Registers()
+        self._reg_series = {}
         self._enable_pause = True
         self._fn_table = {
             OpCode.COLOR: self._color,
@@ -43,10 +52,11 @@ class Machine:
             OpCode.NOP: self._nop,
             OpCode.PAUSE: self._pause,
             OpCode.POWER: self._power,
+            OpCode.SERIES: self._series,
             OpCode.SET_REG: self._set_reg,
             OpCode.STOP: self.stop,
             OpCode.TIME_PATTERN: self._time_pattern,
-            OpCode.TIME_WAIT: self._time_wait
+            OpCode.WAIT: self._wait
         }
 
     def run(self, program):
@@ -64,15 +74,15 @@ class Machine:
 
     def stop(self):
         self._pc = len(self._program)
-
+        
     def color_from_reg(self):
-        return [self._reg.hue, self._reg.saturation, self._reg.brightness,
-                self._reg.kelvin]
+        return self._reg.get_color()
 
     def color_to_reg(self, color):
         if color is not None:
             reg = self._reg
             reg.hue, reg.saturation, reg.brightness, reg.kelvin = color
+            self._reg_series.clear()
 
     def _color(self): {
         Operand.ALL: self._color_all,
@@ -92,7 +102,7 @@ class Machine:
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            light.set_color(self._reg.get_color(), self._reg.duration)
+            light.set_color(self.color_from_reg(), self._reg.duration)
             
     @inject(LightSet)
     def _color_mz_light(self, light_set):
@@ -170,6 +180,22 @@ class Machine:
                     self.color_to_reg(light.get_color_zones(zone, zone + 1))[0]
             else:
                 self.color_to_reg(light.get_color())
+
+    def _series(self):
+        inst = self._program[self._pc]
+        if inst.param0 == SeriesOp.CLEAR:
+            self._reg_series.clear()
+        elif inst.param0 == SeriesOp.INIT:
+            (start, delta) = inst.param1
+            series = Series(start, delta)
+            self._reg_series[self._reg.series] = series
+        elif inst.param0 == SeriesOp.REMOVE:
+            if self._reg.series in self._reg_series: 
+                del self._reg_series[self._reg.series]
+        elif inst.param0 == SeriesOp.NEXT:
+            for reg in self._reg_series.keys():
+                series = self._reg_series[reg]
+                setattr(self._reg, reg.name.lower(), series.next())
             
     def _nop(self): pass
 
@@ -184,10 +210,10 @@ class Machine:
                 if char == '!':
                     self._enable_pause = False
 
-    def _check_wait(self):
+    def _wait(self):
         time = self._reg.time
         if isinstance(time, TimePattern):
-            self._clock.wait_until(self._reg.time)
+            self._clock.wait_until(time)
         elif time > 0:
             self._clock.pause_for(time / 1000.0)
 
@@ -205,9 +231,6 @@ class Machine:
             self._reg.time = inst._param1
         else:
             self._reg.time.union(inst._param1)
-
-    def _time_wait(self):
-        self._check_wait()
 
     def _zone_check(self, light):
         if not light.multizone:

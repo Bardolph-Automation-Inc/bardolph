@@ -10,12 +10,11 @@ class OpCode(Enum):
     NOP = auto()
     PAUSE = auto()
     POWER = auto()
+    SERIES = auto()
     SET_REG = auto()
     STOP = auto()
     TIME_PATTERN = auto()
-    TIME_WAIT = auto()
-    ZONE = auto()
-
+    WAIT = auto()
 
 class Operand(Enum):
     ALL = auto()
@@ -24,12 +23,18 @@ class Operand(Enum):
     LOCATION = auto()
     MZ_LIGHT = auto()
 
-
 class SetOp(Enum):
     """ Used with TimePattern """
     INIT = auto()
     UNION = auto()
     
+class SeriesOp(Enum):
+    ATTACH = auto()
+    CLEAR = auto()
+    INIT = auto()
+    NEXT = auto()
+    REMOVE = auto()    
+
 
 class Register(Enum):
     HUE = auto()
@@ -40,6 +45,7 @@ class Register(Enum):
     POWER = auto()
     NAME = auto()
     OPERAND = auto()
+    SERIES = auto()
     TIME = auto()
     ZONES = auto()
 
@@ -76,6 +82,9 @@ class Instruction:
     def op_code(self):
         return self._op_code
     
+    def nop(self):
+        self._op_code = OpCode.NOP
+        
     @property
     def param0(self):
         return self._param0

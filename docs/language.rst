@@ -134,7 +134,9 @@ zone numbers::
 
 Note that the zone numbers start with zero. If you try use a zone on
 a light that doesn't have that capability, an error will be sent to
-the log, and the light will not be accessed.
+the log, and the light will not be accessed. Unlike Python ranges, the
+numbers are inclusive. For example, `zone 1 3` would include zones 1, 2,
+and 3.
 
 .. index::
    single: power
@@ -200,7 +202,9 @@ As mentioned above, the existing values for `time` and `duration` are re-used
 with each command. In this example, `time` is set only
 once, but there will be the same delay between every action.
 
-If you want to set multiple lights at the same time, you can specify them using
+Multiple Lights Using `and`
+---------------------------
+If you want to set multiple lights at the same time, you can chain them using
 `and`::
 
   time 2 on "Table" and "Chair Side"  # Uses "and".
@@ -208,7 +212,7 @@ If you want to set multiple lights at the same time, you can specify them using
 This script will:
 
 #. Wait 2 seconds. 
-#. Turns both lights on *simultaneously*. 
+#. Turn both lights on *simultaneously*. 
 
 This contrasts with::
 
@@ -358,22 +362,23 @@ it turns off all the lights, waits 10 s, and turns them on again.
    single: groups
    single: locations
    
-Wait with No Action
+Wait With No Action
 ===================
 To wait for the next time interval without doing anything::
 
   wait
 
 This can be useful to keep a script active until the last command has been
-executed. for example:
+executed. For example::
 
   time 0 hue 120 saturation 90 brightness 50 kelvin 2700
   duration 200 set all
   time 200 wait
   
-Because the `set` command will take 200 seconds to fully take effect, this
-script adds a 200-second wait to the end. If multiple scripts are in the
-queue, this prevents the next script in line from stepping on the current one.
+In this example, the `set` command will take 200 seconds to fully take effect.
+The script adds a 200-second wait to keep it from exiting before that slow `set`
+completes. If a script is waiting in the queue, this prevents that next script
+from starting before the 200-second duration has elapsed.
    
 Groups and Locations
 ====================
@@ -390,9 +395,83 @@ Continuing the same example, you can also set the color of all the lights in the
 
   set group "Reading Lights"
 
-You can combine lights, groups, and locations with the `and` keyword:
+You can combine lights, groups, and locations with the `and` keyword::
 
   set location "Living Room" and "Table" and group "Reading Lights"
+
+
+.. index::
+   single: series
+
+Series of Values
+================
+When setting the color of multiple lights, you can use a running series of
+incremental values. For example::
+
+  hue series 100 10
+  saturation 50 brightness 60 kelvin 2700
+  set "Top" 
+  set "Middle" and "Bottom"
+
+This example assumes that three lights named "Top", "Middle", and
+"Bottom" are all available on the network. This script will:
+
+#. Set light "Top" to HSBK of 100, 50, 60, 2700
+#. Set light "Middle" to HSBK of 110, 50, 60, 2700
+#. Set light "Bottom" to HSBK of 110, 50, 60, 2700
+
+Note that when setting more that one light using `and`, the series
+is advanced only once, and the same value is used for all lights
+in the `set` command's list.
+
+Series can be used for `hue`, `saturation`, `brightness`, and
+`kelvin`. In the case of a group or location, all member lights are
+given the same value from the series.
+
+A series advances with each `set` command, regardless of what
+it's applied to. For example::
+
+  hue series 100 10
+
+  set "Top" 
+  set group "Furniture"
+
+This will set the hue for light "Top" to 100. Every light in the group
+"Furniture" will get a hue of 110.
+
+If a series value reaches the maximum for `saturation` or `brightness`,
+every subsequent element will be 100 for logical units, or 65,535 for raw
+units. When using raw units, hue has the same limit as the other parameters:
+65,535. When using logical units, hue values are angles, and have no maximum.
+
+.. index::
+   single: range
+
+Range of Values
+===============
+When setting the color of multiple lights, you can use a range, and each
+light will get a different, evenly-distributed value. For example::
+
+  hue range 100 200 3
+  saturation 50 brightness 40 kelvin 2700
+  set "Top"
+  set "Middle"
+  set "Bottom"
+
+The parameters to `range` are start, end, and count. In this example, the 
+range has a first value of 200, a final value of 300, and will produce
+3 evenly-divided numbers. This script will:
+
+#. Set light "Top" to HSBK of 100, 50, 40, 2700
+#. Set light "Middle" to HSBK of 150, 50, 40, 2700
+#. Set light "Bottom" to HSBK of 200, 50, 40, 2700
+
+The values are assigned to the lights using the same order
+in which they appear in the script. Ranges can be used for `hue`,
+`saturation`, `brightness`, and `kelvin`.
+
+Note that a range will keep going, even after you use more numbers
+than originally specified.
 
 .. index::
    single: define
@@ -457,14 +536,14 @@ or multiple lights::
 Raw and Logical Units
 =====================
 By default, numerical values in scripts are given in units that should be
-convenient to humans. However, those numbers are mapped to 16-bit integer
-values that are sent to the bulbs as specified by the
+convenient to humans. However, those numbers are mapped to unsigned, 16-bit
+integer values that are sent to the bulbs as specified by the
 `LIFX API <https://lan.developer.lifx.com>`_.
 
 If you prefer to send unmodified numbers to the bulbs as specified by that 
 API, you can use `raw` values (and switch back to `logical` units as desired).
 "Raw" refers to an integer between 0 and 65535 that gets transmitted unmodified
-to the bulbs::
+to the bulbs. These two actions are equivalent::
 
   units raw
   time 10000 duration 2500
@@ -480,7 +559,7 @@ as a floating-point quantity of seconds.
 
 There's no limit to the precision of the floating-point value, but because it
 will be converted to milliseconds, any digits more than 3 places to the right
-of the decimal point will be rounded off. For example, durations of `2` and
+of the decimal point will be insignificant. For example, durations of `2` and
 `1.9999` are equivalent, while `3` and `2.999` will differ by one millisecond.
 However, in practice, none of the timing is precise or accurate enough for you
 to see any difference in behavior for these examples. In my experience,

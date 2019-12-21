@@ -221,7 +221,11 @@ Uninstall
 
   pip uninstall bardolph
  
-System Requirements
+
+.. index:
+   single: system requirements
+   
+System Requirements 
 ###################
 The program has been tested on Python versions at or above 3.5.1. I
 haven't tried it, but I'm almost certain that it won't run on any 2.x 

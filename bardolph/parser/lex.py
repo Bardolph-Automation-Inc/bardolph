@@ -6,7 +6,7 @@ from .token_types import TokenTypes
 
 class Lex:
     TOKEN_REGEX = re.compile(r'#.*$|".*?"|\S+')
-    NUMBER_REGEX = re.compile(r'^[0-9]*\.?[0-9]+$')
+    NUMBER_REGEX = re.compile(r'^\-?[0-9]*\.?[0-9]+$')
     REG_REGEX = re.compile('hue|saturation|brightness|duration|time|kelvin')
 
     def __init__(self, input_string):

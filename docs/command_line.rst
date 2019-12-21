@@ -21,15 +21,15 @@ most often.
   while. Basically, a "report" message gets broadcast over the WiFi network,
   and each bulb announces its presence. If the number
   of bulbs is unknown, the discover process has no choice but to wait a
-  specific amount of time  for them to stop answering. To minimize any delay,
-  use the optional `-n` or `--num-bulbs` flag to specify the actual number
-  of bulbs. For example:
+  specific amount of time  for them to stop answering. To minimize that delay,
+  use the optional `-n` or `--num-lights` flag to specify the actual number
+  of lights. For example:
   
   .. code-block:: bash
   
     # I have 5 bulbs in my apartment.
     lscap -n 5
-    lsrun --num-bulbs 5 scripts/on-all.ls
+    lsrun --num-lights 5 scripts/on-all.ls
     
   With this option, discovery stops as soon as the expected
   number has been found, which is usually much faster.
@@ -119,19 +119,30 @@ This is equivalent to:
   python -m bardolph.controller.lsc
 
 Only one file name may be provided. You can set the name of the output file
-with te `-o` parameter. The generated file can be run from the
-command line like any other Python module:
+with the `-o` parameter. Note that the file name needs to be the first
+parameter. For example::
 
 .. code-block:: bash
 
-  lsc scripts/evening.ls -o evening.py
+  # ok
+  lsc evening.ls -o evening.py
+
+  # error
+  lsc -o evening.py evening.ls  
+
+The generated file can be run from the command line like any other Python
+module:
+
+.. code-block:: bash
+
+  lsc evening.ls -o evening.py
   python evening.py
 
 The generated Python code relies on Bardolph's Python modules, which
 should be available after installation.
 
-If you want to use this module in your own Python code, you can import the
-and call the function `run_script()`.
+If you want to use this your own Python code, you can import the
+generated file as a module and call the function `run_script()`.
 
 Command Line Options
 --------------------
@@ -179,5 +190,3 @@ output it produces, notably:
   you can run it later to restore those setttings.
 * `-n` or `--num-lights`: Specify the number of lights that are on the network.
 
-.. index:
-   single: system requirements

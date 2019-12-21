@@ -7,6 +7,11 @@ from bardolph.controller.instruction import Instruction, OpCode, Operand
 from bardolph.controller.instruction import Register
 from bardolph.parser.parse import Parser
 
+def _filter(inst_list):
+    return [inst for inst in inst_list
+            if inst.op_code == OpCode.SET_REG
+                and inst.param0 != Register.SERIES]
+        
 class ParserTest(unittest.TestCase):
     def setUp(self):
         logging.getLogger().addHandler(logging.NullHandler())
@@ -47,7 +52,7 @@ class ParserTest(unittest.TestCase):
             Instruction(OpCode.SET_REG, Register.BRIGHTNESS, 0),
             Instruction(OpCode.SET_REG, Register.KELVIN, 0),
         ]
-        actual = self.parser.parse(input_string)
+        actual = _filter(self.parser.parse(input_string))
         self.assertEqual(expected, actual,
                          "Unit conversion failed: {} {}".format(
                              expected, actual))
@@ -58,7 +63,7 @@ class ParserTest(unittest.TestCase):
             Instruction(OpCode.SET_REG, Register.SATURATION, 65535),
             Instruction(OpCode.SET_REG, Register.BRIGHTNESS, 65535)
         ]
-        actual = self.parser.parse(input_string)
+        actual = _filter(self.parser.parse(input_string))
         self.assertEqual(expected, actual,
                          "Unit conversion failed: {} {}".format(
                              expected, actual))
@@ -69,7 +74,7 @@ class ParserTest(unittest.TestCase):
             Instruction(OpCode.SET_REG, Register.SATURATION, 13107),
             Instruction(OpCode.SET_REG, Register.BRIGHTNESS, 26214)
         ]
-        actual = self.parser.parse(input_string)
+        actual = _filter(self.parser.parse(input_string))
         self.assertEqual(expected, actual,
                          "Unit conversion failed: {} {}".format(
                              expected, actual))
@@ -77,13 +82,11 @@ class ParserTest(unittest.TestCase):
     def test_multi_zone(self):
         input_string = 'set "Strip" zone 3 5'
         expected = [
-            Instruction(OpCode.TIME_WAIT, None, None),
             Instruction(OpCode.SET_REG, Register.NAME, "Strip"),
             Instruction(OpCode.SET_REG, Register.ZONES, (3, 5)),
             Instruction(OpCode.SET_REG, Register.OPERAND, Operand.MZ_LIGHT),
-            Instruction(OpCode.COLOR, None, None)
         ]
-        actual = self.parser.parse(input_string)
+        actual = _filter(self.parser.parse(input_string))
         self.assertEqual(expected, actual,
                          "Multi-zone failed: {} {}".format(expected, actual))
 
@@ -98,22 +101,23 @@ class ParserTest(unittest.TestCase):
             Instruction(OpCode.SET_REG, Register.HUE, 16384),
             Instruction(OpCode.SET_REG, Register.SATURATION, 32768),
         ]
-        actual = self.parser.parse(input_string)
+        actual = _filter(self.parser.parse(input_string))
         self.assertEqual(expected, actual,
                          "Unit switch failed: {} {}".format(
                              expected, actual))
 
     def test_optimizer(self):
-        input_string = 'units raw hue 5 saturation 10 hue 5 brightness 20'
+        input_string = 'units raw set "name" brightness 20 set "name"'
         expected = [
-            Instruction(OpCode.SET_REG, Register.HUE, 5),
-            Instruction(OpCode.SET_REG, Register.SATURATION, 10),
+            Instruction(OpCode.SET_REG, Register.NAME, "name"),
+            Instruction(OpCode.SET_REG, Register.OPERAND, Operand.LIGHT),
             Instruction(OpCode.SET_REG, Register.BRIGHTNESS, 20)
         ]
-        actual = self.parser.parse(input_string)
+        raw_output = self.parser.parse(input_string)
+        self.assertIsNotNone(raw_output, self.parser.get_errors())
+        actual = _filter(raw_output)
         self.assertEqual(expected, actual,
                          "Optimizer failed: {} {}".format(expected, actual))
-
 
 if __name__ == '__main__':
     unittest.main()

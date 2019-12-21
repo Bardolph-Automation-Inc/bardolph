@@ -71,7 +71,7 @@ your actual bulbs:
   lscap
 
 This will discover the lights on the network and output a plain-text report
-with the state of each bulb it finds.
+with the state of each light it finds.
 
 The source distribution includes some examples in a directory
 named `scripts`. For example:
@@ -80,7 +80,7 @@ named `scripts`. For example:
 
   lsrun scripts/on-all.ls
 
-To run a script without attempting to access any bulbs (for example, if you
+To run a script without attempting to access any lights (for example, if you
 don't have any), use the "fakes" option:
 
 .. code-block:: bash 

@@ -4,8 +4,9 @@ import argparse
 import logging
 
 from ..controller.instruction import Instruction, OpCode, Operand
-from ..controller.instruction import Register, SetOp
-from ..controller.units import UnitMode, Units
+from ..controller.instruction import Register, SeriesOp, SetOp
+from ..controller import units
+from ..controller.units import UnitMode
 from . import lex
 from ..lib.time_pattern import TimePattern
 from .token_types import TokenTypes
@@ -80,18 +81,27 @@ class Parser:
 
     def _set_reg(self):
         self._name = self._current_token
-        register = Register[self._name.upper()]
-        if register == Register.TIME:
+        reg = Register[self._name.upper()]
+        if reg == Register.TIME:
             return self._time()
-        if register == Register.DURATION:
+        if reg == Register.DURATION:
             return self._duration()
                 
+        self._add_instruction(OpCode.SET_REG, Register.SERIES, reg)
+        self._add_instruction(OpCode.SERIES, SeriesOp.REMOVE)
+        
         self._next_token()
         if self._current_token_type == TokenTypes.NUMBER:
             try:
                 value = round(float(self._current_token))
             except ValueError:
                 return self._token_error('Invalid number: "{}"')
+        elif self._current_token_type == TokenTypes.SERIES:
+            self._next_token()
+            return self._series(reg)
+        elif self._current_token_type == TokenTypes.RANGE:
+            self._next_token()
+            return self._range(reg)            
         elif self._current_token_type == TokenTypes.LITERAL:
             value = self._current_token
         elif self._current_token in self._symbol_table:
@@ -99,11 +109,51 @@ class Parser:
         else:
             return self._token_error('Unknown parameter value: "{}"')
         
-        self._add_reg_instruction(register, value)
+        self._add_reg_instruction(reg, value)
         return self._next_token()
 
+    def _series(self, reg):     
+        start = self._current_float()
+        if start is None:
+            return self._token_error("Expected start for series, got: {}")
+        self._next_token()
+        delta = self._current_float()
+        if delta is None:
+            return self._token_error("Expected step for series, got: {}")
+        return self._init_series(reg, start, delta)
+        
+    def _range(self, reg):
+        start = self._current_float()
+        if start is None:
+            return self._token_error("Expected start for range, got: {}")    
+        self._next_token()
+        last = self._current_float()
+        if last is None:
+            return self._token_error("Expected end of range, got: {}")
+        self._next_token()
+        count = self._current_float()
+        if count is None:
+            return self._token_error("Expected count for range, got: {}")
+        if count == 0:
+            return self._trigger_error("Count must not be zero.")
+        
+        if count == 1:
+            start = (start + last) / 2.0
+            delta = 0.0
+        else:
+            delta = (last - start) / (count - 1)
+        return self._init_series(reg, start, delta)
+
+    def _init_series(self, reg, start, delta):
+        if self._unit_mode == UnitMode.LOGICAL:
+            start = units.as_raw(reg, start, True)        
+            delta = units.as_raw(reg, delta, True)
+        self._add_instruction(OpCode.SET_REG, Register.SERIES, reg)
+        self._add_instruction(OpCode.SERIES, SeriesOp.INIT, (start, delta))
+
+        return self._next_token()
+    
     def _add_reg_instruction(self, reg, value):
-        units = Units()
         if self._unit_mode == UnitMode.LOGICAL:
             value = units.as_raw(reg, value)
             if units.has_range(reg):
@@ -112,10 +162,11 @@ class Parser:
                     if self._unit_mode == UnitMode.LOGICAL:
                         min_val = units.as_logical(reg, min_val)
                         max_val = units.as_logical(reg, max_val)
-                    return self._trigger_error(
-                        '{} must be between {} and {}'.format(
-                            reg.name.lower(), min_val, max_val))
-        self._add_instruction(OpCode.SET_REG, reg, value)
+                        self._trigger_error(
+                            '{} must be between {} and {}'.format(
+                                reg.name.lower(), min_val, max_val))
+                        return None
+        return self._add_instruction(OpCode.SET_REG, reg, value)
 
     def _set_units(self):
         self._next_token()
@@ -132,7 +183,7 @@ class Parser:
         return self._next_token()
 
     def _wait(self):
-        self._add_instruction(OpCode.TIME_WAIT)
+        self._add_instruction(OpCode.WAIT)
         return self._next_token()
 
     def _set(self):
@@ -159,9 +210,11 @@ class Parser:
         else:
             operand = Operand.LIGHT
 
+        self._add_instruction(OpCode.SERIES, SeriesOp.CLEAR)
         self._add_instruction(OpCode.SET_REG, Register.NAME, self._name)
         self._add_instruction(OpCode.SET_REG, Register.OPERAND, operand)
         self._add_instruction(OpCode.GET_COLOR)
+        
         return True
 
     def _power_on(self):
@@ -234,10 +287,11 @@ class Parser:
         return time_pattern  
     
     def _action(self, op_code):
-        """ op_code: COLOR, GET_COLOR, or POWER """
+        """ op_code: COLOR or POWER """
         self._op_code = op_code
-        if self._op_code != OpCode.GET_COLOR:
-            self._add_instruction(OpCode.TIME_WAIT)
+        self._add_instruction(OpCode.WAIT)
+        if self._op_code == OpCode.COLOR:
+            self._add_instruction(OpCode.SERIES, SeriesOp.NEXT)
 
         self._next_token()
         if self._current_token_type == TokenTypes.ALL:
@@ -347,7 +401,9 @@ class Parser:
         return True
 
     def _add_instruction(self, op_code, param0=None, param1=None):
-        self._code.append(Instruction(op_code, param0, param1))
+        inst = Instruction(op_code, param0, param1)
+        self._code.append(inst)
+        return inst
 
     def _add_message(self, message):
         self._error_output += '{}\n'.format(message)
@@ -368,6 +424,11 @@ class Parser:
         if self._current_token_type != TokenTypes.NUMBER:
             return None
         return round(float(self._current_token))
+    
+    def _current_float(self):
+        if self._current_token_type != TokenTypes.NUMBER:
+            return None
+        return float(self._current_token)
 
     def _token_error(self, message_format):
         return self._trigger_error(message_format.format(self._current_token))
@@ -388,30 +449,28 @@ class Parser:
         return value
     
     def _optimize(self):
-        """
-        Eliminate SET_REG if it has the same value as the previous SET_REG
-        instruction.
-        
-        For this instruction, param0 is the name of the register, and param1 is
-        the value to which the register is set.
-
-        Any GET_COLOR instruction clears out the previous value cache.
-        """
-        opt = []
-        prev_value = {}
+        idem = (Register.NAME, Register.OPERAND, Register.SERIES, Register.TIME,
+                Register.DURATION)
+        last_value = {}
+        any_series = False
+               
         for inst in self._code:
-            if inst.op_code == OpCode.GET_COLOR:
-                prev_value = {}
-                opt.append(inst)
-            if inst.op_code != OpCode.SET_REG:
-                opt.append(inst)
-            else:
-                key = str(inst.param0)
-                if key not in prev_value or prev_value[key] != inst.param1:
-                    opt.append(inst)
-                    prev_value[key] = inst.param1
-        self._code = opt
-
+            if inst.op_code == OpCode.SERIES and inst.param0 == SeriesOp.INIT:
+                any_series = True
+            if inst.op_code == OpCode.SET_REG and inst.param0 in idem:
+                reg = inst.param0
+                value = inst.param1
+                if reg in last_value and value == last_value[reg]:
+                    inst.nop()
+                else:
+                    last_value[reg] = value
+        if not any_series:
+            for inst in self._code:
+                if (inst.op_code == OpCode.SERIES
+                        or inst.param0 == Register.SERIES):
+                    inst.nop()
+        self._code = [inst for inst in self._code if inst.op_code != OpCode.NOP]
+            
 
 def main():
     arg_parser = argparse.ArgumentParser()
@@ -440,32 +499,33 @@ if __name__ == '__main__':
         "brightness" <set_reg>
         | "define" <definition>
         | "duration" <set_reg>
+        | "get" <name>
         | "hue" <set_reg>
         | "kelvin" <set_reg>
-        | "off" <power_off>
-        | "on" <power_on>
-        | "_pause" <pause>
+        | "off" <operand_list>
+        | "on" <operand_list>
+        | "pause" <pause>
         | "saturation" <set_reg>
-        | "_set" <set>
+        | "set" <operand_list>
         | "units" <set_units>
         | "time" <time_spec>
-    <set_reg> ::= <name> <number> | <name> <literal> | <name> <symbol>
-    <set> ::= <action>
+        | "wait"
+    <set_reg> ::= <name> <number_param> | <name> <literal> | <name> <symbol>
+    <number_param> ::= <number> | "series" <number> <number>
+    <operand_list> ::= <operand> | <operand> <and> *
+    <operand> ::= <light> | "group" <name> | "location" <name>
+    <light> ::= <name> | <name> <zone_list>
+    <zone_list> ::= "zone" <zone_range>
+    <zone_range> ::= <number> | <number> <number>
+    <name> ::= <literal> | <token>
     <set_units> ::= "logical" | "raw"
-    <get> ::= <action>
-    <power_off> ::= <action>
-    <power_on> ::= <action>
     <time_spec> ::= <number> | <time_pattern_set>
     <time_pattern_set> ::= <time_pattern> | <time_pattern> "or" <time_pattern>
     <time_pattern> ::= <hour_pattern> ":" <minute_pattern>
-    <hour_pattern> ::= <digit> | <digit><digit> | "*" <digit> |
+    <hour_pattern> ::= <digit> | <digit> <digit> | "*" <digit> |
                         <digit> "*" | "*"
-    <minute_pattern> ::= <digit><digit> | <digit> "*" | "*" <digit> | "*"
-    <action> ::= <op_code> <operand_list> | <op_code> "all"
-    <operand_list> ::= <operand> | <operand> <and> *
-    <operand> ::= <name> | "group" <name> | "location" <name>
-    <name> ::= <literal> | <token>
+    <minute_pattern> ::= <digit> <digit> | <digit> "*" | "*" <digit> | "*"
     <and> ::= "and" <operand_name>
     <definition> ::= <token> <number> | <token> <literal>
-    <literal> ::= "\"" <token> "\""
+    <literal> ::= "\"" (text) "\""
 """

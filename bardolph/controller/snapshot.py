@@ -11,7 +11,7 @@ from . import light_module
 from .instruction import Register
 from .i_controller import LightSet
 from . import lsc
-from .units import Units
+from . import units
 
 
 def _quote_if_string(param):
@@ -77,7 +77,6 @@ class ScriptSnapshot(Snapshot):
             Register.HUE, Register.SATURATION, Register.BRIGHTNESS,
             Register.KELVIN
             ], color)
-        units = Units()
         for param in params:
             reg, value = param
             fmt = '{} {:.0f} ' if units.requires_conversion(reg) else '{} {} '
@@ -177,7 +176,8 @@ class TextSnapshot(Snapshot):
     def start_light(self, light):
         self._add_field(light.name)
         
-    def start_zones(self, light):
+    def start_multizone(self, light):
+        self.start_light(light)
         self._text += '{:>45}'.format(light.get_power())
         self._text += '\nZone #\n'
         
@@ -194,7 +194,6 @@ class TextSnapshot(Snapshot):
             Register.HUE, Register.SATURATION, Register.BRIGHTNESS,
             Register.KELVIN
             ], color)
-        units = Units()
         for param in params:
             self._add_field(
                 '{:>4.0f}'.format(units.as_logical(param[0], param[1])))
