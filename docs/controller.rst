@@ -122,8 +122,61 @@ The content of this register  determines the meaning of the contents of the VM's
 location.
 
 .. index::
-   single: job scheduling
+   single: routines
+   
+Subroutines
+-----------
+A routine definition contains:
+* The entry point of the routine.
+* A dictionary of parameters, keyed on the parameter's name in the routine
+definition.
+* A list of strings to define the number of parameters and their order.
 
+A stack frame contains:
+* The return address.
+* A reference to the routine's definition.
+
+Calling a routine:
+#. Get the entry point and number of parameters for the routine.
+#. Build the stack frame with the PC and specified number of parameters.
+#. Push the stack frame.
+#. Jump to the instruction of the routine.
+
+Inside the routine:
+#. Execute the code as usual.
+#. When an instruction has a parameter of type `parameter`, get its
+value from the stack frame.
+
+At the end of a routine, the `end` keyword causes:
+#. Pop the stack frame.
+#. Restore the PC from the popped stack frame.
+#. Resume execution with the updated PC.
+
+VM Considerations
+#################
+A special `routine` instruction declares the name of a routine and marks 
+its entry point. The VM uses this instruction to map names to entry points.
+
+A routine call is set up by first specifying the values of the parameters.
+Following that setup, a `call` instruction contains the name of the routine
+as its first param::
+  
+  param "x" 10
+  param "y" 20
+  call "color3"
+
+The VM handles a `call` by first pushing the PC. It then builds 
+a dictionary of parameter values from the instruction.
+
+Eventually, the VM reaches a `return` instruction. At that point, it
+pops the PC and resumes execution from the restored location::
+
+  return
+
+
+.. index::
+   single: job scheduling
+   
 Job Scheduling
 ==============
 The controller maintains an internal queue of scripts to execute. When a script

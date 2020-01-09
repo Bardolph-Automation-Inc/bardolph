@@ -65,11 +65,11 @@ def main():
     init_settings(args)
     light_module.configure()
 
-    jobs = job_control.JobControl(args.repeat)
+    jobs = job_control.JobControl()
     if args.script is not None:
-        jobs.add_job(ScriptJob.from_string(args.script))
+        jobs.add_job(ScriptJob.from_string(args.script), args.repeat)
     for file_name in args.file:
-        jobs.add_job(ScriptJob.from_file(file_name))
+        jobs.add_job(ScriptJob.from_file(file_name), args.repeat)
 
 
 if __name__ == "__main__":

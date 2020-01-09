@@ -42,10 +42,16 @@ class ScriptFrontEnd:
         return self.index()
 
     @inject(WebApp)
-    def stop(self, web_app):
-        web_app.request_stop()
+    def stop(self, stop_background, web_app):
+        web_app.request_stop(stop_background)
         return self.index('Stopped')
 
+    @inject(WebApp)
+    def window_on(self, web_app):
+        web_app.queue_file('mz-on.ls')
+        web_app.queue_file('mz-red-green.ls', True, True)
+        web_app.queue_file('mz-blue-green.ls', True, True)   
+    
     @inject(WebApp)
     def render_launched(self, script_info, web_app):
         return render_template(
@@ -91,7 +97,13 @@ def off(): return sfe.off()
 def status(): return sfe.status()
 
 @fe.route('/stop')
-def stop(): return sfe.stop()
+def stop(): return sfe.stop(False)
+
+@fe.route('/stop-all')
+def stop_all(): return sfe.stop(True)
+
+@fe.route('/window-on')
+def window_on(): return sfe.window_on()
 
 @fe.route('/<script_path>')
 def run_script(script_path): return sfe.run_script(script_path)

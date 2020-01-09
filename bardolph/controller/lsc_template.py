@@ -14,32 +14,33 @@ from bardolph.controller.instruction import Operand, Register, SetOp
 from bardolph.controller import light_module
 from bardolph.controller import machine
 
-instructions = [
+assembly = [
     #instructions
 
 ]
 
 current_instruction = 0
 
-def next_instruction():
-    global current_instruction
-    if current_instruction < len(instructions):
-        value = instructions[current_instruction]
+def get_assembly():
+    current_instruction = 0
+    while current_instruction < len(assembly):
+        value = assembly[current_instruction]
         current_instruction += 1
-        return value
-    return None
+        yield value
 
 def build_instructions():
     program = []
-    op_code = next_instruction()
+    it = iter(get_assembly())
+    
+    op_code = next(it, None)
     while op_code != None:
         if op_code in (OpCode.SET_REG, OpCode.TIME_PATTERN):
-            param0 = next_instruction()
-            param1 = next_instruction()
+            param0 = next(it)
+            param1 = next(it)
             program.append(Instruction(op_code, param0, param1))
         else:
             program.append(Instruction(op_code))
-        op_code = next_instruction()
+        op_code = next(it, None)
     return program
 
 def main():

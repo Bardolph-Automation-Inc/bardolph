@@ -4,12 +4,15 @@ from bardolph.lib.auto_repl import auto
 
 
 class OpCode(Enum):
+    CALL = auto()
     COLOR = auto()
     END = auto()
     GET_COLOR = auto()
     NOP = auto()
+    PARAM = auto()
     PAUSE = auto()
     POWER = auto()
+    ROUTINE = auto()
     SERIES = auto()
     SET_REG = auto()
     STOP = auto()

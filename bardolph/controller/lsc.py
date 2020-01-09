@@ -13,8 +13,8 @@ from . import config_values
 
 def program_code(instructions):
     output = ''
-    with open(os.path.join(
-            'bardolph', 'controller', 'lsc_template.py')) as srce:
+    dot = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(dot, 'lsc_template.py')) as srce:
         for line in srce:
             if line.find('#instructions') > -1:
                 output += instructions

@@ -14,8 +14,8 @@ from bardolph.controller.snapshot import DictSnapshot, ScriptSnapshot
 
 
 class Script:
-    def __init__(self, file_name, repeat, run_background, title, path,
-                 background, color, icon):
+    def __init__(self, file_name, repeat=False, run_background=False,
+                 title='', path='', background='', color='', icon=''):
         self.file_name = html.escape(file_name)
         self.repeat = repeat
         self.run_background = run_background
@@ -66,8 +66,12 @@ class WebApp:
         if script.run_background:
             self._jobs.spawn_job(job, script.repeat)
         else:
-            self._jobs.set_repeat(script.repeat)
-            self._jobs.add_job(job)
+            self._jobs.add_job(job, script.repeat)
+            
+    @inject(Settings)
+    def queue_file(self, file_name, repeat=False, run_background=False):
+        script = Script(file_name, repeat, run_background)
+        self.queue_script(script)
 
     def get_script(self, path):
         return self._scripts.get(path, None)
@@ -77,9 +81,6 @@ class WebApp:
 
     def get_snapshot(self):
         return DictSnapshot().generate().get_list()
-
-    def set_repeat(self, repeat):
-        self._jobs.set_repeat(repeat)
 
     @inject(LightSet)
     def get_status(self, lights):
@@ -118,12 +119,7 @@ class WebApp:
                 path = path[:-3]
         return path
 
-    def request_finish(self):
-        self._jobs.request_finish()
-
-    def request_stop(self):
-        # Stop everything, including background scripts.
-        stop_background = True
+    def request_stop(self, stop_background=False):
         self._jobs.request_stop(stop_background)
 
     @inject(Settings)

@@ -51,6 +51,14 @@ class LexTest(unittest.TestCase):
         expected_tokens = [TokenTypes.REGISTER for _ in range(0, 4)]
         expected_strings = ['hue', 'kelvin', 'saturation', 'brightness']
         self.lex_and_compare(input_string, expected_tokens, expected_strings)
+        
+    def test_embedded_keywords(self):
+        input_string = "a_hue saturation_z _brightness_ kelvinkelvin"
+        expected_tokens = [TokenTypes.UNKNOWN] * 4
+        expected_strings = [
+            'a_hue', 'saturation_z', '_brightness_', 'kelvinkelvin'
+        ]
+        self.lex_and_compare(input_string, expected_tokens, expected_strings)
 
     def lex_and_compare(self, input_string, expected_tokens, expected_strings):
         actual_tokens = []

@@ -1,41 +1,47 @@
-#!/usr/bin/env python
+    #!/usr/bin/env python
 
 import argparse
 import logging
 
-from ..controller.instruction import Instruction, OpCode, Operand
+from ..controller.instruction import OpCode, Operand
 from ..controller.instruction import Register, SeriesOp, SetOp
 from ..controller import units
 from ..controller.units import UnitMode
+from .code_gen import CodeGen
 from . import lex
+from ..lib.trace import trace_call, trace_call_enable
 from ..lib.time_pattern import TimePattern
+from .symbol_table import SymbolTable, SymbolType
 from .token_types import TokenTypes
 
 
 class Parser:
+    _token_trace = False
+
     def __init__(self):
         self._lexer = None
         self._error_output = ''
-        self._light_state = {}
         self._name = None
         self._current_token_type = None
         self._current_token = None
         self._op_code = OpCode.NOP
-        self._symbol_table = {}
-        self._code = []
+        self._symbol_table = SymbolTable()
+        self._code_gen = CodeGen()
         self._unit_mode = UnitMode.LOGICAL
 
     def parse(self, input_string):
-        self._code.clear()
+        self._code_gen.clear()
+        self._symbol_table.clear()
         self._error_output = ''
         self._lexer = lex.Lex(input_string)
         self._next_token()
         success = self._script()
         self._lexer = None
-        if not success:
+        if success:
+            self._code_gen.optimize()
+            return self._code_gen.program
+        else:
             return None
-        self._optimize()
-        return self._code
 
     def load(self, file_name):
         logging.debug('File name: {}'.format(file_name))
@@ -56,17 +62,21 @@ class Parser:
         return self._body() and self._eof()
 
     def _body(self):
-        succeeded = True
-        while succeeded and self._current_token_type != TokenTypes.EOF:
-            succeeded = self._command()
-        return succeeded
+        while self._current_token_type != TokenTypes.EOF:
+            if not self._command():
+                return False
+        return True
 
     def _eof(self):
         if self._current_token_type != TokenTypes.EOF:
             return self._trigger_error("Didn't get to end of file.")
         return True
 
+    @trace_call
     def _command(self):
+        routine = self._symbol_table.get_routine(self._current_token)
+        if routine is not None:
+            return self._call_routine()
         return {
             TokenTypes.DEFINE: self._definition,
             TokenTypes.GET: self._get,
@@ -79,6 +89,7 @@ class Parser:
             TokenTypes.WAIT: self._wait
         }.get(self._current_token_type, self._syntax_error)()
 
+    @trace_call
     def _set_reg(self):
         self._name = self._current_token
         reg = Register[self._name.upper()]
@@ -105,13 +116,14 @@ class Parser:
         elif self._current_token_type == TokenTypes.LITERAL:
             value = self._current_token
         elif self._current_token in self._symbol_table:
-            value = self._symbol_table[self._current_token]
+            value = self._symbol_table.get_value(self._current_token)
         else:
             return self._token_error('Unknown parameter value: "{}"')
         
         self._add_reg_instruction(reg, value)
         return self._next_token()
 
+    @trace_call
     def _series(self, reg):     
         start = self._current_float()
         if start is None:
@@ -122,6 +134,7 @@ class Parser:
             return self._token_error("Expected step for series, got: {}")
         return self._init_series(reg, start, delta)
         
+    @trace_call
     def _range(self, reg):
         start = self._current_float()
         if start is None:
@@ -168,6 +181,7 @@ class Parser:
                         return None
         return self._add_instruction(OpCode.SET_REG, reg, value)
 
+    @trace_call
     def _set_units(self):
         self._next_token()
         mode = {
@@ -182,13 +196,16 @@ class Parser:
         self._unit_mode = mode
         return self._next_token()
 
+    @trace_call
     def _wait(self):
         self._add_instruction(OpCode.WAIT)
         return self._next_token()
 
+    @trace_call
     def _set(self):
         return self._action(OpCode.COLOR)
 
+    @trace_call
     def _get(self):
         self._next_token()
         if self._current_token_type == TokenTypes.LITERAL:
@@ -217,19 +234,23 @@ class Parser:
         
         return True
 
+    @trace_call
     def _power_on(self):
         self._add_instruction(OpCode.SET_REG, Register.POWER, True)
         return self._action(OpCode.POWER)
 
+    @trace_call
     def _power_off(self):
         self._add_instruction(OpCode.SET_REG, Register.POWER, False)
         return self._action(OpCode.POWER)
 
+    @trace_call
     def _pause(self):
         self._add_instruction(OpCode.PAUSE)
         self._next_token()
         return True
     
+    @trace_call
     def _time(self):
         self._next_token()
         if self._current_token_type == TokenTypes.AT:
@@ -239,24 +260,26 @@ class Parser:
             value = self._normalized_time()
         elif self._current_token in self._symbol_table:
             value = self._normalized_time(
-                self._symbol_table[self._current_token])
+                self._symbol_table.get_value(self._current_token))
         else:
             return self._time_spec_error()
         self._add_reg_instruction(Register.TIME, value)
         return self._next_token()
         
+    @trace_call
     def _duration(self):
         self._next_token()
         if self._current_token_type == TokenTypes.NUMBER:
             value = self._normalized_time()
         elif self._current_token in self._symbol_table:
             value = self._normalized_time(
-                self._symbol_table[self._current_token])
+                self._symbol_table.get_value(self._current_token))
         else:
             return self._token_error("Expected number for duration, got {}.")
         self._add_reg_instruction(Register.DURATION, value)
         return self._next_token()
         
+    @trace_call
     def _process_time_patterns(self):
         time_pattern = self._next_time_pattern()
         if time_pattern is None:
@@ -275,6 +298,7 @@ class Parser:
 
         return True;
 
+    @trace_call
     def _next_time_pattern(self):
         self._next_token()
         if self._current_token_type == TokenTypes.TIME_PATTERN:
@@ -286,6 +310,7 @@ class Parser:
         time_pattern = TimePattern.from_string(pattern_string)
         return time_pattern  
     
+    @trace_call
     def _action(self, op_code):
         """ op_code: COLOR or POWER """
         self._op_code = op_code
@@ -298,12 +323,14 @@ class Parser:
             return self._all_operand()
         return self._operand_list()
     
+    @trace_call
     def _all_operand(self):
         self._add_instruction(OpCode.SET_REG, Register.NAME, None)
         self._add_instruction(OpCode.SET_REG, Register.OPERAND, Operand.ALL)
         self._add_instruction(self._op_code)
         return self._next_token()
 
+    @trace_call
     def _operand_list(self):
         if not self._operand():
             return self._syntax_error()
@@ -317,6 +344,7 @@ class Parser:
             self._add_instruction(self._op_code)
         return True
     
+    @trace_call
     def _operand(self):
         """ A group, location, or light with an optional set of zones. """
         if self._current_token_type == TokenTypes.GROUP:
@@ -331,7 +359,7 @@ class Parser:
         if self._current_token_type == TokenTypes.LITERAL:
             self._name = self._current_token
         elif self._current_token in self._symbol_table:
-            self._name = self._symbol_table[self._current_token]
+            self._name = self._symbol_table.get_value(self._current_token)
         else:
             return self._token_error('Unknown variable: {}')
         self._add_instruction(OpCode.SET_REG, Register.NAME, self._name)
@@ -345,6 +373,7 @@ class Parser:
         self._add_instruction(OpCode.SET_REG, Register.OPERAND, operand)
         return True
 
+    @trace_call
     def _zone_range(self):
         if self._op_code != OpCode.COLOR:
             return self._trigger_error('Zones not supported for {}'.format(
@@ -367,6 +396,7 @@ class Parser:
             OpCode.SET_REG, Register.ZONES, (start_zone, end_zone))
         return True
 
+    @trace_call
     def _and(self):
         self._next_token()
         if not self._operand_name():
@@ -375,16 +405,93 @@ class Parser:
         self._add_instruction(self._op_code)
         return True
 
+    @trace_call
     def _definition(self):
         self._next_token()
-        if self._current_token_type in [
-                TokenTypes.LITERAL, TokenTypes.NUMBER, TokenTypes.TIME_PATTERN]:
-            return self._token_error('Unexpected literal: {}')
+        if self._current_token_type in (
+                TokenTypes.LITERAL, TokenTypes.NUMBER, TokenTypes.TIME_PATTERN):
+            return self._token_error('Expected name for definition, got: {}')
+        
+        name = self._current_token
+        if name in self._symbol_table:
+            return self._token_error('Already defined: {}')
 
-        var_name = self._current_token
         self._next_token()
+        if self._detect_routine_start():
+            self._symbol_table.set_symbol(name, SymbolType.ROUTINE)
+            self._add_instruction(OpCode.ROUTINE, name)
+            if not self._routine_definition():
+                return False
+            self._add_instruction(OpCode.END, name)
+            return True
+        else:
+            return self._value_definition(name)
+    
+    def _detect_routine_start(self):
+        #
+        # If a definition is followed by "with", "begin", a keyword
+        # corresponding to a command, or the name of an existing routine, it's 
+        # defining a routine and not a variable.
+        #
+        if self._current_token_type in (TokenTypes.BEGIN, TokenTypes.WITH,
+                    TokenTypes.REGISTER, TokenTypes.SET): 
+            return True
+        if self._symbol_table.get_type(
+                self._current_token) == SymbolType.ROUTINE:
+            return True
+        return False
+    
+    @trace_call
+    def _routine_definition(self):
+        context = None 
+
+        if self._current_token_type == TokenTypes.WITH:
+            context = SymbolTable()
+            params = self._param_decl(context)
+            if params is None:
+                return False
+            self._symbol_table.add_context(context)
+
+        if self._current_token_type == TokenTypes.BEGIN:
+            self._next_token()
+            result = self._compound_proc()
+        else:
+            result = self._simple_proc()        
+        if context is not None:
+            self._symbol_table.remove_context()
+        return result
+
+    @trace_call
+    def _param_decl(self, context):
+        while self._current_token_type in (TokenTypes.AND, TokenTypes.WITH):
+            self._next_token()
+            if self._current_token_type != TokenTypes.UNKNOWN:
+                self._token_error(
+                    "Using keyword {} as a parameter name.")
+                return None
+            name = self._current_token    
+            context.set_symbol(name, SymbolType.PARAM)
+            self._add_instruction(OpCode.PARAM, name)
+            self._next_token()
+        return True
+    
+    @trace_call
+    def _simple_proc(self):
+        return self._command()
+    
+    @trace_call
+    def _compound_proc(self):
+        while self._current_token_type != TokenTypes.END:
+            if self._current_token_type == TokenTypes.EOF:
+                return self._trigger_error('End of file before "end".')
+            if not self._command():
+                return False
+        return self._next_token()
+
+    @trace_call
+    def _value_definition(self, var_name):
         if self._current_token_type == TokenTypes.NUMBER:
-            value = int(self._current_token)
+            value = float(self._current_token)
         elif self._current_token_type == TokenTypes.LITERAL:
             value = self._current_token
         elif self._current_token_type == TokenTypes.TIME_PATTERN:
@@ -392,18 +499,30 @@ class Parser:
             if value is None:
                 return self._time_spec_error()
         elif self._current_token in self._symbol_table:
-            value = self._symbol_table[self._current_token]
+            value = self._symbol_table.get_value(self._current_token)
         else:
             return self._token_error('Unknown term: "{}"')
 
-        self._symbol_table[var_name] = value
-        self._next_token()
+        self._symbol_table.set_symbol(var_name, SymbolType.VAR, value)
+        return self._next_token()
+            
+    def _call_routine(self):
+        routine_name = self._current_token
+        routine_def = self._symbol_table.get_routine(routine_name)
+        if routine_def is None:
+            return self._token_error('Unknown routine: "{}"')
+        
+        for param in routine_def.ordered_params:
+            param_name = param.name
+            self._next_token()
+            param_value = self._current_token
+            self._add_instruction(OpCode.PARAM, param_name, param_value)
+            
+        self._add_instruction(OpCode.CALL, routine_def.name)
         return True
 
     def _add_instruction(self, op_code, param0=None, param1=None):
-        inst = Instruction(op_code, param0, param1)
-        self._code.append(inst)
-        return inst
+        return self._code_gen.add_instruction(op_code, param0, param1)
 
     def _add_message(self, message):
         self._error_output += '{}\n'.format(message)
@@ -418,7 +537,15 @@ class Parser:
     def _next_token(self):
         (self._current_token_type,
          self._current_token) = self._lexer.next_token()
+        if self._token_trace:
+            logging.info(
+                'Next token: "{}" ({})'.format(
+                    self._current_token, self._current_token_type))
         return True
+    
+    def _trace(self, grammar_name):
+        if self._parse_trace:
+            logging.info("Parse: ".format(grammar_name))
     
     def _current_int(self):
         if self._current_token_type != TokenTypes.NUMBER:
@@ -432,6 +559,9 @@ class Parser:
 
     def _token_error(self, message_format):
         return self._trigger_error(message_format.format(self._current_token))
+    
+    def _unimplementd(self):
+        return self._token_error('Unimplemented at token "{}"')
 
     def _syntax_error(self):
         return self._token_error('Unexpected input "{}"')
@@ -447,29 +577,6 @@ class Parser:
         else:
             value = int(token)            
         return value
-    
-    def _optimize(self):
-        idem = (Register.NAME, Register.OPERAND, Register.SERIES, Register.TIME,
-                Register.DURATION)
-        last_value = {}
-        any_series = False
-               
-        for inst in self._code:
-            if inst.op_code == OpCode.SERIES and inst.param0 == SeriesOp.INIT:
-                any_series = True
-            if inst.op_code == OpCode.SET_REG and inst.param0 in idem:
-                reg = inst.param0
-                value = inst.param1
-                if reg in last_value and value == last_value[reg]:
-                    inst.nop()
-                else:
-                    last_value[reg] = value
-        if not any_series:
-            for inst in self._code:
-                if (inst.op_code == OpCode.SERIES
-                        or inst.param0 == Register.SERIES):
-                    inst.nop()
-        self._code = [inst for inst in self._code if inst.op_code != OpCode.NOP]
             
 
 def main():
@@ -477,6 +584,8 @@ def main():
     arg_parser.add_argument('file', help='name of the script file')
     args = arg_parser.parse_args()
 
+    trace_call_enable(False)
+    
     logging.basicConfig(
         level=logging.DEBUG,
         format='%(filename)s(%(lineno)d) %(funcName)s(): %(message)s')
@@ -486,7 +595,7 @@ def main():
         for inst in output_code:
             print(inst)
     else:
-        print(parser.get_errors())
+        print("Error parsing: {}".format(parser.get_errors()))
 
 
 if __name__ == '__main__':
@@ -526,6 +635,11 @@ if __name__ == '__main__':
                         <digit> "*" | "*"
     <minute_pattern> ::= <digit> <digit> | <digit> "*" | "*" <digit> | "*"
     <and> ::= "and" <operand_name>
-    <definition> ::= <token> <number> | <token> <literal>
+    <definition> ::= <token> <number> | <token> <literal> | <code_definition> 
+    <code_definition> ::= "with" <parameter_decl> <code_block> | <code_block>
+    <parameter_decl> ::= <formal_parameter> | <formal_parameter> <and> <parameter_decl>
+    <formal_parameter> ::= <name>
+    <code_block> ::= "begin" <code_sequence> "end" | <command>
+    <code_sequence> ::= <command> *
     <literal> ::= "\"" (text) "\""
 """

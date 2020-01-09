@@ -22,7 +22,7 @@ maintains a queue, allowing execution of a sequence of compiled scripts.
 A script sets the color and brightness of the lights by specifying
 5 numbers: `hue`, `saturation`, `brightness`, `kelvin`, and `duration`.
 During execution, the Bardolph virtual machine sends these parameters
-to the bulbs.
+to the lights.
 
 The easiest way to understand the meaning of these numbers is to use 
 the LIFX mobile app and observe the displayed numbers as you change
@@ -439,11 +439,6 @@ it's applied to. For example::
 This will set the hue for light "Top" to 100. Every light in the group
 "Furniture" will get a hue of 110.
 
-If a series value reaches the maximum for `saturation` or `brightness`,
-every subsequent element will be 100 for logical units, or 65,535 for raw
-units. When using raw units, hue has the same limit as the other parameters:
-65,535. When using logical units, hue values are angles, and have no maximum.
-
 .. index::
    single: range
 
@@ -536,9 +531,9 @@ or multiple lights::
 Raw and Logical Units
 =====================
 By default, numerical values in scripts are given in units that should be
-convenient to humans. However, those numbers are mapped to unsigned, 16-bit
-integer values that are sent to the bulbs as specified by the
-`LIFX API <https://lan.developer.lifx.com>`_.
+convenient to humans. However, during communication with the lights,
+those numbers are mapped to unsigned, 16-bit integer values as specified
+by the `LIFX API <https://lan.developer.lifx.com>`_.
 
 If you prefer to send unmodified numbers to the bulbs as specified by that 
 API, you can use `raw` values (and switch back to `logical` units as desired).

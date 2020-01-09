@@ -4,6 +4,25 @@ from ..controller import i_controller
 from ..lib.injection import bind_instance
 
 
+class ActivityLog:
+    def __init__(self):
+        self._actions = []
+    
+    def call(self, name, params=None):
+        # params is a tuple or None.
+        self._actions.append((name, params))
+
+    def calls_to(self, name):
+        # list of tuples and/or None's.
+        return [action[1] for action in self._actions if action[0] == name]
+    
+    def call_list(self):
+        return self._actions
+    
+    def clear(self):
+        self._actions.clear()
+
+
 class Light:
     """
     Fake lifxlan.light.Light which implements the methods that are actually
@@ -16,25 +35,38 @@ class Light:
         self._multizone = multizone
         self._power = 12345
         self._color = color if color is not None else [-1] * 4
+        self._color_zones = [self._color] * 16
         self._set_color = None
+        self._activity = ActivityLog()
+        self._quiet = False
 
     def __repr__(self):
-        rep = '_name: "{}", _group: "{}", _location: "{}", _power: {}, '.format(
-            self._name, self._group, self._location, self._power)
-        rep += '_color: {}'.format(self._color)
-        return rep
+        fmt = 'fake_lifx.Light(_name: "{}", _group: "{}", _location: "{}", '
+        fmt += '_power: {}, _color: {})'
+        return fmt.format(
+            self._name, self._group, self._location, self._power, self._color)
 
     def get_color(self):
-        logging.info('Get color from "{}": {}'.format(self._name, self._color))
+        self._activity.call('get_color')
+        if not self._quiet:
+            logging.info(
+                'Get color from "{}": {}'.format(self._name, self._color))
         return self._color
 
     def set_color(self, color, duration=0, _=False):
         self._color = color
         self._set_color = color
-        logging.info(
-            'Set color for "{}": {}, {}'.format(self._name, color, duration))
+        self._activity.call('set_color', (color, duration))
+        if not self._quiet:
+            logging.info(
+                'Set color for "{}": {}, {}'.format(
+                    self._name, color, duration))
 
     def set_zone_color(self, start_index, end_index, color, duration, _=False):
+        for zone in range(start_index, end_index):
+            self._color_zones[zone] = color
+        self._activity.call(
+            'set_zone_color', (start_index, end_index, color, duration))
         logging.info('Multizone color "{}": {}, {}, {}, {}'.format(
             self._name, start_index, end_index, color, duration))
 
@@ -46,21 +78,17 @@ class Light:
 
     def set_power(self, power, duration, _=False):
         self._power = power
+        self._activity.call('set_power', (power, duration))
         logging.info(
             'Set power for "{}": {}, {}'.format(self._name, power, duration))
 
     def get_power(self):
+        self._activity.call('get_power')
         return self._power
 
-    def get_color_zones(self, start=0, end=7):
-        if start is None:
-            start = 0
-        if end is None:
-            end = 7
-        return [self._color] * (end - start)
-
-    def set_return_power(self, power):
-        self._power = power
+    def get_color_zones(self, start=0, end=15):
+        self._activity_call('get_color_zones', (start, end))
+        return self._color_zones[start : end]
 
     def get_label(self):
         return self._name
@@ -73,6 +101,9 @@ class Light:
     
     def was_set(self, color):
         return self._set_color == color
+    
+    def call_list(self):
+        return self._activity.call_list()
 
 
 class Lifx(i_controller.Lifx):

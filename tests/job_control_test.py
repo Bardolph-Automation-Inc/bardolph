@@ -42,13 +42,23 @@ class StoppableJob(job_control.Job):
     def stop_requested(self):
         return self._stop_requested
 
+class TrackedJob(StoppableJob):
+    def __init__(self, job_id, call_list):
+        super().__init__()
+        self._id = job_id
+        self._call_list = call_list
+        
+    def execute(self):
+        self._call_list.append(self._id)
+        super().execute()
+
 class JobControlTest(unittest.TestCase):
     def setUp(self):
         self.failed = False
         self.job_stopped = False
 
     def wait_for_threads(self, j_control):
-        max_wait = 5
+        max_wait = 10
         while j_control.has_jobs():
             time.sleep(0.2)
             max_wait -= 1
@@ -64,12 +74,14 @@ class JobControlTest(unittest.TestCase):
 
     def test_add_multiple(self):
         j_control = job_control.JobControl()
-        job = TestJob()
-        num_jobs = 10
-        for _ in range(0, num_jobs):
-            j_control.add_job(job)
+        call_list = []
+        num_jobs = 5
+        for job_num in range(0, num_jobs):
+            name = 'tj {}'.format(job_num)
+            j_control.add_job(TrackedJob(name, call_list))
         self.wait_for_threads(j_control)
-        self.assertEqual(job.execute.call_count, num_jobs)
+        expected = ['tj 0', 'tj 1', 'tj 2', 'tj 3', 'tj 4']
+        self.assertListEqual(call_list, expected)
 
     def test_request_stop(self):
         j_control = job_control.JobControl()
@@ -84,17 +96,16 @@ class JobControlTest(unittest.TestCase):
             unwanted.failed, "Failure: job should not have been run.")
 
     def test_repeat(self):
-        job1 = StoppableJob()
-        job2 = StoppableJob()
+        call_list = []
+        job1 = TrackedJob(1, call_list)
+        job2 = TrackedJob(2, call_list)
         j_control = job_control.JobControl()
-        j_control.set_repeat(True)
-        j_control.add_job(job1)
-        j_control.add_job(job2)
+        j_control.add_job(job1, True)
+        j_control.add_job(job2, True)
         time.sleep(1)
         j_control.request_stop()
         self.wait_for_threads(j_control)
-        self.assertGreater(job1.call_count, 1)
-        self.assertGreater(job2.call_count, 1)
+        self.assertListEqual(call_list[0:4], [1, 2, 1, 2])
         
     def test_background_jobs(self):
         job1 = StoppableJob()

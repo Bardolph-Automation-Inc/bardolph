@@ -40,6 +40,39 @@ source tree.
 
   git clone https://github.com/al-fontes-jr/bardolph
 
+.. index::
+   single: local build
+   
+Alternative: Build and Install
+==============================
+You can use this process if you want to build from source and install the
+local package. In this case, you should still use `pip` as your package
+manager, so that you can use it later to remove your build and clean
+out unwanted files.
+
+To do this, you need to have 
+`setuptools <https://pypi.org/project/setuptools>`_ installed.
+
+With `setuptools` on your system:
+
+.. code-block:: bash
+
+  git clone https://github.com/al-fontes-jr/bardolph
+  cd bardolph
+  python setup.py bdist_wheel 
+  pip install --find-links ./dist bardolph 
+
+Note that the invocation of `setup.py` creates the `dist` directory. Within
+that directory, it creates a `.whl` file containing the new package. When
+you run `pip`, it finds that file and installs it.
+
+When you get a newer release of the code, you can upgrade it with:
+ 
+.. code-block:: bash
+
+  python setup.py bdist 
+  pip install --upgrade --find-links ./dist bardolph
+
 Testing the Installation
 ========================
 .. note:: The `lsrun`, `lscap`, and `lsc` commands are small Python
@@ -97,6 +130,9 @@ Uninstall with:
 .. code-block:: bash 
 
   pip uninstall bardolph
+  
+This will work whether you installed a downloaded package, or build and
+installed a package locally.
 
 .. index::
    single: logging configuration
