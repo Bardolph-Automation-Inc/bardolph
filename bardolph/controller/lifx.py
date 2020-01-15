@@ -9,13 +9,13 @@ from ..lib.injection import bind, inject
 class Lifx(i_controller.Lifx):
     @inject(i_lib.Settings)
     def __init__(self, settings):
-        num_expected = int(settings.get_value('default_num_lights', 0))
+        num_expected = settings.get_value('default_num_lights', None)
         self._lifxlan = lifxlan.LifxLAN(num_expected)
     
     @inject(i_lib.Settings)
     def get_lights(self, settings):
         lights = self._lifxlan.get_lights()
-        expected = int(settings.get_value('default_num_lights', 0))
+        expected = settings.get_value('default_num_lights', None)
         if expected is not None:
             actual = len(lights)
             if actual < expected:

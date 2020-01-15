@@ -1,7 +1,7 @@
 import logging
 
 functional = {
-    'default_num_lights': 0,
+    'default_num_lights': None,
     'light_gc_time': 20 * 60, # seconds (20 minutes)
     'sleep_time': 0.01, # seconds
     

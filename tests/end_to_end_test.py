@@ -119,6 +119,15 @@ class EndToEndTest(unittest.TestCase):
         self._run_script(script)
         self._check_call_list(('Top'), [('set_color', ([1, 2, 3, 4], 500))])
         
+    def test_nested_define(self):
+        script = """
+            units raw define x 500 define y x
+            hue 1 saturation 2 brightness 3 kelvin 4 duration y
+            set "Top"
+        """
+        self._run_script(script)
+        self._check_call_list(('Top'), [('set_color', ([1, 2, 3, 4], 500))])
+        
     def test_zones(self):
         script = """
             units raw
