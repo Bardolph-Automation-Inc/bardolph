@@ -12,9 +12,9 @@ class UnitsTest(unittest.TestCase):
         self.assertEqual(units.as_raw(Register.HUE, 120.0), 21845)
         self.assertEqual(units.as_raw(Register.SATURATION, 33), 21627)
         self.assertEqual(units.as_raw(Register.BRIGHTNESS, 67), 43908)
-        self.assertEqual(units.as_raw(Register.TIME, 1000000), 1000000)
+        self.assertEqual(units.as_raw(Register.TIME, 1.0), 1000)
         self.assertEqual(
-            units.as_raw(Register.DURATION, 200000), 200000)
+            units.as_raw(Register.DURATION, 2.0), 2000)
         self.assertEqual(units.as_raw(Register.KELVIN, 4000), 4000)
 
     def test_as_logical(self):
@@ -30,11 +30,10 @@ class UnitsTest(unittest.TestCase):
         self.assertAlmostEqual(
             units.as_logical(Register.KELVIN, 4000), 4000.0, places)
 
-        # These values should be untouched, hence assertEqual.
-        self.assertEqual(
-            units.as_logical(Register.TIME, 1000000.0), 1000000.0)
-        self.assertEqual(
-            units.as_logical(Register.DURATION, 200000.0), 200000.0)
+        self.assertAlmostEqual(
+            units.as_logical(Register.TIME, 1000.0), 1.0, places)
+        self.assertAlmostEqual(
+            units.as_logical(Register.DURATION, 2000.0), 2.0, places)
 
     def test_with_strings(self):
         places = 2

@@ -70,7 +70,8 @@ class JobControl:
                 self._lock.release()
 
     def has_jobs(self):
-        return len(self._queue) > 0 or len(self._background) > 0
+        return (len(self._queue) > 0 or len(self._background) > 0 or
+            self._active_agent is not None)
 
     def run_next_job(self):
         if self._acquire_lock():

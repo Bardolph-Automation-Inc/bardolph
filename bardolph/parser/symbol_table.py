@@ -32,9 +32,11 @@ class SymbolTable:
 
     def get_symbol(self, name):
         # Return (type, value)
-        pair = self._dict.get(name, None)
-        if pair is None and self._other is not None:
+        pair = None
+        if self._other is not None:
             pair = self._other.get_symbol(name)
+        if pair is None: 
+            pair = self._dict.get(name, None)
         return pair if pair is not None else (None, None)
     
     def get_type(self, name):

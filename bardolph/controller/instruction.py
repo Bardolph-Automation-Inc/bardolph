@@ -8,6 +8,7 @@ class OpCode(Enum):
     COLOR = auto()
     END = auto()
     GET_COLOR = auto()
+    GET_PARAM = auto()
     NOP = auto()
     PARAM = auto()
     PAUSE = auto()
@@ -40,17 +41,19 @@ class SeriesOp(Enum):
 
 
 class Register(Enum):
-    HUE = auto()
-    SATURATION = auto()
     BRIGHTNESS = auto()
-    KELVIN = auto()
     DURATION = auto()
-    POWER = auto()
+    FIRST_ZONE = auto()
+    HUE = auto()
+    LAST_ZONE = auto()
+    KELVIN = auto()
     NAME = auto()
     OPERAND = auto()
+    POWER = auto()
+    SATURATION = auto()
     SERIES = auto()
     TIME = auto()
-    ZONES = auto()
+    UNIT_MODE = auto()
 
 
 class Instruction:

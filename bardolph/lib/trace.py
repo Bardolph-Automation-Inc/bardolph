@@ -4,9 +4,13 @@ class Trace:
 
 def trace_call(fn):
     def wrapper(*args, **kwargs):
-        if Trace.trace_enabled:
-            Trace.callback("Calling: {}".format(fn.__name__))
-        return fn(*args, **kwargs)
+        if not Trace.trace_enabled:
+            return fn(*args, **kwargs)
+            
+        Trace.callback("Enter: {}".format(fn.__name__))
+        result = fn(*args, **kwargs)
+        Trace.callback("Exit: {}".format(fn.__name__))
+        return result        
     return wrapper
 
 def trace_call_enable(enable):

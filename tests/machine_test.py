@@ -6,6 +6,7 @@ from bardolph.controller.instruction import Instruction
 from bardolph.controller.instruction import OpCode, Operand, Register
 from bardolph.controller import i_controller
 from bardolph.controller.machine import Machine
+from bardolph.controller.units import UnitMode
 from bardolph.lib.injection import provide
 
 
@@ -49,6 +50,7 @@ class MachineTest(unittest.TestCase):
     @classmethod
     def code_for_set(cls, name, operand, params):
         return [
+            Instruction(OpCode.SET_REG, Register.UNIT_MODE, UnitMode.RAW),
             Instruction(OpCode.SET_REG, Register.HUE, params[0]),
             Instruction(OpCode.SET_REG, Register.SATURATION, params[1]),
             Instruction(OpCode.SET_REG, Register.BRIGHTNESS, params[2]),

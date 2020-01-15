@@ -131,7 +131,7 @@ Uninstall with:
 
   pip uninstall bardolph
   
-This will work whether you installed a downloaded package, or build and
+This will work whether you installed a downloaded package, or built and
 installed a package locally.
 
 .. index::

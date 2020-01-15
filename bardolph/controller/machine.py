@@ -3,6 +3,8 @@ import logging
 from ..lib.i_lib import Clock, TimePattern
 from ..lib.injection import inject, provide
 
+from ..controller import units
+from ..controller.units import UnitMode
 from .get_key import getch
 from .i_controller import LightSet
 from .instruction import OpCode, Operand, SeriesOp, SetOp
@@ -16,12 +18,14 @@ class Registers:
         self.brightness = 0
         self.kelvin = 0
         self.duration = 0
+        self.first_zone = None
+        self.last_zone = None
         self.power = False
         self.name = None
         self.operand = None
         self.series = None
-        self.zones = None
         self.time = 0 # ms.
+        self.unit_mode = UnitMode.LOGICAL
 
     def get_color(self):
         return [
@@ -110,7 +114,10 @@ class Machine:
         if light is None:
             Machine._report_missing(self._reg.name)
         elif self._zone_check(light):
-            start_index, end_index = self._reg.zones
+            start_index = self._reg.first_zone
+            end_index = self._reg.last_zone
+            if end_index is None:
+                end_index = start_index
             light.set_zone_color(
                 start_index, end_index, 
                 self._reg.get_color(), self._reg.duration)
@@ -157,11 +164,21 @@ class Machine:
 
     @inject(LightSet)
     def _power_group(self, light_set):
-        self._power_multiple(light_set.get_group(self._reg.name))
+        lights = light_set.get_group(self._reg.name)
+        if lights is None:
+            logging.warning(
+                'Power invoked for unknown group "{}"'.format(self._reg.name))
+        else:
+            self._power_multiple(light_set.get_group(self._reg.name))
 
     @inject(LightSet)
     def _power_location(self, light_set):
-        self._power_multiple(light_set.get_location(self._reg.name))
+        lights = light_set.get_location(self._reg.name)
+        if lights is None:
+            logging.warning(
+                "Power invoked for unknown location: {}".format(self._reg.name))
+        else:
+            self._power_multiple(lights)
 
     def _power_multiple(self, lights):
         power = self._reg.get_power()
@@ -176,7 +193,7 @@ class Machine:
         else:
             if self._reg.operand == Operand.MZ_LIGHT:
                 if self._zone_check(light):
-                    zone = self._reg.zones[0]
+                    zone = self._reg.first_zone
                     self.color_to_reg(light.get_color_zones(zone, zone + 1))[0]
             else:
                 self.color_to_reg(light.get_color())
@@ -222,8 +239,24 @@ class Machine:
 
     def _set_reg(self):
         # param0 is the name of the register, param1 is its value.
-        inst = self._program[self._pc]
-        setattr(self._reg, inst.param0.name.lower(), inst.param1)
+        inst = self._program[self._pc]        
+        reg = inst.param0
+        value = inst.param1
+    
+        if (units.requires_conversion(reg) and
+                self._reg.unit_mode == UnitMode.LOGICAL):
+            value = units.as_raw(reg, value)
+            if units.has_range(reg):
+                (min_val, max_val) = units.get_range(reg)
+                if value < min_val or value > max_val:
+                    if self._unit_mode == UnitMode.LOGICAL:
+                        min_val = units.as_logical(reg, min_val)
+                        max_val = units.as_logical(reg, max_val)
+                        return self._trigger_error(
+                            '{} out of range'.format(reg.name.lower()))
+        
+        setattr(self._reg, inst.param0.name.lower(), value)
+        return True
 
     def _time_pattern(self):
         inst = self._program[self._pc]

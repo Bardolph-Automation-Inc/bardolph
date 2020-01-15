@@ -16,7 +16,7 @@ class ActivityLog:
         # list of tuples and/or None's.
         return [action[1] for action in self._actions if action[0] == name]
     
-    def call_list(self):
+    def get_call_list(self):
         return self._actions
     
     def clear(self):
@@ -103,7 +103,7 @@ class Light:
         return self._set_color == color
     
     def call_list(self):
-        return self._activity.call_list()
+        return self._activity.get_call_list()
 
 
 class Lifx(i_controller.Lifx):
@@ -128,6 +128,7 @@ class Lifx(i_controller.Lifx):
 
 
 def configure():
+    # light name, group, location
     Lifx._inits = [
         ('Table', 'Furniture', 'Home', [1, 2, 3, 4], False),
         ('Top', 'Pole', 'Home', [10, 20, 30, 40], False),

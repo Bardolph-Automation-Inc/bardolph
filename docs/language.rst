@@ -474,7 +474,7 @@ than originally specified.
 
 Definitions
 ===========
-Symbols can be defined to hold a  commonly-used name or number::
+Symbols can be defined to hold a commonly-used name or number::
 
   define blue 240 define deep 100 define dim 20 
   define gradual 4
@@ -482,10 +482,27 @@ Symbols can be defined to hold a  commonly-used name or number::
   hue blue saturation deep brightness dim duration gradual
   set ceiling
 
+A symbol can occur as a light name or a value to be used to set a
+parameter. It can also be used as a zone number with multi-zone
+lights::
+
+  define my_light "Chair Side"
+  hue 120 saturation 80 brightness 50 kelvin 2700
+  set my_light
+  
+  define zone_1 5 define zone_2 10
+  set "Strip" zone zone_1 zone_2
+
 Definitions may refer to other existing symbols::
 
   define blue 240
   define b blue
+  
+A symbol may not be used as an alias for a command::
+
+  # Error - won't work.
+  define shut_off off
+  shut_off all
 
 .. index::
    single: get

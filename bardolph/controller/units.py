@@ -1,5 +1,4 @@
 from enum import Enum
-import math
 
 from bardolph.lib.auto_repl import auto
 from ..controller.instruction import Register
@@ -17,8 +16,13 @@ def has_range(reg):
     return reg not in (Register.DURATION, Register.TIME)
 
 def requires_conversion(reg):
-    return reg not in (
-        Register.DURATION, Register.KELVIN, Register.TIME)
+    return reg in (
+        Register.BRIGHTNESS,
+        Register.DURATION,
+        Register.HUE,
+        Register.KELVIN,
+        Register.SATURATION,
+        Register.TIME)
 
 def get_range(reg):
     """
@@ -62,6 +66,8 @@ def as_raw(reg, logical_value, use_float=False):
                 value = 65535.0
             else:
                 value = logical_value / 100.0 * 65535.0
+        elif reg in (Register.DURATION, Register.TIME):
+            value = logical_value * 1000.0
                 
     return value if use_float else round(value)
 
@@ -89,6 +95,8 @@ def as_logical(reg, raw_value):
             value = 100.0
         else:
             value = float(raw_value) / 65535.0 * 100.0
+    elif reg in (Register.DURATION, Register.TIME):
+        value = raw_value / 1000.0
     return value
 
 def _string_check(reg):

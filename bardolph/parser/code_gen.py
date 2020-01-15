@@ -21,7 +21,7 @@ class CodeGen:
     
     def optimize(self):
         idem = (Register.NAME, Register.OPERAND, Register.SERIES, Register.TIME,
-                Register.DURATION)
+                Register.DURATION, Register.FIRST_ZONE, Register.LAST_ZONE)
         last_value = {}
         any_series = False
                

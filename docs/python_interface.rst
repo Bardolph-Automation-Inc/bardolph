@@ -50,12 +50,16 @@ then discovers the lights out on the network. After that, It spawns a thread
 that repeats the discovery process every 5 minutes to continuously refresh
 its internal list of available lights.
 
+Note that the scripts are run in a separate thread, and queued up
+asynchronously. This means that `queue_script` returns immediately,
+even though the script may not run, yet.
+
 Your code can queue up jobs at any time, even while others are running. In
 the above example, the first call to `queue_script()` returns immediately,
 although the lights won't come on until 10 seconds have elapsed. The second 
-script, which turns the lights off, gets queued up asynchronously while the first
-script continues to run. However, that second script will not start until the
-first one finishes.
+script, which turns the lights off, gets queued up asynchronously while the
+first script continues to run. However, that second script will not start
+until the first one finishes.
 
 The `queue_script()` function parses the incoming string and puts the resulting
 byte code into a queue. That queue is processed by a separate thread that is 

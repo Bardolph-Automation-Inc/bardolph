@@ -47,7 +47,6 @@ def main():
     settings.use_base(config_values.functional).configure()
 
     input_file = args.file
-    print(input_file) 
     program = instruction_text(input_file)
     if program is not None:
         output_python(program_code(program), arg_helper.get_output_file(args))
