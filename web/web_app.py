@@ -67,7 +67,7 @@ class WebApp:
             self._jobs.spawn_job(job, script.repeat)
         else:
             self._jobs.add_job(job, script.repeat)
-            
+
     @inject(Settings)
     def queue_file(self, file_name, repeat=False, run_background=False):
         script = Script(file_name, repeat, run_background)

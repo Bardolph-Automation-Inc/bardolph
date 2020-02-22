@@ -21,46 +21,47 @@ class LexTest(unittest.TestCase):
         lexer = Lex('12:34')
         (token_type, _) = lexer.next_token()
         self.assertEqual(TokenTypes.TIME_PATTERN, token_type)
-    
+
     def test_all_tokens(self):
         input_string = 'all and at brightness \
             define # comment \n duration hue \
             off on or kelvin range saturation series \
             set time wait zone 12:*4 \
-            -1.0 01.234\n"Hello There" @'
+            -1.0 01.234\n"Hello There" x _abc @'
         expected_tokens = [
             TokenTypes.ALL, TokenTypes.AND, TokenTypes.AT, TokenTypes.REGISTER,
             TokenTypes.DEFINE, TokenTypes.REGISTER, TokenTypes.REGISTER,
             TokenTypes.OFF, TokenTypes.ON, TokenTypes.OR, TokenTypes.REGISTER,
-            TokenTypes.RANGE, TokenTypes.REGISTER, TokenTypes.SERIES, 
+            TokenTypes.RANGE, TokenTypes.REGISTER, TokenTypes.SERIES,
             TokenTypes.SET, TokenTypes.REGISTER,
             TokenTypes.WAIT, TokenTypes.ZONE, TokenTypes.TIME_PATTERN,
-            TokenTypes.NUMBER, TokenTypes.NUMBER, TokenTypes.LITERAL,
+            TokenTypes.NUMBER, TokenTypes.NUMBER, TokenTypes.LITERAL_STRING,
+            TokenTypes.NAME, TokenTypes.NAME,
             TokenTypes.UNKNOWN
         ]
         expected_strings = [
             'all', 'and', 'at', 'brightness', 'define', 'duration',
             'hue', 'off', 'on', 'or', 'kelvin', 'range', 'saturation',
-            'series', 'set', 'time', 'wait', 'zone', '12:*4', 
-            '-1.0', '01.234', 'Hello There', '@'
+            'series', 'set', 'time', 'wait', 'zone', '12:*4',
+            '-1.0', '01.234', 'Hello There', 'x', '_abc', '@'
         ]
-        self.lex_and_compare(input_string, expected_tokens, expected_strings)
+        self._lex_and_compare(input_string, expected_tokens, expected_strings)
 
     def test_abbreviations(self):
         input_string = 'h k s b'
         expected_tokens = [TokenTypes.REGISTER for _ in range(0, 4)]
         expected_strings = ['hue', 'kelvin', 'saturation', 'brightness']
-        self.lex_and_compare(input_string, expected_tokens, expected_strings)
-        
+        self._lex_and_compare(input_string, expected_tokens, expected_strings)
+
     def test_embedded_keywords(self):
         input_string = "a_hue saturation_z _brightness_ kelvinkelvin"
-        expected_tokens = [TokenTypes.UNKNOWN] * 4
+        expected_tokens = [TokenTypes.NAME] * 4
         expected_strings = [
             'a_hue', 'saturation_z', '_brightness_', 'kelvinkelvin'
         ]
-        self.lex_and_compare(input_string, expected_tokens, expected_strings)
+        self._lex_and_compare(input_string, expected_tokens, expected_strings)
 
-    def lex_and_compare(self, input_string, expected_tokens, expected_strings):
+    def _lex_and_compare(self, input_string, expected_tokens, expected_strings):
         actual_tokens = []
         actual_strings = []
 
@@ -69,7 +70,7 @@ class LexTest(unittest.TestCase):
         while token_type not in (TokenTypes.EOF, None):
             actual_tokens.append(token_type)
             actual_strings.append(token)
-            (token_type, token) = lexer.next_token()
+            token_type, token = lexer.next_token()
 
         self.assertEqual(token_type, TokenTypes.EOF)
         self.assertListEqual(actual_tokens, expected_tokens)

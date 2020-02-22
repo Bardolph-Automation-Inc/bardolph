@@ -3,6 +3,8 @@
 import unittest
 
 from tests.activity_log_test import ActivityLogTest
+from tests.call_context_test import CallContextTest
+from tests.call_stack_test import CallStackTest
 from tests.clock_test import ClockTest
 from tests.end_to_end_test import EndToEndTest
 from tests.injection_test import InjectionTest
@@ -21,6 +23,8 @@ tests = unittest.TestSuite()
 
 for test_class in (
     ActivityLogTest,
+    CallContextTest,
+    CallStackTest,
     ClockTest,
     EndToEndTest,
     InjectionTest,
@@ -35,5 +39,5 @@ for test_class in (
     UnitsTest,
     WebAppTest
 ): tests.addTest(unittest.makeSuite(test_class))
-    
+
 unittest.TextTestRunner(verbosity=2).run(tests)

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from bardolph.lib.auto_repl import auto
+from ..lib.auto_repl import auto
 
 class TokenTypes(Enum):
     ALL = auto()
@@ -12,9 +12,10 @@ class TokenTypes(Enum):
     EOF = auto()
     GET = auto()
     GROUP = auto()
-    LITERAL = auto()
+    LITERAL_STRING = auto()
     LOCATION = auto()
     LOGICAL = auto()
+    NAME = auto()
     NUMBER = auto()
     OFF = auto()
     ON = auto()

@@ -6,7 +6,9 @@ from .token_types import TokenTypes
 
 class Lex:
     TOKEN_REGEX = re.compile(r'#.*$|".*?"|\S+')
+    NAME_REGEX = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
     NUMBER_REGEX = re.compile(r'^\-?[0-9]*\.?[0-9]+$')
+    INT_REGEX = re.compile(r'^\-?[0-9]*$')
     REG_REGEX = re.compile(
         '^hue$|^saturation$|^brightness$|^duration$|^time$|^kelvin$')
 
@@ -33,6 +35,23 @@ class Lex:
     def get_line_number(self):
         return self._line_num
 
+    def _token_type(self, token):
+        token_type = TokenTypes.__members__.get(token.upper(), None)
+        if token_type is not None:
+            return token_type
+
+        pairs = (
+            (self.REG_REGEX, TokenTypes.REGISTER),
+            (TimePattern.REGEX, TokenTypes.TIME_PATTERN),
+            (self.NUMBER_REGEX, TokenTypes.NUMBER),
+            (self.NAME_REGEX, TokenTypes.NAME)
+        )
+        for reg_expr, token_type in pairs:
+            if reg_expr.match(token):
+                return token_type
+
+        return TokenTypes.UNKNOWN
+
     def next_token(self):
         token_type = None
         while token_type is None:
@@ -47,15 +66,8 @@ class Lex:
             if token[0] != '#':
                 if token[0] == '"':
                     token = token[1:-1]
-                    token_type = TokenTypes.LITERAL
-                elif self.REG_REGEX.search(token):
-                    token_type = TokenTypes.REGISTER
-                elif TimePattern.REGEX.search(token):
-                    token_type = TokenTypes.TIME_PATTERN
-                elif self.NUMBER_REGEX.search(token):
-                    token_type = TokenTypes.NUMBER
+                    token_type = TokenTypes.LITERAL_STRING
                 else:
-                    token_type = TokenTypes.__members__.get(
-                        token.upper(), TokenTypes.UNKNOWN)
+                    token_type = self._token_type(token)
 
         return (token_type, token)

@@ -11,9 +11,9 @@ class UnitMode(Enum):
     LOGICAL = auto()
     RAW = auto()
 
-
 def has_range(reg):
-    return reg not in (Register.DURATION, Register.TIME)
+    return reg in (
+        Register.BRIGHTNESS, Register.HUE, Register.KELVIN, Register.SATURATION)
 
 def requires_conversion(reg):
     return reg in (
@@ -68,7 +68,7 @@ def as_raw(reg, logical_value, use_float=False):
                 value = logical_value / 100.0 * 65535.0
         elif reg in (Register.DURATION, Register.TIME):
             value = logical_value * 1000.0
-                
+
     return value if use_float else round(value)
 
 def as_logical(reg, raw_value):

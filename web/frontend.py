@@ -50,8 +50,8 @@ class ScriptFrontEnd:
     def window_on(self, web_app):
         web_app.queue_file('mz-on.ls')
         web_app.queue_file('mz-red-green.ls', True, True)
-        web_app.queue_file('mz-blue-green.ls', True, True)   
-    
+        web_app.queue_file('mz-blue-green.ls', True, True)
+
     @inject(WebApp)
     def render_launched(self, script_info, web_app):
         return render_template(

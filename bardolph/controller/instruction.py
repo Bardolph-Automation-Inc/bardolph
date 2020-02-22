@@ -1,6 +1,6 @@
 from enum import Enum
 
-from bardolph.lib.auto_repl import auto
+from ..lib.auto_repl import auto
 
 
 class OpCode(Enum):
@@ -8,14 +8,14 @@ class OpCode(Enum):
     COLOR = auto()
     END = auto()
     GET_COLOR = auto()
-    GET_PARAM = auto()
+    JUMP = auto()
+    MOVE = auto()
+    MOVEQ = auto()
     NOP = auto()
     PARAM = auto()
     PAUSE = auto()
     POWER = auto()
     ROUTINE = auto()
-    SERIES = auto()
-    SET_REG = auto()
     STOP = auto()
     TIME_PATTERN = auto()
     WAIT = auto()
@@ -31,14 +31,6 @@ class SetOp(Enum):
     """ Used with TimePattern """
     INIT = auto()
     UNION = auto()
-    
-class SeriesOp(Enum):
-    ATTACH = auto()
-    CLEAR = auto()
-    INIT = auto()
-    NEXT = auto()
-    REMOVE = auto()    
-
 
 class Register(Enum):
     BRIGHTNESS = auto()
@@ -51,7 +43,6 @@ class Register(Enum):
     OPERAND = auto()
     POWER = auto()
     SATURATION = auto()
-    SERIES = auto()
     TIME = auto()
     UNIT_MODE = auto()
 
@@ -76,7 +67,7 @@ class Instruction:
             self._op_code,
             Instruction.quote_if_string(self._param0),
             Instruction.quote_if_string(self._param1))
-        
+
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             raise TypeError
@@ -85,22 +76,23 @@ class Instruction:
                 and self._param1 == other._param1)
 
     @property
-    def op_code(self):
+    def op_code(self) -> OpCode:
         return self._op_code
-    
+
     def nop(self):
         self._op_code = OpCode.NOP
-        
+
     @property
     def param0(self):
         return self._param0
-    
+
     @property
     def param1(self):
         return self._param1
-    
-    def as_list_text(self):
-        if self._op_code not in (OpCode.SET_REG, OpCode.TIME_PATTERN):
+
+    def as_list_text(self) -> str:
+        if self._op_code not in (
+                OpCode.MOVE, OpCode.MOVEQ, OpCode.TIME_PATTERN):
             return '{}'.format(self._op_code)
         return '{}, {}, {}'.format(
             self._op_code,

@@ -1,15 +1,20 @@
 duration 2 on all
 
-duration 10 hue 30 saturation 75 brightness 60 set all
+duration 10 time 10 saturation 75 brightness 60
 
-time 10
-hue 60 set all
-hue 90 set all
-hue 120 set all
-hue 150 set all
-hue 180 set all
-hue 210 set all
-hue 240 set all
-hue 270 set all
-hue 300 set all
-hue 360 set all
+define hue_set with new_hue
+begin
+    hue new_hue set all
+end
+
+hue_set 30
+hue_set 60
+hue_set 90
+hue_set 120
+hue_set 150
+hue_set 180
+hue_set 210
+hue_set 240
+hue_set 270
+hue_set 300
+hue_set 360

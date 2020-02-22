@@ -6,11 +6,11 @@ def trace_call(fn):
     def wrapper(*args, **kwargs):
         if not Trace.trace_enabled:
             return fn(*args, **kwargs)
-            
+
         Trace.callback("Enter: {}".format(fn.__name__))
         result = fn(*args, **kwargs)
         Trace.callback("Exit: {}".format(fn.__name__))
-        return result        
+        return result
     return wrapper
 
 def trace_call_enable(enable):

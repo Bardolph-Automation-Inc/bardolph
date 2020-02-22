@@ -283,7 +283,8 @@ def main():
     if do_text:
         _do_gen(TextSnapshot)
     if do_py:
-        instructions = InstructionSnapshot().generate().text
+        snap = InstructionSnapshot()
+        instructions = snap.generate().text
         lsc.output_python(lsc.program_code(instructions))
 
 
