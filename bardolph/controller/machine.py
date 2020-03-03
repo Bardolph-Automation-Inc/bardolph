@@ -8,7 +8,7 @@ from . import units
 from .call_stack import CallStack
 from .get_key import getch
 from .i_controller import LightSet
-from .instruction import OpCode, Operand, SetOp
+from .instruction import OpCode, Operand, Register, SetOp
 from .loader import Loader
 from .units import UnitMode
 
@@ -27,13 +27,16 @@ class Registers:
         self.time = 0  # ms.
         self.unit_mode = UnitMode.LOGICAL
 
-    def get_color(self):
+    def get_color(self) -> [int]:
         return [
             round(self.hue),
             round(self.saturation),
             round(self.brightness),
             round(self.kelvin)
         ]
+
+    def reset(self):
+        self.__init__()
 
     def get_power(self):
         return 65535 if self.power else 0
@@ -47,10 +50,10 @@ class Machine:
         self._variables = {}
         self._program = []
         self._reg = Registers()
-        self._reg_series = {}
         self._call_stack = CallStack()
         self._enable_pause = True
         self._fn_table = {
+            OpCode.BREAKPOINT: Machine._breakpoint,
             OpCode.CALL: self._call,
             OpCode.COLOR: self._color,
             OpCode.END: self._end,
@@ -67,14 +70,17 @@ class Machine:
             OpCode.WAIT: self._wait
         }
 
-    def run(self, program) -> None:
+    def reset(self) -> None:
+        self._reg.reset()
         self._variables.clear()
-        loader = Loader()
-        loader.load(program, self._variables)
-        self._program = loader.code
         self._pc = 0
         self._cue_time = 0
         self._call_stack.clear()
+
+    def run(self, program) -> None:
+        loader = Loader()
+        loader.load(program, self._variables)
+        self._program = loader.code
         self._clock.start()
         while self._pc < len(self._program):
             inst = self._program[self._pc]
@@ -88,14 +94,29 @@ class Machine:
     def stop(self) -> None:
         self._pc = len(self._program)
 
+    def bind(self, name, extern) -> None:
+        self._call_stack.bind(name, extern)
+
+    def unbind(self, name) -> None:
+        self._call_stack.unbind(name)
+
+    def unbind_all(self) -> None:
+        self._call_stack.unbind_all()
+
+    def color_to_reg(self, color) -> None:
+        self._reg.hue = self._assure_raw(Register.HUE, color[0])
+        self._reg.saturation = self._assure_raw(Register.SATURATION, color[1])
+        self._reg.brightness = self._assure_raw(Register.BRIGHTNESS, color[2])
+        self._reg.kelvin = color[3]
+
     def color_from_reg(self) -> [int]:
         return self._reg.get_color()
 
-    def color_to_reg(self, color) -> None:
-        if color is not None:
-            reg = self._reg
-            reg.hue, reg.saturation, reg.brightness, reg.kelvin = color
-            self._reg_series.clear()
+    def _set_tagged_reg(self, reg, value) -> None:
+        setattr(self._reg, reg.name.lower(), value)
+
+    def _get_tagged_reg(self, reg):
+        return getattr(self._reg, reg.name.lower())
 
     def _color(self) -> None: {
         Operand.ALL: self._color_all,
@@ -115,7 +136,7 @@ class Machine:
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            light.set_color(self.color_from_reg(), self._reg.duration)
+            light.set_color(self._reg.get_color(), self._reg.duration)
 
     @inject(LightSet)
     def _color_mz_light(self, light_set) -> None:
@@ -215,9 +236,9 @@ class Machine:
         """
         inst = self._program[self._pc]
         value = inst.param1
-        if isinstance(value, Symbol) and value.symbol_type == SymbolType.VAR:
+        if isinstance(value, Symbol):
             value = self._call_stack.get_variable(value.name)
-        self._call_stack.add_param(inst.param0, value)
+        self._call_stack.put_param(inst.param0, value)
 
     def _call(self) -> None:
         inst = self._program[self._pc]
@@ -232,7 +253,7 @@ class Machine:
         self._call_stack.pop_current()
         self._pc = ret_addr
 
-    def _nop(self): pass
+    def _nop(self) -> None: pass
 
     def _jump(self) -> None:
         self._pc = self._program[self._pc].param0
@@ -255,57 +276,66 @@ class Machine:
         elif time > 0:
             self._clock.pause_for(time / 1000.0)
 
-    def _unit_check(self, reg, value) -> int:
+    def _assure_raw(self, reg, value) -> int:
         """
-        If necessary, convert from logical to raw units. Check the range of
-        the value if appropriate.
+        If in logical mode, convert incoming value to raw units. If not in
+        logical mode, no conversion is necessary.
         """
         if (self._reg.unit_mode == UnitMode.LOGICAL
                 and units.requires_conversion(reg)):
-            value = units.as_raw(reg, value)
-        if units.has_range(reg):
-            min_val, max_val = units.get_range(reg)
-            if not min_val <= value <= max_val:
-                self._trigger_error('{} out of range'.format(reg.name.lower()))
-                return None
+            return units.as_raw(reg, value)
+        return value
+
+    def _maybe_logical(self, reg, value) -> int:
+        """
+        If in logical mode, convert incoming value to logical units. If not
+        in logical mode, no conversion is necessary.
+
+        Typically, the incoming value comes from a register, which always
+        contains a raw value.
+        """
+        if (self._reg.unit_mode == UnitMode.LOGICAL
+                and units.requires_conversion(reg)):
+            return units.as_logical(reg, value)
         return value
 
     def _move(self) -> bool:
         """
-        Inside a routine, move a value from a parameter into a register.
-
-        Within the instruction, param0 is the name of a parameter, while param1
-        is the destination register.
+        Move from variable/register to variable/register.
         """
         inst = self._program[self._pc]
-        name = inst.param0
-        value = self._call_stack.get_variable(name)
-        if value is None:
-            return self._trigger_error('Unknown: "{}"'.format(name))
+        srce = inst.param0
+        dest = inst.param1
+        if isinstance(srce, Register):
+            value = self._get_tagged_reg(srce)
+            if isinstance(dest, Register):
+                self._set_tagged_reg(dest, value)
+            else:
+                self._call_stack.put_variable(
+                    dest, self._maybe_logical(srce, value))
+            return True
 
-        reg = inst.param1
-        value = self._unit_check(reg, value)
+        value = self._call_stack.get_variable(srce)
         if value is None:
-            return False
-        setattr(self._reg, reg.name.lower(), value)
+            return self._trigger_error('Unknown: "{}"'.format(srce))
+        if isinstance(dest, Register):
+            self._set_tagged_reg(dest, self._assure_raw(dest, value))
+        else:
+            self._call_stack.put_variable(dest, value)
         return True
 
     def _moveq(self) -> bool:
         """
-        Move a value from the instruction itself into a register.
-
-        Within the instruction, param0 is the source literal value, while param1
-        is the destination register.
+        Move a value from the instruction itself into a register or variable.
         """
         inst = self._program[self._pc]
-        reg = inst.param1
-        if inst.param0 is None:
-            value = None
+        value = inst.param0
+        dest = inst.param1
+
+        if isinstance(dest, Register):
+            self._set_tagged_reg(dest, self._assure_raw(dest, value))
         else:
-            value = self._unit_check(reg, inst.param0)
-            if value is None:
-                return False
-        setattr(self._reg, reg.name.lower(), value)
+            self._call_stack.put_variable(dest, value)
         return True
 
     def _time_pattern(self) -> None:
@@ -328,6 +358,10 @@ class Machine:
 
     def _power_param(self):
         return 65535 if self._reg.power else 0
+
+    @classmethod
+    def _breakpoint(cls):
+        breakpoint()
 
     def _trigger_error(self, message) -> bool:
         logging.error(message)

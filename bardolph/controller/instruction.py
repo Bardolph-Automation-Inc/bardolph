@@ -4,6 +4,7 @@ from ..lib.auto_repl import auto
 
 
 class OpCode(Enum):
+    BREAKPOINT = auto()
     CALL = auto()
     COLOR = auto()
     END = auto()

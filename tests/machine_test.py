@@ -78,5 +78,20 @@ class MachineTest(unittest.TestCase):
         light = light_set.get_light(name)._impl
         self.assertTrue(light.was_set(color))
 
+    def test_bound_variable(self):
+        program = [
+            Instruction(OpCode.MOVE, "bound", Register.HUE),
+            Instruction(OpCode.MOVEQ, 1.0, Register.SATURATION),
+            Instruction(OpCode.MOVEQ, 2.0, Register.BRIGHTNESS),
+            Instruction(OpCode.MOVEQ, 3.0, Register.KELVIN),
+            Instruction(OpCode.MOVEQ, "Top", Register.NAME),
+            Instruction(OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND),
+            Instruction(OpCode.COLOR, None, None),
+            Instruction(OpCode.MOVE, "bound", Register.HUE),
+            Instruction(OpCode.COLOR, None, None),
+            Instruction(OpCode.MOVE, "bound", Register.HUE),
+            Instruction(OpCode.COLOR, None, None)
+        ]
+
 if __name__ == '__main__':
     unittest.main()

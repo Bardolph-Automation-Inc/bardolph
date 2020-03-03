@@ -10,25 +10,31 @@ from bardolph.parser.call_context import CallContext
 class CallContextTest(unittest.TestCase):
     def test_push_pop(self):
         context = CallContext()
-        context.add_param('a', 1)
-        context.add_param('b', 2)
-        context.push()
-        context.add_param('a', 3)
+        context.add_variable('global', 100)
 
-        self.assertEqual(context.resolve_variable('a').value, 3)
-        self.assertIsNone(context.resolve_variable('b'))
-        self.assertIsNone(context.resolve_variable('x'))
+        context.push()
+        context.add_variable('a', 1)
+        context.add_variable('b', 2)
+        context.push()
+        context.add_variable('a', 3)
+
+        self.assertEqual(context.get_data('a').value, 3)
+        self.assertEqual(context.get_data('global').value, 100)
+        self.assertIsNone(context.get_symbol('b'))
+        self.assertIsNone(context.get_symbol('x'))
 
         context.pop()
-        self.assertEqual(context.resolve_variable('a').value, 1)
-        self.assertEqual(context.resolve_variable('b').value, 2)
+        self.assertEqual(context.get_data('a').value, 1)
+        self.assertEqual(context.get_data('b').value, 2)
+        self.assertEqual(context.get_data('global').value, 100)
 
         context.clear()
-        self.assertIsNone(context.resolve_variable('a'))
+        self.assertIsNone(context.get_data('global'))
+        self.assertIsNone(context.get_data('a'))
 
     def test_get_routine(self):
         context = CallContext()
-        context.add_param('a', 1)
+        context.add_variable('a', 1)
         context.add_routine(Routine('2'))
         self.assertIsNone(context.get_routine('a'))
         self.assertEqual(context.get_routine('2').name, '2')

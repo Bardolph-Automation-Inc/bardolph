@@ -7,6 +7,7 @@ from tests.call_context_test import CallContextTest
 from tests.call_stack_test import CallStackTest
 from tests.clock_test import ClockTest
 from tests.end_to_end_test import EndToEndTest
+from tests.example_test import ExampleTest
 from tests.injection_test import InjectionTest
 from tests.job_control_test import JobControlTest
 from tests.lex_test import LexTest
@@ -27,6 +28,7 @@ for test_class in (
     CallStackTest,
     ClockTest,
     EndToEndTest,
+    ExampleTest,
     InjectionTest,
     JobControlTest,
     LexTest,

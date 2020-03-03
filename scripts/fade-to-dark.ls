@@ -4,17 +4,15 @@ hue 54 saturation 40 brightness 60
 set all
 
 time 120 duration 120
-# time 0 duration 1.5
 
-kelvin 2500 hue 42 saturation 80 brightness 40 # pause 
+kelvin 2500 hue 42 saturation 80 brightness 40
 set all
 
-hue 30 brightness 20 # pause 
-set all 
-
-brightness 10 # pause 
+hue 30 brightness 20
 set all
 
-brightness 6 saturation 90 # pause 
+brightness 10
 set all
 
+brightness 6 saturation 90
+set all

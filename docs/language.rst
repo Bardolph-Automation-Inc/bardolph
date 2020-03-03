@@ -21,10 +21,10 @@ maintains a queue, allowing execution of a sequence of compiled scripts.
 
 A script sets the color and brightness of the lights by specifying
 5 numbers: `hue`, `saturation`, `brightness`, `kelvin`, and `duration`.
-During execution, the Bardolph virtual machine sends these parameters
+During execution, the Bardolph virtual machine sends these settings
 to the lights.
 
-The easiest way to understand the meaning of these numbers is to use
+One easy way to understand the meaning of these numbers is to use
 the LIFX mobile app and observe the displayed numbers as you change
 the lighting.
 
@@ -38,14 +38,24 @@ values. Percentages above 100 are considered invalid. Angles
 greater than or equal to 360 are normalized to a number less
 than 360 by modulo arithmetic.
 
+.. index::
+    pair: color setting; definition
+    pair: color; definition
+
 .. note:: The term *color* is somewhat ambiguous. Intuitively, you may
   consider brightness (intensity) to be separate from a bulb's color.
   However, for simplicity here, "color" always refers
   to the tone of the light and its intensity. Therefore,
-  in this documentation, "setting the color" of a bulb means that
-  you are specifying both the frequency and the brightness of the light that
-  the bulb produces.
+  in this documentation, "setting the color" of a light means that
+  you are specifying both the frequency and the brightness of the
+  light that the device produces.
 
+  Throughout this documentation, *color setting* is defined as any of
+  the parameters that control this so-called color. The available
+  color settings are `hue`, `saturation`, `brightness`, and `kelvin`.
+
+Syntax
+======
 A script is a plain-text file in which all whitespace is equivalent. You can
 format it with tabs or even put the entire script on a single line.
 Comments begin with the '#' character and continue to the end of the line. All
@@ -81,6 +91,22 @@ Any uninitialized values default to zero, or an empty string. This can lead
 to unwanted results, so each of the values should be set at least once before
 setting the color of any lights. Or, consider starting your script with
 `get all` (the `get` command is described below).
+
+.. index::
+  pair: name; syntax
+
+Names
+-----
+As described below, the language supports various features that make use of
+symbolic names. Examples of this are variables and macros. A valid name
+starts with either an underscore or alphabetic character. The rest of the
+name can contain letters, numbers, and underscores. For example:
+
+* `x`
+* `_living_room`
+* `Bulb_80`
+
+Names are handled with case-sensitive logic.
 
 .. index::
    single: individual lights
@@ -165,7 +191,7 @@ can set the brightness to zero).
 
 Abbreviations
 =============
-Scripts can be much terser with shorthand parameter names: `h` (hue),
+Scripts can be much terser with shorthand color setting names: `h` (hue),
 `s` (saturation), `b` (brightness), and `k` (kelvin). The following two
 lines do the same thing::
 
@@ -268,8 +294,10 @@ short for the program to keep up, it will simply keep executing
 instructions as fast as it can.
 
 .. index::
-   single: clock time
-   single: time of day
+  single: clock time
+  single: time of day
+  single: time pattern
+  pair: time pattern; syntax
 
 Wait for Time of Day
 =====================
@@ -280,19 +308,21 @@ example, to turn on all the lights at 8:00 a.m.::
   time at 8:00 on all
 
 All times are specified using a 24-hour clock, with midnight at 0:00.
+In this documentation, the parameter supplied in the script is called
+a *time pattern*.
 
-In this context, you can use wildcards to match more than one possible
+A time pattern can contain wildcards to match more than one possible
 time. For example, to turn on the lights on the hour and turn them off on the
 half-hour::
 
   time at *:00 on all time at *:30 off all
 
-The pattern used to specify the time can replace one or two digits with the
+A time pattern can have placeholders for one or two digits with an
 asterisk. Here are some examples of valid patterns:
 
 * `2*:00` - matches 21:00, 22:00, and 23:00.
 * `1:*5` - matches 1:05, 1:15, 1:25, 1:35, 1:45 and 1:55.
-* `*:30` - matches any half-hour.
+* `*:30` - matches on the half-hour.
 
 These are not valid patterns:
 
@@ -302,7 +332,8 @@ These are not valid patterns:
 * `12:5` - minutes need to be expressed as two digits.
 
 Note that the language is procedural, not declarative. This means that the
-script is executed from top to bottom. For example::
+script is executed from top to bottom. For example, assume you run this script
+at 8:00 a.m.::
 
   time at 10:00 on all
   time at 9:00 off all
@@ -401,48 +432,8 @@ You can combine lights, groups, and locations with the `and` keyword::
 
   set location "Living Room" and "Table" and group "Reading Lights"
 
-
 .. index::
-   single: series
-
-Series of Values
-================
-When setting the color of multiple lights, you can use a running series of
-incremental values. For example::
-
-  hue series 100 10
-  saturation 50 brightness 60 kelvin 2700
-  set "Top"
-  set "Middle" and "Bottom"
-
-This example assumes that three lights named "Top", "Middle", and
-"Bottom" are all available on the network. This script will:
-
-#. Set light "Top" to HSBK of 100, 50, 60, 2700
-#. Set light "Middle" to HSBK of 110, 50, 60, 2700
-#. Set light "Bottom" to HSBK of 110, 50, 60, 2700
-
-Note that when setting more that one light using `and`, the series
-is advanced only once, and the same value is used for all lights
-in the `set` command's list.
-
-Series can be used for `hue`, `saturation`, `brightness`, and
-`kelvin`. In the case of a group or location, all member lights are
-given the same value from the series.
-
-A series advances with each `set` command, regardless of what
-it's applied to. For example::
-
-  hue series 100 10
-
-  set "Top"
-  set group "Furniture"
-
-This will set the hue for light "Top" to 100. Every light in the group
-"Furniture" will get a hue of 110.
-
-.. index::
-   single: define
+   pair: define; macro
    single: macro
 
 Macro Definitions
@@ -471,22 +462,64 @@ Macros may refer to other existing macros::
   define blue 240
   define b blue
 
-A macro can be defined only once::
+A macro can be defined only once, which makes it suitable for constants::
 
-  define blue 240 hue blue
-  define blue 260 # Error - already defined.
+  define blue 240
+  define blue 260 # Error: already defined.
 
 .. index::
-   single: define
-   single: routine
-   single: subroutine
+  single: variables
+  pair: assign; syntax
+
+Variables
+=========
+A variable is somewhat similar to a macro, in that it can hold a value.
+However, a variable's contents can be replaced with a new value at
+run-time. In addition, the current value for a color setting can be
+copied into a variable. The syntax is:
+
+  `assign variable value`
+
+A variable can contain a number, a string, or a time pattern. Once
+it has been initialized, it can be used as a name or a value for a
+color or time setting. For example::
+
+  assign the_light "Chair"
+  on the_light
+
+  assign the_room "Living Room"
+  off group the_room
+
+  assign dinner_time 17:00
+  time at dinner_time on "Table"
+
+An existing variable can be assigned to another. A variable can also get
+a copy of a color setting. For example::
+
+  assign x 120
+  assign y x     # y now contains 120
+  hue 240
+  assign y hue   # y now contains 240
+
+Assignment of one variable to another has by-value semantics::
+
+  assign x 120
+  assign y x
+  assign x 240    # y still contains 120
+  hue y           # Sets hue to 120.
+
+In this example, `y` has an independent copy of the original value of `x`,
+even after `x` has been given a new value.
+
+.. index::
+  pair: define; routine
+  single: subroutine
 
 Routine Definitions
 ===================
 A subprogram, hereafter called a *routine* can be defined as a
-sequence of commands.
-
-Here's a simple exmple of a routine being defined, and then called::
+sequence of commands. Here's a simple exmple of a routine being defined
+and called::
 
   define shut_off_all off all
   shut_off_all
@@ -494,33 +527,49 @@ Here's a simple exmple of a routine being defined, and then called::
 A routine can have one or more parameters delineated by the `with` and
 `and` keywords::
 
-  define shut_off with first_light and second_light
-  shut_off first_light second_light
+  define set_mz with mz_light and mz_zone
+    set mz_light zone mz_zone
 
-  shut_off "Table" "Chair Side"
+  set_mz "Strip" 7
 
 Note that the routine's parameters are separated by the `and` keyword
 only in the definition. Neither `with` nor `and` appear in the
 routine call.
 
-If a routine contains more that one command, it needs to be included
-within `begin` and `end` keywords::
+If a routine contains multiple commands, they need to be contained
+in `begin` and `end` keywords::
 
-  define delayed_shut_off with light_name and delay
-  begin
+  define partial_shut_off begin
+    off group "Living Room"
+  end
+
+  define off_3_seconds with the_light begin
+    duration 3
+    off the_light
+  end
+
+  partial_shut_off
+  off_3_seconds "Chair"
+
+A routine can call another and pass along incoming parameters. As noted
+above, the parameters are passed by value::
+
+  define delayed_off with light_name and delay begin
     time delay
     off light_name
   end
 
-A routine can call another::
-
-  define slow_shut_off with light_name and delay
-  begin
+  define slow_off with light_name and delay begin
     duration 30
-    delayed_shut_off light_name delay
+    delayed_off light_name delay
   end
 
-Routine definitions may not be nested::
+  slow_off "Chair" 10
+
+A routine may not be re-defined. Routine definitions may not be nested::
+
+  define a_routine set "Chair"
+  define a_routine set "Table"  # Error: already defined.
 
   define outer
     begin
@@ -528,7 +577,31 @@ Routine definitions may not be nested::
       define inner on all
     end
 
-A routine may not be re-defined.
+Variables defined inside a routine are local and go out of scope when the
+routine returns. Because parameters are passed by value, assignment to a
+parameter overwrites the local copy but does not affect any variable
+outside of the routine::
+
+  define do_brightness with x begin
+    assign x 50     # Overwrite local copy.
+    brightness x    # Set brightness to 50.
+  end
+
+  assign y 100
+  do_brightness y
+  saturation y      # y unchanged: set saturation to 100.
+
+Variables assigned outside of a routine are considered global and are
+visible in all scopes::
+
+  assign y 100
+
+  define set_global begin
+    assign y 50
+  end
+
+  set_global
+  saturation y   # Set saturation to 50.
 
 .. index::
    single: get
@@ -538,7 +611,7 @@ Retrieving Current Color
 ========================
 The `get` command retrieves the current settings from a single light::
 
-  get "Table Lamp"
+  get "Table"
   hue 20
   set all
 
@@ -602,3 +675,15 @@ of the decimal point will be insignificant. For example, durations of `2` and
 However, in practice, none of the timing is precise or accurate enough for you
 to see any difference in behavior for these examples. In my experience,
 you can't expect precision much better than 1/10 of a second.
+
+When in logical mode, a value moved between a variable and a setting
+is subject to conversion. Following is an example that illustrates this
+behavior. Note that 50% in logical units is equivalent to 32767 in raw
+units::
+
+  units logical
+  brightness 50
+  assign x brightness   # x contains 50.
+
+  units raw             # x still contains 50.
+  assign x brightness   # x now contains 32767.

@@ -31,7 +31,7 @@ def get_assembly():
 def build_instructions():
     program = []
     it = iter(get_assembly())
-    
+
     op_code = next(it, None)
     while op_code != None:
         if op_code in (OpCode.SET_REG, OpCode.TIME_PATTERN):
@@ -53,7 +53,7 @@ def main():
     args = ap.parse_args()
 
     injection.configure()
-    settings_init = settings.use_base(config_values.functional)    
+    settings_init = settings.use_base(config_values.functional)
     overrides = {
         'sleep_time': 0.1
     }
@@ -61,13 +61,13 @@ def main():
         overrides['log_level'] = logging.DEBUG
         overrides['log_to_console'] = True
     if args.fakes:
-        overrides['use_fakes'] = True    
+        overrides['use_fakes'] = True
     n_arg = arg_helper.get_overrides(args)
     if n_arg is not None and not args.fakes:
         overrides.update(n_arg)
 
     settings_init.add_overrides(overrides).configure()
-    light_module.configure()    
+    light_module.configure()
     machine.Machine().run(build_instructions())
 
 

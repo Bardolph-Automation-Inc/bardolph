@@ -17,12 +17,8 @@ def has_range(reg):
 
 def requires_conversion(reg):
     return reg in (
-        Register.BRIGHTNESS,
-        Register.DURATION,
-        Register.HUE,
-        Register.KELVIN,
-        Register.SATURATION,
-        Register.TIME)
+        Register.BRIGHTNESS, Register.DURATION, Register.HUE,
+        Register.SATURATION, Register.TIME)
 
 def get_range(reg):
     """
@@ -41,7 +37,8 @@ def get_range(reg):
         Register.DURATION, Register.TIME) else _RAW_RANGE
 
 def as_raw(reg, logical_value, use_float=False):
-    """If necessary, converts to integer value that can be passed into the
+    """
+    If necessary, converts to integer value that can be passed into the
     light API.
 
     Args:

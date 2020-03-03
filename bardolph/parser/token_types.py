@@ -5,8 +5,10 @@ from ..lib.auto_repl import auto
 class TokenTypes(Enum):
     ALL = auto()
     AND = auto()
+    ASSIGN = auto()
     AT = auto()
     BEGIN = auto()
+    BREAKPOINT = auto()
     DEFINE = auto()
     END = auto()
     EOF = auto()
@@ -25,7 +27,6 @@ class TokenTypes(Enum):
     RANGE = auto()
     RAW = auto()
     REGISTER = auto()
-    SERIES = auto()
     SET = auto()
     SYNTAX_ERROR = auto()
     TIME_PATTERN = auto()
@@ -34,3 +35,10 @@ class TokenTypes(Enum):
     WITH = auto()
     WAIT = auto()
     ZONE = auto()
+
+    @classmethod
+    def commands(cls):
+        return (TokenTypes.ASSIGN, TokenTypes.GET, TokenTypes.OFF,
+                TokenTypes.ON, TokenTypes.POWER, TokenTypes.PAUSE,
+                TokenTypes.REGISTER, TokenTypes.SET, TokenTypes.UNITS,
+                TokenTypes.WAIT)

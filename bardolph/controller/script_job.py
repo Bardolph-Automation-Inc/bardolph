@@ -7,6 +7,7 @@ from ..parser.parse import Parser
 
 class ScriptJob(Job):
     def __init__(self):
+        super().__init__()
         self._program = None
         self._parser = Parser()
         self._machine = Machine()
@@ -34,13 +35,14 @@ class ScriptJob(Job):
         if self._program is None:
             logging.error(self._parser.get_errors())
         return self._program
-    
+
     @property
     def program(self):
         return self._program
 
     def execute(self):
         if self._program is not None:
+            self._machine.reset()
             self._machine.run(self._program)
 
     def request_stop(self):

@@ -25,24 +25,23 @@ class LexTest(unittest.TestCase):
     def test_all_tokens(self):
         input_string = 'all and at brightness \
             define # comment \n duration hue \
-            off on or kelvin range saturation series \
+            off on or kelvin range saturation \
             set time wait zone 12:*4 \
             -1.0 01.234\n"Hello There" x _abc @'
         expected_tokens = [
             TokenTypes.ALL, TokenTypes.AND, TokenTypes.AT, TokenTypes.REGISTER,
             TokenTypes.DEFINE, TokenTypes.REGISTER, TokenTypes.REGISTER,
             TokenTypes.OFF, TokenTypes.ON, TokenTypes.OR, TokenTypes.REGISTER,
-            TokenTypes.RANGE, TokenTypes.REGISTER, TokenTypes.SERIES,
-            TokenTypes.SET, TokenTypes.REGISTER,
-            TokenTypes.WAIT, TokenTypes.ZONE, TokenTypes.TIME_PATTERN,
-            TokenTypes.NUMBER, TokenTypes.NUMBER, TokenTypes.LITERAL_STRING,
-            TokenTypes.NAME, TokenTypes.NAME,
+            TokenTypes.RANGE, TokenTypes.REGISTER, TokenTypes.SET,
+            TokenTypes.REGISTER, TokenTypes.WAIT, TokenTypes.ZONE,
+            TokenTypes.TIME_PATTERN, TokenTypes.NUMBER, TokenTypes.NUMBER,
+            TokenTypes.LITERAL_STRING, TokenTypes.NAME, TokenTypes.NAME,
             TokenTypes.UNKNOWN
         ]
         expected_strings = [
             'all', 'and', 'at', 'brightness', 'define', 'duration',
             'hue', 'off', 'on', 'or', 'kelvin', 'range', 'saturation',
-            'series', 'set', 'time', 'wait', 'zone', '12:*4',
+            'set', 'time', 'wait', 'zone', '12:*4',
             '-1.0', '01.234', 'Hello There', 'x', '_abc', '@'
         ]
         self._lex_and_compare(input_string, expected_tokens, expected_strings)

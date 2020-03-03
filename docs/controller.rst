@@ -5,12 +5,15 @@
 
    http://www.bardolph.org
 
-Controller Module
-#################
+Controller and Virtual Machine Module
+#####################################
 This document is the first draft of an description of Bardolph's core module
 that interprets a script and accesses the lights. It serves as documentation
-of some of the internals, as well as design notes for certain parts of the
+of some of the program logic, as well as design notes for certain parts of the
 code.
+
+If you are trying to use Bardolph, this document won't be of much use to
+you. It covers only the internals of the code.
 
 The module builds on a very simple virtual machine that executes a program
 built out of a narrow set of instructions, described below.
@@ -61,31 +64,73 @@ instructions are:
 * time_pattern
 * wait
 
+Units Mode
+----------
+Both the parser and VM maintain a current units mode. All of the numbers
+that appear in the LS code also appear in the generated instructions.
+
+Any numerical values that move from register to register are untouched
+as they are copied. Movement between two variables is also done with
+no processing.
+
+If a value is moved between a variable and a register, a conversion may
+take place. Registers always contain raw values, but variables can contain
+either type. If the parser or VM is in logical units mode, then any
+value moved out of or into a register must be converted.
+
+Here is an example that illustrates this behavior::
+
+   units logical
+   assign x 50
+   brightness x          # converted: brightness is 32767
+
+   units raw
+   assign x brightness   # x = 32767
+   units logical         # no change: x = 32767
+   assign x brightness   # x = 50
+
 Move and Moveq
 --------------
-These are the basic instructions for moving data into registers. In
-both cases, the source is in `param0` of the instruction and the
-desitnation register is in `param1`. The difference between the two
-lies in the meaning of `param0`.
+These are the basic instructions for moving data between registers and
+variables.  In a `move` instruction, the source and destination can each
+be a variable or a register. The VM determines the appropriate action by
+examining the Python type information for `param0` and `param1`.
 
-In a `move` instruction, `param0` is a string containing the name of a
-symbol. When the VM executes this instruction, it first checks the list
-of parameters, which are in the top stack frame. If that
-symbol is not there, the VM then checks the globals. In either case, the
-dictionary must contain the value of the symbol. If the symbol isn't in
-either dictionary, an error has occurred. The parser should catch
-that error and report it.
+In a `moveq` instruction, `param0` always contains a fixed value that
+the VM will copy directly from the instruction to the destination. The
+destination in `param1` can be either a string or an instance of
+Register. If the destination is a string, it is interpreted as the
+name of a variable. If it is a register, the destination will be the
+VM's associated register.
 
-Until variables have been implemented, no globals will exist.
+As it's source operand, a `move` instruction's `param0` can contain
+either a string or an instance of Register. If the source is a Register,
+the VM copies the content of the associated register to the destination.
+If the source is a string, it is treated as the name of a variable, and
+the variable is dereferenced to get the value.
 
-In a `moveq` instruction, `param0` contains the actual value, which was
-known at compile time. A string in this case is considered a literal value.
-Execution copies the content of `param0` directly from
-this instruction into the register.
+With respect to the destination in `param1`, the `move` instruction
+has the same behavior as `moveq`: a string is treated as a variable
+name, and a Register object refers to a VM register.
 
-Set Color - color
------------------
-To execute the "color" command, the VM reads the values from its `hue`,
+In any case, the VM's CallStack resolves variable names. If a
+variable is the destination, the CallStack checks to see if that
+variable is in the current stack frame. If so, the value in the stack
+frame gets replaced.
+
+If a destination variable name is not in the top stack frame, a value
+is added to it, effectively creating a local variable. If the name
+is present in the top stack frame, its value is replaced.
+
+If a variable is a source, the VM first looks for it  in the top stack
+frame. If that symbol is not there, the VM then checks the globals. If
+the symbol isn't in either dictionary, an error has occurred. The parser
+should catch that error and report it; if it doesn't, there's a bug in
+the parse code.
+
+Set Color
+---------
+To execute the `color` command, the VM reads the values from its `hue`,
 `saturation`, `brightness`, and `kelvin` registers to assemble a color for the
 target device. If the `operand` register contains `light`, the `name` register
 is assumed to contain the name of a light. Correspondingly, if `operand`
@@ -147,7 +192,58 @@ VM's "name" register, which could be a name of a light, the name of a group, or
 location.
 
 .. index::
-   single: routines
+   single: variables
+
+Variables
+---------
+A variable can exist in local or global scope. When one is created inside a
+routine definition, it exists in local scope and hides any global variable
+of the same name.
+
+Parsing Variable Usage
+~~~~~~~~~~~~~~~~~~~~~~
+In all cases, `param0` is a string containing the name of the variable.
+
+Sequence:
+
+   #. In source code, reach an "assign" command.
+   #. Get the name of the variable, in the next token.
+   #. Add the variable to the current call context.
+   #. and use it as `param1`.
+      Note that in all cases, the name of the variable is in `param1`.
+   #. Get the next token, which contains the value for the variable.
+   #. If the value is a macro or literal, generate a `moveq` instruction
+      with the actual value in `param0`. If the value is a register,
+      generate a `move` instruction with an instance of Register in `param0`.
+      If the value resolves to variable, generate a `move` instruction where
+      `param0` is a string containing the name.
+
+Executing Variable Usage
+~~~~~~~~~~~~~~~~~~~~~~~~
+In a `moveq` instruction, `param0` is aways considered to be a literal
+value, including when it is a string.
+
+With this instruction, the VM examines the Python type of
+`param1`. If it's a string, `param1` is considered to be the
+name of the destination variable. If it is of
+type Register, the destination is the VM's associted register.
+
+In a `move` instruction, either parameter can be a string. In all
+cases with this instruction, a string is considered a variable name.
+Either parameter can also be an instance of Register. Because `param0`
+and `param1` can both be either a Register or a string, there are 4
+permutations of source/destination types.
+
+When a variable is assigned a value, it is added to the dictionary of
+variables at the top of the call stack. This means that any existing
+value gets replaced, and new variables are created automatically.
+
+If the currently executing code is not within a routine, the top of
+the call stack will effectively point to the root frame, which
+contains the global variables.
+
+.. index::
+   single: macros
 
 Macros
 ------
@@ -159,6 +255,9 @@ Sequence:
 #. In source code, reach `define` statement for value, which can be a string,
 number, or time pattern.
 #. Save the value of the macro in the call context's globals.
+
+.. index::
+   single: routines
 
 Subroutines
 -----------
@@ -193,8 +292,8 @@ Upon exit, the stack is popped and the routine's parameters go out of scope.
 
 Stack Frame
 ~~~~~~~~~~~
-The *stack frame* is used by the *virtual machine*. It tracks the return
-address for when a the routine exits, and manages parameters.
+The *stack frame* is used by the *virtual machine*. It tracks return
+addresses for when routines exit, and manages parameters.
 
 Within the code, various `move` instructions copy data from
 parameters into VM registers. In these instructions, the "source" in
@@ -205,15 +304,20 @@ stack, or in the global symbol table.
 That stack frame is populated by zero or more `param` instructions, each
 with a name and a value. Prior to the routine call, those instructions
 cause parameters to be accumulated in a dictionary, which serves
-as an activation record. When the VM gets to the `call` command, that
-dictionary defines all of the parameters
-associated with that routine. A new stack frame with that activation
-record gets pushed on top of the stack, where it is accessed by the current
-routine's code. The VM then creates a new one for the subsequent routine
-calls.
+as an activation record. The `param` instructions are immediately followed by
+a `call` command. A new stack frame with that activation
+record gets pushed on top of the stack, where it can be accessed
+by `move` instructions in the current routine's code. The
+VM then creates a new staging dictionary for any nested routine calls.
 
 Upon exit, the stack frame is popped. The dictionary representing the
-activation record should be empty at this point.
+activation record should be empty at this point. The stack should never
+be empty; in all cases, at least the root frame must be present.
+
+Before any routines are called, the stack has a single stack
+frame which represents the root, or global frame. Any effort to
+resolve a variable name first checks the top of the stack. If the name
+isn't found, the call stack then checks the root frame.
 
 Parsing a Routine
 ~~~~~~~~~~~~~~~~~
@@ -247,27 +351,32 @@ time stamp), a reference to a macro, or a Symbol.
    instruction.
 #. Generate a `call` instruction containing the routine's name in a string.
 
-In all cases, `param0` in the instruction contains the name of the parameter
-and `param1` contains the parameter itself. In the case
-of a literal, the value can be put directly into `param0` in the
-instruction. For a macro, the name can be resolved through the call context
-and its value put into `param0`.
+To set the value of a parameter, a `param` instruction holds
+the name of the parameter in `param0`, and `param1` contains the
+parameter itself. In the case of a literal, the value can be put
+directly into `param0` in the instruction. For a macro, the name
+can be resolved through the call context and its value put into
+`param0`.
 
-If the parameter is of type `var`, then `param1` in the generated
-instruction would be an instance of Symbol.
-During execution, when param1 contains a Symbol, the VM will attempt to
-resolve it, first in its parameter dictionary, then in its globals.
+If the parameter is of type `var`, then `param1` in the generated `param`
+instruction is an instance of Symbol. During execution, upon detecting that
+`param1` contains a Symbol, the VM will attempt to resolve it, first
+in the call stack, then in its globals.
 
 Running Code
 ~~~~~~~~~~~~
-The output of the parser contains code that belongs in the main segment, with
-routine definitions mixed in.
+The output of the parser contains code that is executed immediately, with
+routine definitions mixed in. The loader puts the immediate code the
+*main* segment while collecting the routine code in a *routine segment*.
 
 Layout of a program after it has been loaded:
 
 #. `jump` instruction to main segment.
 #. Routine code.
 #. Main code.
+
+With this layout, the program terminates when the VM finishes
+executing the last instruction.
 
 Loading:
 

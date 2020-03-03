@@ -1,38 +1,16 @@
 #!/usr/bin/env python3
 
-import time
 import unittest
 
 from bardolph.controller import i_controller
-from bardolph.controller.script_job import ScriptJob
 from bardolph.lib.injection import provide
-from bardolph.lib.job_control import JobControl
-from . import test_module
+from tests.script_runner import ScriptRunner
+from tests import test_module
 
 class EndToEndTest(unittest.TestCase):
     def setUp(self):
         test_module.configure()
-
-    def _run_script(self, script, max_waits=None):
-        jobs = JobControl()
-        jobs.add_job(ScriptJob.from_string(script))
-        while jobs.has_jobs():
-            time.sleep(0.01)
-            if max_waits is not None:
-                max_waits -= 1
-                if max_waits < 0:
-                    self.fail("Jobs didn't finish.")
-
-    def _check_call_list(self, light_names, expected):
-        lifx = provide(i_controller.Lifx)
-        for light in lifx.get_lights():
-            if light.get_label() in light_names:
-                self.assertListEqual(light.call_list(), expected)
-
-    def _check_all_call_lists(self, expected):
-        lifx = provide(i_controller.Lifx)
-        for light in lifx.get_lights():
-            self.assertListEqual(light.call_list(), expected)
+        self._runner = ScriptRunner(self)
 
     def test_individual(self):
         script = """
@@ -40,7 +18,7 @@ class EndToEndTest(unittest.TestCase):
             hue 11 saturation 22 brightness 33 kelvin 2500 set "Top"
             hue 44 saturation 55 brightness 66 set "Bottom"
         """
-        self._run_script(script)
+        self._runner.run_script(script)
         lifx = provide(i_controller.Lifx)
         for light in lifx.get_lights():
             if light.get_label() == 'Top':
@@ -53,7 +31,7 @@ class EndToEndTest(unittest.TestCase):
 
     def test_power(self):
         script = 'on "Top" off "Bottom"'
-        self._run_script(script)
+        self._runner.run_script(script)
         lifx = provide(i_controller.Lifx)
         for light in lifx.get_lights():
             if light.get_label() == "Top":
@@ -64,20 +42,12 @@ class EndToEndTest(unittest.TestCase):
                 expected = []
             self.assertListEqual(light.call_list(), expected)
 
-    def _test_code(self, script, lights, expected):
-        self._run_script(script)
-        self._check_call_list(lights, expected)
-
-    def _test_code_all(self, script, expected):
-        self._run_script(script)
-        self._check_all_call_lists(expected)
-
     def test_and(self):
         script = """
             units raw hue 1 saturation 2 brightness 3 kelvin 4
             duration 5 set "Bottom" and "Top" and "Middle"
         """
-        self._run_script(script)
+        self._runner.run_script(script)
         lifx = provide(i_controller.Lifx)
         for light in lifx.get_lights():
             if light.get_label() in ('Bottom', 'Middle', 'Top'):
@@ -91,7 +61,7 @@ class EndToEndTest(unittest.TestCase):
             units raw hue 10 saturation 20 brightness 30 kelvin 40
             duration 50 set "Table" and group "Pole"
         """
-        self._test_code(script, ('Top', 'Middle', 'Bottom', 'Table'),
+        self._runner.test_code(script, ('Top', 'Middle', 'Bottom', 'Table'),
                         [('set_color', ([10, 20, 30, 40], 50))])
 
     def test_define_operand(self):
@@ -101,7 +71,7 @@ class EndToEndTest(unittest.TestCase):
             set light_name
             on light_name
         """
-        self._test_code(script, 'Top', [
+        self._runner.test_code(script, 'Top', [
             ('set_color', ([1, 2, 3, 4], 5)),
             ('set_power', (65535, 5.0))])
 
@@ -111,7 +81,8 @@ class EndToEndTest(unittest.TestCase):
             hue 1 saturation 2 brightness 3 kelvin 4 duration x time x
             set "Top"
         """
-        self._test_code(script, 'Top', [('set_color', ([1, 2, 3, 4], 500))])
+        self._runner.test_code(
+            script, 'Top', [('set_color', ([1, 2, 3, 4], 500))])
 
     def test_nested_define(self):
         script = """
@@ -119,7 +90,8 @@ class EndToEndTest(unittest.TestCase):
             hue 1 saturation 2 brightness 3 kelvin 4 duration y
             set "Top"
         """
-        self._test_code(script, 'Top', [('set_color', ([1, 2, 3, 4], 500))])
+        self._runner.test_code(
+            script, 'Top', [('set_color', ([1, 2, 3, 4], 500))])
 
     def test_zones(self):
         script = """
@@ -128,7 +100,7 @@ class EndToEndTest(unittest.TestCase):
             set "Strip" zone 0 5
             set "Strip" zone 1
         """
-        self._test_code(script, 'Strip', [
+        self._runner.test_code(script, 'Strip', [
             ('set_zone_color', (0, 6, [5, 10, 15, 20], 25.0)),
             ('set_zone_color', (1, 2, [5, 10, 15, 20], 25.0))])
 
@@ -137,7 +109,7 @@ class EndToEndTest(unittest.TestCase):
             units raw hue 10 saturation 20 brightness 30 kelvin 40 duration 50
             set "Strip" zone 5 7
         """
-        self._test_code(script, 'Strip',
+        self._runner.test_code(script, 'Strip',
                         [('set_zone_color', (5, 8, [10, 20, 30, 40], 50))])
 
     def test_get_zone(self):
@@ -146,7 +118,7 @@ class EndToEndTest(unittest.TestCase):
             define nine 9
             get "Strip" zone nine get "Strip" zone 9
         """
-        self._test_code(script, 'Strip', [
+        self._runner.test_code(script, 'Strip', [
             ('get_color_zones', (9, 10)),
             ('get_color_zones', (9, 10))])
 
@@ -155,7 +127,7 @@ class EndToEndTest(unittest.TestCase):
             units raw define get_z with x and z get x zone z
             get_z "Strip" 5
         """
-        self._test_code(script, 'Strip', [('get_color_zones', (5, 6))])
+        self._runner.test_code(script, 'Strip', [('get_color_zones', (5, 6))])
 
     def test_define_zones(self):
         script = """
@@ -165,7 +137,7 @@ class EndToEndTest(unittest.TestCase):
             set light zone z1 z2
             set light zone z2
         """
-        self._test_code(script, 'Strip', [
+        self._runner.test_code(script, 'Strip', [
             ('set_zone_color', (0, 6, [50, 100, 150, 200], 789)),
             ('set_zone_color', (5, 6, [50, 100, 150, 200], 789))])
 
@@ -176,10 +148,10 @@ class EndToEndTest(unittest.TestCase):
             set group "Pole"
             on group "Furniture"
         """
-        self._run_script(script)
-        self._check_call_list(('Top', 'Middle', 'Bottom'), [
+        self._runner.run_script(script)
+        self._runner.check_call_list(('Top', 'Middle', 'Bottom'), [
             ('set_color', ([100, 10, 1, 1000], 0))])
-        self._check_call_list(('Table', 'Chair', 'Strip'), [
+        self._runner.check_call_list(('Table', 'Chair', 'Strip'), [
             ('set_power', (65535, 0))])
 
     def test_location(self):
@@ -189,7 +161,7 @@ class EndToEndTest(unittest.TestCase):
             set location "Home"
             on location "Home"
         """
-        self._test_code_all(script, [
+        self._runner.test_code_all(script, [
             ('set_color', ([100, 10, 1, 1000], 0)),
             ('set_power', (65535, 0))])
 
@@ -200,7 +172,7 @@ class EndToEndTest(unittest.TestCase):
             define do_set with light_name set light_name
             do_set "Table"
         """
-        self._test_code(script, 'Table',
+        self._runner.test_code(script, 'Table',
                         [('set_color', ([100, 10, 1, 1000], 0))])
 
     def test_compound_routine(self):
@@ -214,7 +186,7 @@ class EndToEndTest(unittest.TestCase):
             do_set "Table" "Bottom" 600
             units logical
         """
-        self._test_code(script, ('Table', 'Bottom'),
+        self._runner.test_code(script, ('Table', 'Bottom'),
                         [('set_color', ([600, 50, 5, 5000], 0))])
 
     def test_nested_param(self):
@@ -228,10 +200,51 @@ class EndToEndTest(unittest.TestCase):
             outer_outer 700
             set "Table"
         """
-        self._test_code(script, 'Table', [
+        self._runner.test_code(script, 'Table', [
                         ('set_color', ([600, 60, 6, 6000], 0)),
                         ('set_color', ([700, 60, 6, 6000], 0))])
 
+    def test_variables(self):
+        script = """
+            units raw saturation 1 brightness 2 kelvin 3
+            assign x 5 hue x set "Table"
+
+            assign name "Chair" set name
+            assign name2 name set name2
+
+            define use_var with x
+            begin assign y x hue y set name end
+            use_var 10
+
+            assign z 100
+            use_var z
+
+            brightness z set "Chair"
+        """
+        self._runner.run_script(script)
+        self._runner.check_call_list(
+            'Table', [('set_color', ([5, 1, 2, 3], 0))])
+        self._runner.check_call_list('Chair', [
+            ('set_color', ([5, 1, 2, 3], 0)),
+            ('set_color', ([5, 1, 2, 3], 0)),
+            ('set_color', ([10, 1, 2, 3], 0)),
+            ('set_color', ([100, 1, 2, 3], 0)),
+            ('set_color', ([100, 1, 100, 3], 0))])
+
+    def test_nested_variables(self):
+        script = """
+            units raw hue 1 saturation 2 brightness 3 kelvin 4
+            assign n 50
+
+            define inner1 with x begin kelvin x set "Chair" end
+            define inner2 with y begin saturation y inner1 n end
+            define outer1 with z inner2 z
+
+            outer1 7500
+        """
+        self._runner.run_script(script)
+        self._runner.check_call_list('Chair', [
+            ('set_color', ([1, 7500, 3, 50], 0))])
 
 if __name__ == '__main__':
     unittest.main()
