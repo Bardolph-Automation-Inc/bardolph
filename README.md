@@ -1,4 +1,5 @@
-[![logo](https://www.bardolph.org/logo.png)(https://www.bardolph.org)]
+![logo](https://www.bardolph.org/logo.png)
+https://www.bardolph.org
 
 # Bardolph Project
 
