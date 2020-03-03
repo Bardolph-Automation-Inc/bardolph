@@ -103,7 +103,7 @@ Register. If the destination is a string, it is interpreted as the
 name of a variable. If it is a register, the destination will be the
 VM's associated register.
 
-As it's source operand, a `move` instruction's `param0` can contain
+As a source operand, `param0` in a `move` instruction can contain
 either a string or an instance of Register. If the source is a Register,
 the VM copies the content of the associated register to the destination.
 If the source is a string, it is treated as the name of a variable, and
