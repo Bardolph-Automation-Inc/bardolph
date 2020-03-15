@@ -5,7 +5,8 @@ from .token_types import TokenTypes
 
 
 class Lex:
-    TOKEN_REGEX = re.compile(r'#.*$|".*?"|\S+')
+    EXPR_REGEX = re.compile(r'^\{.*\}$')
+    TOKEN_REGEX = re.compile(r'#.*$|".*?"|\{.*\}|\S+')
     NAME_REGEX = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
     NUMBER_REGEX = re.compile(r'^\-?[0-9]*\.?[0-9]+$')
     INT_REGEX = re.compile(r'^\-?[0-9]*$')
@@ -41,6 +42,7 @@ class Lex:
             return token_type
 
         pairs = (
+            (self.EXPR_REGEX, TokenTypes.EXPRESSION),
             (self.REG_REGEX, TokenTypes.REGISTER),
             (TimePattern.REGEX, TokenTypes.TIME_PATTERN),
             (self.NUMBER_REGEX, TokenTypes.NUMBER),
@@ -69,5 +71,7 @@ class Lex:
                     token_type = TokenTypes.LITERAL_STRING
                 else:
                     token_type = self._token_type(token)
+                    if token_type == TokenTypes.EXPRESSION:
+                        token = token[1:-1]
 
         return (token_type, token)

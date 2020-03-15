@@ -1,5 +1,6 @@
-from .instruction import Instruction, OpCode
-from .routine import Routine
+from .instruction import Instruction
+from .vm_codes import JumpCondition, OpCode
+from bardolph.controller.routine import Routine
 
 class Loader:
     def __init__(self):
@@ -49,7 +50,8 @@ class Loader:
     def code(self):
         if len(self._routine_segment) == 0:
             return self._main_segment
-        ret_value = [Instruction(OpCode.JUMP, len(self._routine_segment) + 1)]
+        ret_value = [Instruction(
+            OpCode.JUMP, JumpCondition.ALWAYS, len(self._routine_segment) + 1)]
         ret_value.extend(self._routine_segment)
         ret_value.extend(self._main_segment)
         return ret_value

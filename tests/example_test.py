@@ -5,6 +5,9 @@ import unittest
 from tests.script_runner import ScriptRunner
 from tests import test_module
 
+
+""" Tests for examples in the documentation. """
+
 class ExampleTest(unittest.TestCase):
     def setUp(self):
         test_module.configure()

@@ -10,7 +10,7 @@ from bardolph.lib.job_control import JobControl
 
 from bardolph.controller.i_controller import LightSet
 from bardolph.controller.script_job import ScriptJob
-from bardolph.controller.snapshot import DictSnapshot, ScriptSnapshot
+from bardolph.controller.snapshot import ScriptSnapshot, TextSnapshot
 
 
 class Script:
@@ -79,23 +79,10 @@ class WebApp:
     def get_script_list(self):
         return self._scripts_list
 
-    def get_snapshot(self):
-        return DictSnapshot().generate().get_list()
-
     @inject(LightSet)
     def get_status(self, lights):
-        last_discover_time = lights.last_discover
-        if last_discover_time is not None:
-            last_discover = time.strftime(
-                "%A %m/%d %I:%M:%S %p", last_discover_time)
-        else:
-            last_discover = "none"
-
         return {
-            'lights': self.get_snapshot(),
-            'last_discover': last_discover,
-            'num_successes': lights.get_successful_discovers(),
-            'num_failures': lights.get_failed_discovers(),
+            'lights': TextSnapshot().generate().text,
             'py_version': platform.python_version()
         }
 

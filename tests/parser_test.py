@@ -3,10 +3,10 @@
 import logging
 import unittest
 
-from bardolph.controller.instruction import Instruction, OpCode, Operand
-from bardolph.controller.instruction import Register
 from bardolph.controller.units import UnitMode
 from bardolph.parser.parse import Parser
+from bardolph.vm.instruction import Instruction
+from bardolph.vm.vm_codes import OpCode, Operand, Register
 
 
 def _filter(inst_list):
@@ -42,7 +42,7 @@ class ParserTest(unittest.TestCase):
     def test_bad_number(self):
         input_string = "hue 5 saturation x"
         self.assertFalse(self.parser.parse(input_string))
-        self.assertIn('Not a data variable: "x"', self.parser.get_errors())
+        self.assertIn('Cannot use x as a value.', self.parser.get_errors())
 
     def test_single_zone(self):
         input_string = 'set "Strip" zone 7'

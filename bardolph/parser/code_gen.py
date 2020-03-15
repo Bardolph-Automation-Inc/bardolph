@@ -1,4 +1,5 @@
-from ..controller.instruction import Instruction, OpCode, Register
+from bardolph.vm.instruction import Instruction
+from bardolph.vm.vm_codes import OpCode, Register
 
 class CodeGen:
     def __init__(self):
@@ -19,7 +20,7 @@ class CodeGen:
         return inst
 
     def push_context(self, params):
-        self.add_instruction(OpCode.CALL, params)
+        self.add_instruction(OpCode.JSR, params)
 
     def optimize(self):
         idem = (Register.NAME, Register.OPERAND, Register.TIME,

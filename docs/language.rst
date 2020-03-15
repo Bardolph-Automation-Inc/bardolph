@@ -512,6 +512,31 @@ In this example, `y` has an independent copy of the original value of `x`,
 even after `x` has been given a new value.
 
 .. index::
+  single: mathematical expressions
+  single: numeric operations
+
+Mathematical Expressions
+========================
+An expression can be used wherever a number is needed. The syntax
+for an expression is to contain it in curly braces. For example, to
+put 5 + 4 into x::
+
+  assign x {5 + 4}
+
+The syntax for an expression is a narrow subset of that of numerical
+expressions in Python. It can contain numbers, references to variables,
+registers, and the standard operators `+`, `-`, `*`, `/`, and `()`.
+Currently, no mathematical functions are available.
+
+Registers can provide values::
+
+  assign double_brt {brightness * 2}
+  brightness double_brt
+  brightness {double_brt / (2 + 10)}
+
+  assign double_brt {double_brt - 10}
+
+.. index::
   pair: define; routine
   single: subroutine
 

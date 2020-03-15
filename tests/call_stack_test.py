@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 
 import unittest
-
-from bardolph.controller.call_stack import CallStack
-from bardolph.controller.routine import Routine
-from bardolph.lib.symbol_table import SymbolType
-
+from bardolph.vm.call_stack import CallStack
 
 class CallStackTest(unittest.TestCase):
     def test_push_pop(self):
@@ -29,7 +25,7 @@ class CallStackTest(unittest.TestCase):
         self.assertEqual(stack.get_variable('a'), 3)
         self.assertEqual(stack.get_variable('b'), 2)
 
-        stack.clear()
+        stack.reset()
         self.assertIsNone(stack.get_variable('a'))
 
 

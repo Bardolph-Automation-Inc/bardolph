@@ -3,25 +3,24 @@
 import argparse
 import logging
 
-from . import lex
-from .lex import Lex
-from .token_types import TokenTypes
+from bardolph.controller.routine import Routine
+from bardolph.controller.units import UnitMode
+from bardolph.lib.symbol_table import SymbolType
+from bardolph.lib.time_pattern import TimePattern
+from bardolph.vm.vm_codes import OpCode, Operand, Register, SetOp
 
-from ..controller.instruction import OpCode, Operand
-from ..controller.instruction import Register, SetOp
-from ..controller.routine import Routine
-from ..controller.units import UnitMode
+from . import lex
 from .call_context import CallContext
 from .code_gen import CodeGen
-from ..lib.symbol_table import SymbolType
-from ..lib.time_pattern import TimePattern
+from .lex import Lex
+from .expr_parser import ExprParser
+from .token_types import TokenTypes
 
 
 class Parser:
     def __init__(self):
         self._lexer = None
         self._error_output = ''
-        self._name = None
         self._call_context = CallContext()
         self._current_token_type = None
         self._current_token = None
@@ -37,6 +36,7 @@ class Parser:
             TokenTypes.ON: self._power_on,
             TokenTypes.PAUSE: self._pause,
             TokenTypes.REGISTER: self._set_reg,
+            TokenTypes.REPEAT: self._repeat,
             TokenTypes.SET: self._set,
             TokenTypes.UNITS: self._set_units,
             TokenTypes.WAIT: self._wait
@@ -91,62 +91,21 @@ class Parser:
             self._current_token_type, self._syntax_error)()
 
     def _set_reg(self):
-        self._name = self._current_token
-        reg = Register[self._name.upper()]
+        reg = Register.from_string(self._current_token)
+        if reg is None:
+            return self._token_error('Expected register, got "{}"')
         if reg == Register.TIME:
             return self._time()
 
         self._next_token()
-        if self._current_token_type == TokenTypes.NUMBER:
-            return self._number_to_reg(reg)
         if self._current_token_type == TokenTypes.LITERAL_STRING:
             return self._string_to_reg(reg)
-        if self._current_token_type == TokenTypes.NAME:
-            return self._symbol_to_reg(reg)
-        return self._token_error('Unknown: "{}"')
-
-    def _number_to_reg(self, reg):
-        """ Put a numeric value into a register. """
-        if not reg in (Register.BRIGHTNESS, Register.DURATION,
-                       Register.FIRST_ZONE, Register.LAST_ZONE,
-                       Register.HUE, Register.KELVIN,
-                       Register.SATURATION, Register.TIME):
-            return self._token_error('Numeric value {} not allowed here.')
-        try:
-            value = float(self._current_token)
-            if reg in (Register.FIRST_ZONE, Register.LAST_ZONE):
-                value = int(round(value))
-            self._add_instruction(OpCode.MOVEQ, value, reg)
-            return self._next_token()
-        except ValueError:
-            return self._token_error('Invalid number: "{}"')
+        return self._rvalue(reg)
 
     def _string_to_reg(self, reg) -> bool:
         if reg != Register.NAME:
             return self._trigger_error('Quoted value not allowed here.')
         self._add_instruction(OpCode.MOVEQ, self._current_token, reg)
-        return self._next_token()
-
-    def _symbol_to_reg(self, reg) -> bool:
-        """
-        Using the current token as the name, dereference a symbol and
-        generate the instructions for moving the associated data into
-        a register.
-
-        If the symbol is a macro, put that value into a MOVEQ
-        instruction. Otherwise, put the Symbol representing the
-        parameter into a MOVE instruction.
-        """
-        symbol = self._call_context.get_data(self._current_token)
-        if symbol is None:
-            return self._token_error('Not a data variable: "{}"')
-        if symbol.symbol_type == SymbolType.VAR:
-            self._add_instruction(OpCode.MOVE, symbol.name, reg)
-        elif symbol.symbol_type == SymbolType.MACRO:
-            value = symbol.value
-            self._add_instruction(OpCode.MOVEQ, value, reg)
-        else:
-            return self._token_error('Cannot be passed as a parameter: "{}"')
         return self._next_token()
 
     def _set(self):
@@ -190,8 +149,13 @@ class Parser:
         return True
 
     def _operand(self) -> bool:
-        """ Process a group, location, or light with an optional set of
-        zones. Do this by populating the NAME and OPERAND registers. """
+        """
+        Process a group, location, or light with an optional set of
+        zones. Do this by populating the NAME and OPERAND registers.
+
+        An operand is either a literal string, or a varible/macro containing
+        a string. It gets put into the name register.
+        """
         if self._current_token_type == TokenTypes.GROUP:
             operand = Operand.GROUP
             self._next_token()
@@ -201,15 +165,13 @@ class Parser:
         else:
             operand = Operand.LIGHT
 
-        # Puts literals verbatim into the code. Treat symbol references similar
-        # to when they're in a "set" or "power" instruction.
-        #
-        if self._current_token_type == TokenTypes.LITERAL_STRING:
-            self._add_instruction(
-                OpCode.MOVEQ, self._current_token, Register.NAME)
+        const_str = self._current_str()
+        if const_str is not None:
+            self._add_instruction(OpCode.MOVEQ, const_str, Register.NAME)
             self._next_token()
-        elif self._current_token in self._call_context:
-            self._symbol_to_reg(Register.NAME)
+        elif self._current_token_type == TokenTypes.NAME:
+            if not self._var_operand():
+                return False
         else:
             return self._token_error('Needed a light, got "{}".')
 
@@ -220,6 +182,13 @@ class Parser:
 
         self._add_instruction(OpCode.MOVEQ, operand, Register.OPERAND)
         return True
+
+    def _var_operand(self) -> bool:
+        if not self._call_context.has_symbol_typed(
+                self._current_token, SymbolType.VAR):
+            return self._token_error('Not a variable: "{}"')
+        self._add_instruction(OpCode.MOVE, self._current_token, Register.NAME)
+        return self._next_token()
 
     def _zone_range(self) -> bool:
         if self._op_code != OpCode.COLOR:
@@ -234,31 +203,14 @@ class Parser:
         that populate the FIRST_ZONE and LAST_ZONE registers. If only one
         parameter is present, put None into LAST_ZONE.
         """
-        if self._current_token_type == TokenTypes.NUMBER:
-            first_zone = self._current_int()
-            self._add_instruction(OpCode.MOVEQ, first_zone, Register.FIRST_ZONE)
-            self._next_token()
-        elif self._current_token_type == TokenTypes.NAME:
-            if not self._symbol_to_reg(Register.FIRST_ZONE):
-                return False
-        else:
+        if not self._at_rvalue():
             return self._token_error('Expected zone, got "{}"')
+        if not self._rvalue(Register.FIRST_ZONE):
+            return False
+        if not only_one and self._at_rvalue():
+            return self._rvalue(Register.LAST_ZONE)
 
-        if only_one:
-            second_zone = None
-        else:
-            if self._current_token_type == TokenTypes.NUMBER:
-                second_zone = self._current_int()
-                self._next_token()
-            elif self._current_token_type == TokenTypes.NAME:
-                symbol = self._call_context.get_data(
-                        self._current_token)
-                if symbol is not None:
-                    return self._symbol_to_reg(Register.LAST_ZONE)
-            else:
-                second_zone = None
-
-        self._add_instruction(OpCode.MOVEQ, second_zone, Register.LAST_ZONE)
+        self._add_instruction(OpCode.MOVEQ, None, Register.LAST_ZONE)
         return True
 
     def _set_units(self) -> bool:
@@ -281,14 +233,10 @@ class Parser:
 
     def _get(self) -> bool:
         self._next_token()
-        if self._current_token_type == TokenTypes.LITERAL_STRING:
-            if not self._string_to_reg(Register.NAME):
-                return False
-        elif self._current_token_type == TokenTypes.NAME:
-            if not self._symbol_to_reg(Register.NAME):
-                return False
-        else:
+        if not self._at_rvalue():
             return self._token_error('Needed light for get, got "{}".')
+        if not self._rvalue(Register.NAME):
+            return False
 
         operand = Operand.LIGHT
         if self._current_token_type == TokenTypes.ZONE:
@@ -310,11 +258,7 @@ class Parser:
         self._next_token()
         if self._current_token_type == TokenTypes.AT:
             return self._process_time_patterns()
-        if self._current_token_type == TokenTypes.NUMBER:
-            return self._number_to_reg(Register.TIME)
-        if self._current_token_type == TokenTypes.NAME:
-            return self._symbol_to_reg(Register.TIME)
-        return self._token_error('Needed time value, got "{}"')
+        return self._rvalue(Register.TIME)
 
     def _process_time_patterns(self):
         time_pattern = self._current_time_pattern()
@@ -342,43 +286,45 @@ class Parser:
 
         dest_name = self._current_token
         self._next_token()
-        if self._current_token == dest_name:
-            return self._nop_assign(dest_name)
-
+        if not self._rvalue(dest_name):
+            return False
         self._call_context.add_variable(dest_name)
+        return True
+
+    def _rvalue(self, dest=Register.RESULT) -> bool:
+        """
+        Consume an rvalue. If dest is a Register value, the generated code
+        will put the results of its calculations into that register. If dest
+        contains a string, the results go into a variable of that name in
+        the current context.
+        """
+        const_value = self._current_constant()
+        if const_value is not None:
+            self._add_instruction(OpCode.MOVEQ, const_value, dest)
+            self._call_context.add_global(dest, SymbolType.MACRO, const_value)
+            return self._next_token()
         if self._current_token_type == TokenTypes.NAME:
-            static_value = self._call_context.get_macro(self._current_token)
-            if static_value is not None:
-                self._add_instruction(OpCode.MOVEQ, static_value, dest_name)
+            name = self._current_token
+            if self._call_context.has_symbol_typed(name, SymbolType.VAR):
+                self._add_instruction(OpCode.MOVE, name, dest)
                 return self._next_token()
-            return self._var_to_var(dest_name)
-
-        if self._current_token_type == TokenTypes.REGISTER:
-            self._add_instruction(OpCode.MOVE, self._current_reg(), dest_name)
-        else:
-            static_value = self._current_literal()
-            if static_value is None:
-                return self._trigger_error('Cannot use "{}" as a value.')
-            self._add_instruction(OpCode.MOVEQ, static_value, dest_name)
-
+        if self._current_token_type == TokenTypes.EXPRESSION:
+            parser = ExprParser(self._current_token)
+            if not parser.generate_code(self._code_gen):
+                return self._token_error('Error parsing expression "{}"')
+            self._add_instruction(OpCode.POP, dest)
+            return self._next_token()
+        if self._current_token_type != TokenTypes.REGISTER:
+            return self._token_error('Cannot use {} as a value.')
+        self._add_instruction(OpCode.MOVE, self._current_reg(), dest)
         return self._next_token()
 
-    def _nop_assign(self, name) -> bool:
-        """
-        Assigning a symbol to itself is a no-op if the symbol is defined.
-        Otherwise, it amounts to accessing an undefined variable.
-        """
-        if not self._call_context.has_symbol_typed(name. SymbolType.VAR):
-            return self._trigger_error(
-                'Assigning undefined variable "{}" to itself')
-        return self._next_token()
-
-    def _var_to_var(self, dest_name) -> bool:
-        srce_name = self._current_token
-        if not self._call_context.has_symbol_typed(srce_name, SymbolType.VAR):
-            return self._token_error('Unknown variable: "{}"')
-        self._add_instruction(OpCode.MOVE, srce_name, dest_name)
-        return self._next_token()
+    def _at_rvalue(self) -> bool:
+        return self._current_token_type in (
+            TokenTypes.EXPRESSION,
+            TokenTypes.LITERAL_STRING,
+            TokenTypes.NAME,
+            TokenTypes.NUMBER)
 
     def _definition(self) -> bool:
         self._next_token()
@@ -419,6 +365,7 @@ class Parser:
         if value is None:
             return self._token_error('Macro needs constant, got "{}"')
         self._call_context.add_global(name, SymbolType.MACRO, value)
+        self._add_instruction(OpCode.CONSTANT, name, value)
         return self._next_token()
 
     def _routine_definition(self, name):
@@ -480,26 +427,27 @@ class Parser:
         if routine is None:
             return self._token_error('Unknown name: "{}"')
 
+        self._next_token()
         for param_name in routine.params:
-            self._next_token()
-            if self._current_token_type in (TokenTypes.NUMBER,
-                                            TokenTypes.LITERAL_STRING,
-                                            TokenTypes.TIME_PATTERN):
-                param_value = self._current_value()
-            elif self._current_token_type == TokenTypes.NAME:
-                symbol = self._call_context.get_data(self._current_token)
-                if symbol is None:
-                    param_value = None
-                elif symbol.symbol_type == SymbolType.MACRO:
-                    param_value = symbol.value
-                elif symbol.symbol_type == SymbolType.VAR:
-                    param_value = symbol
-            if param_value is None:
-                return self._token_error('Unknown name: "{}"')
-            self._add_instruction(OpCode.PARAM, param_name, param_value)
+            if not self._rvalue():
+                return False
+            self._add_instruction(OpCode.PARAM, param_name, Register.RESULT)
 
-        self._add_instruction(OpCode.CALL, routine.name)
-        return self._next_token()
+        self._add_instruction(OpCode.JSR, routine.name)
+        return True
+
+    def _repeat(self) -> bool:
+        """ Unconditional, therefore infinite. """
+        self._add_instruction(OpCode.LOOP)
+        self._next_token()
+        if self._current_token_type == TokenTypes.BEGIN:
+            self._next_token()
+            if not self._compound_proc():
+                return False
+        elif not self._command():
+            return False
+        self._add_instruction(OpCode.END)
+        return True
 
     def _add_instruction(self, op_code, param0=None, param1=None):
         return self._code_gen.add_instruction(op_code, param0, param1)
@@ -532,28 +480,21 @@ class Parser:
                 self._time_spec_error()
         return value
 
-    def _current_value(self):
+    def _current_constant(self):
         """
-        Interpret the current token as a constant and return its value. If that
-        token is a literal or a macro, its content is put into the instruction.
-        If it's an instance of Symbol, that object is the value.
+        Interpret the current token as either a literal or macro, and return
+        its value, which is known at compile time. If the token is an undefined
+        name, return None.
         """
         value = self._current_literal()
-        if value is None:
-            symbol = self._call_context.get_data(self._current_token)
-            if symbol is None:
-                self._token_error('Unknown term: "{}"')
-            else:
-                if symbol.symbol_type == SymbolType.MACRO:
-                    value = symbol.value
-                elif symbol.symbol_type == SymbolType.VAR:
-                    value = symbol
-                else:
-                    self._token_error('Incorrect value: "{}"')
-        return value
+        if value is not None:
+            return value
+        if self._current_token_type != TokenTypes.NAME:
+            return None
+        return self._call_context.get_macro(self._current_token)
 
     def _current_int(self):
-        value = self._current_value()
+        value = self._current_constant()
         if isinstance(value, int):
             return value
         if isinstance(value, float):
@@ -561,12 +502,16 @@ class Parser:
         return None
 
     def _current_float(self):
-        value = self._current_value()
+        value = self._current_constant()
         if isinstance(value, float):
             return value
         if isinstance(value, int):
             return float(value)
         return None
+
+    def _current_str(self):
+        value = self._current_constant()
+        return value if isinstance(value, str) else None
 
     def _current_time_pattern(self) -> TimePattern:
         """
@@ -585,7 +530,7 @@ class Parser:
     def _current_reg(self):
         if self._current_token_type != TokenTypes.REGISTER:
             return None
-        return Register[self._current_token.upper()]
+        return Register.from_string(self._current_token)
 
     def _next_token(self):
         (self._current_token_type,

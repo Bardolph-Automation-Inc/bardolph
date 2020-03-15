@@ -246,5 +246,11 @@ class EndToEndTest(unittest.TestCase):
         self._runner.check_call_list('Chair', [
             ('set_color', ([1, 7500, 3, 50], 0))])
 
+    def test_expression(self):
+        script = """
+            assign x {5 + 6}
+        """
+        self._runner.run_script(script)
+
 if __name__ == '__main__':
     unittest.main()

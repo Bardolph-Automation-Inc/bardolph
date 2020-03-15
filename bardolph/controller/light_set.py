@@ -6,7 +6,7 @@ import time
 
 import lifxlan
 
-from ..controller.i_controller import Lifx 
+from ..controller.i_controller import Lifx
 from ..lib.injection import bind_instance, inject
 from ..lib.i_lib import Settings
 
@@ -44,6 +44,8 @@ class LightSet(i_controller.LightSet):
     @inject(Lifx)
     def discover(self, lifx):
         logging.info("discover()")
+        self._last_discover = time.time()
+
         try:
             for lifx_light in lifx.get_lights():
                 light = Light(lifx_light)
@@ -56,7 +58,7 @@ class LightSet(i_controller.LightSet):
             logging.warning("In discover():\n{}".format(ex))
             return False
         return True
-    
+
     def refresh(self):
         logging.debug("refresh()")
         if self.discover():
@@ -91,11 +93,11 @@ class LightSet(i_controller.LightSet):
             if target_light is not None:
                 the_set.discard(target_light)
                 if len(the_set) == 0:
-                    target_set_names.append(set_name)     
-        for set_name in target_set_names:            
+                    target_set_names.append(set_name)
+        for set_name in target_set_names:
             del set_dict[set_name]
 
-    @inject(Settings)        
+    @inject(Settings)
     def _garbage_collect(self, settings):
         # Get rid of a light's proxy if it hasn't responded for a while.
         max_age = int(settings.get_value('light_gc_time', 20 * 60))
@@ -103,7 +105,7 @@ class LightSet(i_controller.LightSet):
         for light_name in self._light_dict.keys():
             light = self._light_dict[light_name]
             if light.age > max_age:
-                LightSet._remove_memberships(light, self._group_dict)           
+                LightSet._remove_memberships(light, self._group_dict)
                 LightSet._remove_memberships(light, self._location_dict)
                 target_lights.append(light_name)
         for light_name in target_lights:

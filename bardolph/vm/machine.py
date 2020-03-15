@@ -1,16 +1,18 @@
 import logging
 
-from ..lib.i_lib import Clock, TimePattern
-from ..lib.injection import inject, provide
-from ..lib.symbol import Symbol, SymbolType
+from bardolph.lib.i_lib import Clock, TimePattern
+from bardolph.lib.injection import inject, provide
+from bardolph.lib.symbol import Symbol
 
-from . import units
+from bardolph.controller import units
+from bardolph.controller.get_key import getch
+from bardolph.controller.i_controller import LightSet
+from bardolph.controller.units import UnitMode
+
 from .call_stack import CallStack
-from .get_key import getch
-from .i_controller import LightSet
-from .instruction import OpCode, Operand, Register, SetOp
 from .loader import Loader
-from .units import UnitMode
+from .vm_codes import JumpCondition, OpCode, Operand, Register, SetOp
+from .vm_math import VmMath
 
 class Registers:
     def __init__(self):
@@ -22,6 +24,7 @@ class Registers:
         self.first_zone = None
         self.last_zone = None
         self.power = False
+        self.result = None
         self.name = None
         self.operand = None
         self.time = 0  # ms.
@@ -34,6 +37,12 @@ class Registers:
             round(self.brightness),
             round(self.kelvin)
         ]
+
+    def get_by_enum(self, reg):
+        return getattr(self, reg.name.lower())
+
+    def set_by_enum(self, reg, value):
+        setattr(self, reg.name.lower(), value)
 
     def reset(self):
         self.__init__()
@@ -51,31 +60,38 @@ class Machine:
         self._program = []
         self._reg = Registers()
         self._call_stack = CallStack()
+        self._vm_math = VmMath(self._call_stack, self._reg)
         self._enable_pause = True
-        self._fn_table = {
-            OpCode.BREAKPOINT: Machine._breakpoint,
-            OpCode.CALL: self._call,
-            OpCode.COLOR: self._color,
-            OpCode.END: self._end,
-            OpCode.GET_COLOR: self._get_color,
-            OpCode.JUMP: self._jump,
-            OpCode.MOVE: self._move,
-            OpCode.MOVEQ: self._moveq,
-            OpCode.NOP: self._nop,
-            OpCode.PARAM: self._param,
-            OpCode.PAUSE: self._pause,
-            OpCode.POWER: self._power,
-            OpCode.STOP: self.stop,
-            OpCode.TIME_PATTERN: self._time_pattern,
-            OpCode.WAIT: self._wait
-        }
+        self._fn_table = {}
+        for opcode in (OpCode.COLOR,
+                       OpCode.CONSTANT,
+                       OpCode.END,
+                       OpCode.GET_COLOR,
+                       OpCode.JSR,
+                       OpCode.JUMP,
+                       OpCode.LOOP,
+                       OpCode.MOVE,
+                       OpCode.MOVEQ,
+                       OpCode.NOP,
+                       OpCode.OP,
+                       OpCode.PARAM,
+                       OpCode.PAUSE,
+                       OpCode.PUSH,
+                       OpCode.POP,
+                       OpCode.POWER,
+                       OpCode.TIME_PATTERN,
+                       OpCode.WAIT):
+            name = '_' + opcode.name.lower()
+            self._fn_table[opcode] = getattr(self, name)
+        self._fn_table[OpCode.STOP] = self.stop
 
     def reset(self) -> None:
         self._reg.reset()
         self._variables.clear()
         self._pc = 0
         self._cue_time = 0
-        self._call_stack.clear()
+        self._call_stack.reset()
+        self._vm_math.reset()
 
     def run(self, program) -> None:
         loader = Loader()
@@ -87,21 +103,12 @@ class Machine:
             if inst.op_code == OpCode.STOP:
                 break
             self._fn_table[inst.op_code]()
-            if inst.op_code not in (OpCode.CALL, OpCode.END, OpCode.JUMP):
+            if inst.op_code not in (OpCode.END, OpCode.JSR, OpCode.JUMP):
                 self._pc += 1
         self._clock.stop()
 
     def stop(self) -> None:
         self._pc = len(self._program)
-
-    def bind(self, name, extern) -> None:
-        self._call_stack.bind(name, extern)
-
-    def unbind(self, name) -> None:
-        self._call_stack.unbind(name)
-
-    def unbind_all(self) -> None:
-        self._call_stack.unbind_all()
 
     def color_to_reg(self, color) -> None:
         self._reg.hue = self._assure_raw(Register.HUE, color[0])
@@ -112,11 +119,12 @@ class Machine:
     def color_from_reg(self) -> [int]:
         return self._reg.get_color()
 
-    def _set_tagged_reg(self, reg, value) -> None:
-        setattr(self._reg, reg.name.lower(), value)
+    def get_variable(self, name):
+        return self._call_stack.get_variable(name)
 
-    def _get_tagged_reg(self, reg):
-        return getattr(self._reg, reg.name.lower())
+    @property
+    def current_inst(self):
+        return self._program[self._pc]
 
     def _color(self) -> None: {
         Operand.ALL: self._color_all,
@@ -234,19 +242,34 @@ class Machine:
         If the parameter is itself an incoming parameter, it needs to be
         resolved to a real value before being put on the stack.
         """
-        inst = self._program[self._pc]
+        inst = self.current_inst
         value = inst.param1
         if isinstance(value, Symbol):
             value = self._call_stack.get_variable(value.name)
+        elif isinstance(value, Register):
+            value = self._reg.get_by_enum(value)
         self._call_stack.put_param(inst.param0, value)
 
-    def _call(self) -> None:
-        inst = self._program[self._pc]
+    def _jsr(self) -> None:
+        inst = self.current_inst
         self._call_stack.set_return(self._pc + 1)
         self._call_stack.push_current()
         routine_name = inst.param0
         rtn = self._variables.get(routine_name, None)
         self._pc = rtn.get_address()
+
+    def _jump(self) -> None:
+        inst = self.current_inst
+        if inst.param0 == JumpCondition.ALWAYS:
+            self._pc = self._program[self._pc].param1
+        else:
+            reg_value = self._reg.result
+            cond_true = inst.param0 == JumpCondition.IF_TRUE
+            if reg_value == cond_true:
+                self._pc = self._program[self._pc].param1
+
+    def _loop(self):
+        self._call_stack.enter_loop(self._pc)
 
     def _end(self) -> None:
         ret_addr = self._call_stack.get_return()
@@ -255,8 +278,20 @@ class Machine:
 
     def _nop(self) -> None: pass
 
-    def _jump(self) -> None:
-        self._pc = self._program[self._pc].param0
+    def _push(self):
+        return self._vm_math.push(self.current_inst.param0)
+
+    def _pop(self):
+        return self._vm_math.pop(self.current_inst.param0)
+
+    def _op(self):
+        return self._vm_math.op(self.current_inst.param0)
+
+    def _bin_op(self, operator):
+        return self._vm_math.bin_op(operator)
+
+    def _unary_op(self, operator):
+        return self._vm_math.unary_op(operator)
 
     def _pause(self) -> None:
         if self._enable_pause:
@@ -268,6 +303,11 @@ class Machine:
                 print("Running...")
                 if char == '!':
                     self._enable_pause = False
+
+    def _constant(self):
+        name = self.current_inst.param0
+        value = self.current_inst.param1
+        self._call_stack.put_constant(name, value)
 
     def _wait(self) -> None:
         time = self._reg.time
@@ -303,13 +343,13 @@ class Machine:
         """
         Move from variable/register to variable/register.
         """
-        inst = self._program[self._pc]
+        inst = self.current_inst
         srce = inst.param0
         dest = inst.param1
         if isinstance(srce, Register):
-            value = self._get_tagged_reg(srce)
+            value = self._reg.get_by_enum(srce)
             if isinstance(dest, Register):
-                self._set_tagged_reg(dest, value)
+                self._reg.set_by_enum(dest, value)
             else:
                 self._call_stack.put_variable(
                     dest, self._maybe_logical(srce, value))
@@ -319,7 +359,7 @@ class Machine:
         if value is None:
             return self._trigger_error('Unknown: "{}"'.format(srce))
         if isinstance(dest, Register):
-            self._set_tagged_reg(dest, self._assure_raw(dest, value))
+            self._reg.set_by_enum(dest, self._assure_raw(dest, value))
         else:
             self._call_stack.put_variable(dest, value)
         return True
@@ -328,18 +368,17 @@ class Machine:
         """
         Move a value from the instruction itself into a register or variable.
         """
-        inst = self._program[self._pc]
-        value = inst.param0
-        dest = inst.param1
+        value = self.current_inst.param0
+        dest = self.current_inst.param1
 
         if isinstance(dest, Register):
-            self._set_tagged_reg(dest, self._assure_raw(dest, value))
+            self._reg.set_by_enum(dest, self._assure_raw(dest, value))
         else:
             self._call_stack.put_variable(dest, value)
         return True
 
     def _time_pattern(self) -> None:
-        inst = self._program[self._pc]
+        inst = self.current_inst
         if inst.param0 == SetOp.INIT:
             self._reg.time = inst.param1
         else:

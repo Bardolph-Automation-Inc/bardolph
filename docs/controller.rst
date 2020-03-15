@@ -417,8 +417,168 @@ Executing:
    #. Pop context off stack.
    #. Jump to return address.
 
+Loops
+-----
+A counting loop has the syntax:
+
+   `repeat` number_of_iterations
+   `with` index_var
+   `from` starting_value `to` ending_value"
+
+If number_of_iterations is missing, the loop is considered infinite, and
+repeats until the VM stops executing the code::
+
+   # Repeat until the VM is told to stop executing the code.
+   #
+   repeat begin
+      hue 120 set all
+      hue 180 set all
+   end
+
+   # Execute the code 5 times.
+   #
+   repeat 5 begin
+      time 2 on all
+      time 10 off all
+   end
+
+The inclusion of `with` sets up a kind of index variable that is updated
+with each loop. The limits given indicate what the first and last desired
+values are. Using that and the number of repetitions, the VM evenly divides
+the range and sets the varaiable to the interpolated values. For example,
+to evenly bring up all the lights from 0% to 100%::
+
+   # Do 10 iterations and distribute the values of brt so that they
+   # are spread evenly between 0 and 100.
+   #
+   repeat 10 with brt from 0 to 100 begin
+      brightness brt
+      set all
+   end
+
+The phrase `with angle` indicates that the variable is an angle to be
+used as a `hue` setting. This means that its values folow modulo 360
+arithmetic::
+
+   # the_hue starts at 180 and wraps until it becomes 60.
+   #
+   repeat 10 with angle the_hue 180 to 60 begin
+      hue the_hue
+      set all
+   end
+
+A special case for an angle is a full 360-degree cycle. In this case,
+the angle doesn't go completely around. This behavior occurs when
+there is no `to` value::
+
+   # Start at 120, circle around and stop one iteration before reaching
+   # 120 again
+   #
+   repeat 10 with angle the_hue 120 begin
+      hue the_hue
+      set all
+   end
+
+Loop Frame
+~~~~~~~~~~
+A LoopFrame is a specialized StackFrame that is used with loops. Inside
+a loop, some variables go into scope, but none become hidden. Therefore,
+a LoopFrame inherits all of the variables contained in its parent frame.
+This is done by making a copy of the dictionary containing the
+parent frame's variables. When the loop frame exits, no variables go
+out of scope.
+
+The index variable remains in scope after the loop exits. At that point,
+it contains the value it had during the final iteration. As such, it
+exists as a local variable in the current CallContext. The index variable
+is handled by the generated code, with no specific VM support.
+
+The loop counter and its limit are not visible to the script code after
+they have been initialized. They are attributes of the top LoopFrame.
+
+Loop Instructions
+~~~~~~~~~~~~~~~~~
+The conditional jump instruction has a numeric parameter with the target
+address.
+
+Inside the loop 4 variables are used:
+
+* loop counter with the number of iterations completed
+* loop limit, which controls when the loop exits
+* variable increment, which is added to the index variable with each iteration.
+
+The variable increment is calculated once, before the loop begins.
+The VM accesses these variables by
+
+VM instructions::
+   # repeat 5 with brt from x to y begin
+
+                  moveq 10 brt
+
+                  # increment
+                  push "x"
+                  push "y"
+                  op sub
+                  push 5
+                  push 1
+                  op sub
+                  op div
+
+                  # limit, counter
+                  push 5
+                  push ...
+                  op gt
+                  jump_if end_of_loop
+
+                  # code goes here...
+
+                  push
+                  push
+                  push 1
+                  op add
+                  pop
+                  pop
+
+                  push "brt"
+                  push call_stack.top.var_increment
+                  op add
+                  pop "brt"
+                  pop pc
+
+   end_of_loop:   exit loop
+
+Parsing a Loop
+~~~~~~~~~~~~~~
+Sequence:
+
+#. Reach a `repeat` token.
+
+Executing a Loop
+~~~~~~~~~~~~~~~~
+Elements:
+
+#. Test terminating condition and jump if appropriate.
+#. Push stack frame and add index variable.
+#. Execute code and return.
+#. update index variable.
+
+When a loop begins, it first pushes a loop frame with its entry
+point as the return address onto the CallStack. This will probably
+be some kind of `loop` command, which is similar to `call`.
+
+An `end` command at the end of the loop code causes the StackFrame
+to be popped, and the VM's PC is set to top of the loop.
+
+If the loop has an exit condition, to code to evaluate that condition
+follows the
+
 .. index::
    single: job scheduling
+
+
+Mathematical Expressions
+========================
+
 
 Job Scheduling
 ==============

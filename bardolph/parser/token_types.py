@@ -12,8 +12,10 @@ class TokenTypes(Enum):
     DEFINE = auto()
     END = auto()
     EOF = auto()
+    EXPRESSION = auto()
     GET = auto()
     GROUP = auto()
+    IF = auto()
     LITERAL_STRING = auto()
     LOCATION = auto()
     LOGICAL = auto()
@@ -27,6 +29,7 @@ class TokenTypes(Enum):
     RANGE = auto()
     RAW = auto()
     REGISTER = auto()
+    REPEAT = auto()
     SET = auto()
     SYNTAX_ERROR = auto()
     TIME_PATTERN = auto()
@@ -38,7 +41,13 @@ class TokenTypes(Enum):
 
     @classmethod
     def commands(cls):
-        return (TokenTypes.ASSIGN, TokenTypes.GET, TokenTypes.OFF,
-                TokenTypes.ON, TokenTypes.POWER, TokenTypes.PAUSE,
-                TokenTypes.REGISTER, TokenTypes.SET, TokenTypes.UNITS,
+        return (TokenTypes.ASSIGN,
+                TokenTypes.GET,
+                TokenTypes.OFF,
+                TokenTypes.ON,
+                TokenTypes.POWER,
+                TokenTypes.PAUSE,
+                TokenTypes.REGISTER,
+                TokenTypes.SET,
+                TokenTypes.UNITS,
                 TokenTypes.WAIT)

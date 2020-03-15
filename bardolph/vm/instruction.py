@@ -1,52 +1,5 @@
-from enum import Enum
 
-from ..lib.auto_repl import auto
-
-
-class OpCode(Enum):
-    BREAKPOINT = auto()
-    CALL = auto()
-    COLOR = auto()
-    END = auto()
-    GET_COLOR = auto()
-    JUMP = auto()
-    MOVE = auto()
-    MOVEQ = auto()
-    NOP = auto()
-    PARAM = auto()
-    PAUSE = auto()
-    POWER = auto()
-    ROUTINE = auto()
-    STOP = auto()
-    TIME_PATTERN = auto()
-    WAIT = auto()
-
-class Operand(Enum):
-    ALL = auto()
-    LIGHT = auto()
-    GROUP = auto()
-    LOCATION = auto()
-    MZ_LIGHT = auto()
-
-class SetOp(Enum):
-    """ Used with TimePattern """
-    INIT = auto()
-    UNION = auto()
-
-class Register(Enum):
-    BRIGHTNESS = auto()
-    DURATION = auto()
-    FIRST_ZONE = auto()
-    HUE = auto()
-    LAST_ZONE = auto()
-    KELVIN = auto()
-    NAME = auto()
-    OPERAND = auto()
-    POWER = auto()
-    SATURATION = auto()
-    TIME = auto()
-    UNIT_MODE = auto()
-
+from .vm_codes import OpCode
 
 class Instruction:
     def __init__(self, op_code, param0=None, param1=None):

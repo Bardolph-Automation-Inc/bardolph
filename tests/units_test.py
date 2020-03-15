@@ -3,7 +3,7 @@
 import unittest
 
 from bardolph.controller import units
-from bardolph.controller.instruction import Register
+from bardolph.vm.vm_codes import Register
 
 class UnitsTest(unittest.TestCase):
 
@@ -40,6 +40,6 @@ class UnitsTest(unittest.TestCase):
         self.assertEqual(units.as_raw("HUE", 360.0), 0)
         self.assertAlmostEqual(
             units.as_logical("SATURATION", 21627), 33.0, places)
-        
+
 if __name__ == '__main__':
     unittest.main()

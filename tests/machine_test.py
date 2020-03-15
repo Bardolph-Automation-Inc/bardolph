@@ -2,13 +2,12 @@
 
 import unittest
 
-from bardolph.controller.instruction import Instruction
-from bardolph.controller.instruction import OpCode, Operand, Register
 from bardolph.controller import i_controller
-from bardolph.controller.machine import Machine
 from bardolph.controller.units import UnitMode
 from bardolph.lib.injection import provide
-
+from bardolph.vm.instruction import Instruction
+from bardolph.vm.machine import Machine
+from bardolph.vm.vm_codes import OpCode, Operand, Register
 
 from . import test_module
 
@@ -77,21 +76,6 @@ class MachineTest(unittest.TestCase):
         light_set = provide(i_controller.LightSet)
         light = light_set.get_light(name)._impl
         self.assertTrue(light.was_set(color))
-
-    def test_bound_variable(self):
-        program = [
-            Instruction(OpCode.MOVE, "bound", Register.HUE),
-            Instruction(OpCode.MOVEQ, 1.0, Register.SATURATION),
-            Instruction(OpCode.MOVEQ, 2.0, Register.BRIGHTNESS),
-            Instruction(OpCode.MOVEQ, 3.0, Register.KELVIN),
-            Instruction(OpCode.MOVEQ, "Top", Register.NAME),
-            Instruction(OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND),
-            Instruction(OpCode.COLOR, None, None),
-            Instruction(OpCode.MOVE, "bound", Register.HUE),
-            Instruction(OpCode.COLOR, None, None),
-            Instruction(OpCode.MOVE, "bound", Register.HUE),
-            Instruction(OpCode.COLOR, None, None)
-        ]
 
 if __name__ == '__main__':
     unittest.main()

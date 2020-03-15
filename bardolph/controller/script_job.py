@@ -1,8 +1,8 @@
 import logging
 
-from ..lib.job_control import Job
-from .machine import Machine
-from ..parser.parse import Parser
+from bardolph.lib.job_control import Job
+from bardolph.vm.machine import Machine
+from bardolph.parser.parse import Parser
 
 
 class ScriptJob(Job):

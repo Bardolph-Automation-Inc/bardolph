@@ -1,7 +1,7 @@
 from enum import Enum
 
 from bardolph.lib.auto_repl import auto
-from ..controller.instruction import Register
+from bardolph.vm.vm_codes import Register
 
 
 _RAW_RANGE = (0, 65535)
@@ -50,21 +50,23 @@ def as_raw(reg, logical_value, use_float=False):
         If no conversion is done, returns the incoming value untouched.
         Otherwise, an integer that corresponds to the logical value.
     """
-    value = logical_value
     reg = _string_check(reg)
-    if requires_conversion(reg):
-        if reg == Register.HUE:
-            if logical_value in (0.0, 360.0):
-                value = 0.0
-            else:
-                value = (logical_value % 360.0) / 360.0 * 65535.0
-        elif reg in (Register.BRIGHTNESS, Register.SATURATION):
-            if logical_value == 100.0:
-                value = 65535.0
-            else:
-                value = logical_value / 100.0 * 65535.0
-        elif reg in (Register.DURATION, Register.TIME):
-            value = logical_value * 1000.0
+    if not requires_conversion(reg):
+        return logical_value
+
+    value = logical_value
+    if reg == Register.HUE:
+        if logical_value in (0.0, 360.0):
+            value = 0.0
+        else:
+            value = (logical_value % 360.0) / 360.0 * 65535.0
+    elif reg in (Register.BRIGHTNESS, Register.SATURATION):
+        if logical_value == 100.0:
+            value = 65535.0
+        else:
+            value = logical_value / 100.0 * 65535.0
+    elif reg in (Register.DURATION, Register.TIME):
+        value = logical_value * 1000.0
 
     return value if use_float else round(value)
 
@@ -81,10 +83,11 @@ def as_logical(reg, raw_value):
         If no conversion is done, returns the incoming value untouched.
         Otherwise, a float that corresponds to the raw value.
     """
-    value = raw_value
     reg = _string_check(reg)
     if not requires_conversion(reg):
         return raw_value
+
+    value = raw_value
     if reg == Register.HUE:
         value = float(raw_value) / 65535.0 * 360.0
     elif reg in (Register.BRIGHTNESS, Register.SATURATION):

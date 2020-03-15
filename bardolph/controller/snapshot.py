@@ -2,13 +2,13 @@
 
 import argparse
 
-from ..lib import injection
-from ..lib import settings
+from bardolph.lib import injection
+from bardolph.lib import settings
+from bardolph.vm.vm_codes import Register
 
 from . import arg_helper
 from . import config_values
 from . import light_module
-from .instruction import Register
 from .i_controller import LightSet
 from . import lsc
 from . import units
@@ -33,11 +33,11 @@ class Snapshot:
         self.record_setting(Register.SATURATION, color[1])
         self.record_setting(Register.BRIGHTNESS, color[2])
         self.record_setting(Register.KELVIN, color[3])
-        
+
     def handle_zones(self, light):
         for number, color in enumerate(light.get_color_zones()):
             self.handle_zone(light, number, color)
-        
+
     @injection.inject(LightSet)
     def generate(self, light_set):
         self.start_snapshot()
@@ -94,7 +94,7 @@ class ScriptSnapshot(Snapshot):
     def start_multizone(self, light):
         self._light_name = light.name
         self._power = light.get_power()
-        
+
     def handle_zone(self, light, number, color):
         self.handle_color(color)
         self._script += 'set "{}" zone {}\n'.format(light.name, number)
@@ -175,17 +175,17 @@ class TextSnapshot(Snapshot):
 
     def start_light(self, light):
         self._add_field(light.name)
-        
+
     def start_multizone(self, light):
         self.start_light(light)
         self._text += '{:>45}'.format(light.get_power())
         self._text += '\nZone #\n'
-        
+
     def handle_zone(self, _, number, color):
         self._add_field('{:>5d}'.format(number))
         self.handle_color(color)
         self._text += '\n'
-        
+
     def end_zones(self, _):
         self._text += '\n'
 
@@ -229,11 +229,7 @@ class DictSnapshot(Snapshot):
         self._snapshot.append(self._current_dict)
 
     @property
-    def text(self):
-        return str(self.list)
-
-    @property
-    def list(self):
+    def snapshot(self):
         return self._snapshot
 
 
