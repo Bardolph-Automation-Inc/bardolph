@@ -27,6 +27,7 @@ class OpCode(Enum):
     COLOR = auto()
     CONSTANT = auto()
     END = auto()
+    END_LOOP = auto()
     GET_COLOR = auto()
     JSR = auto()
     JUMP = auto()
@@ -50,6 +51,12 @@ class JumpCondition(Enum):
     ALWAYS = auto()
     IF_FALSE = auto()
     IF_TRUE = auto()
+
+class LoopVar(Enum):
+    COUNTER = auto()
+    FIRST = auto()
+    INCR = auto()
+    LAST = auto()
 
 class Operator(Enum):
     ADD = auto()

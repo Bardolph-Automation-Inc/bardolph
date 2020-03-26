@@ -9,7 +9,10 @@ class EvalStack:
 
     @property
     def top(self):
-        return self._stack[-1]
+        return self.below(0)
+
+    def below(self, depth):
+        return self._stack[-(depth + 1)]
 
     def push(self, value):
         self._stack.append(value)

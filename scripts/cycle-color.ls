@@ -7,14 +7,7 @@ begin
     hue new_hue set all
 end
 
-hue_set 30
-hue_set 60
-hue_set 90
-hue_set 120
-hue_set 150
-hue_set 180
-hue_set 210
-hue_set 240
-hue_set 270
-hue_set 300
-hue_set 360
+repeat 10 with the_hue from 0 to 360
+begin
+    hue_set the_hue
+end

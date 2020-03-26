@@ -68,6 +68,8 @@ def as_raw(reg, logical_value, use_float=False):
     elif reg in (Register.DURATION, Register.TIME):
         value = logical_value * 1000.0
 
+    if reg == Register.HUE and value > 65535.0:
+        value %= 65536.0
     return value if use_float else round(value)
 
 def as_logical(reg, raw_value):

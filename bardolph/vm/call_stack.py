@@ -1,5 +1,7 @@
 from collections import deque
 
+from .vm_codes import LoopVar
+
 class StackFrame:
     def __init__(self, variables=None, return_addr=None):
         self.vars = variables if variables is not None else {}
@@ -10,11 +12,15 @@ class StackFrame:
         self.return_addr = 0
 
 class LoopFrame(StackFrame):
-    def __init__(self, variables, return_addr):
-        super().__init__(variables, return_addr)
-        self._loop_count = 0
-        self._loop_limit = 0
-        self._var_increment = 0
+    def __init__(self, variables):
+        super().__init__(variables, None)
+        self._loop_var = {}
+
+    def get_loop_var(self, index):
+        return self._loop_var.get(index, None)
+
+    def set_loop_var(self, index, value):
+        self._loop_var[index] = value
 
 class CallStack:
     """
@@ -58,8 +64,11 @@ class CallStack:
         if name not in self._constants:
             self._constants[name] = value
 
-    def put_variable(self, name, value) -> None:
-        self.top.vars[name] = value
+    def put_variable(self, index, value) -> None:
+        if isinstance(index, LoopVar):
+            assert isinstance(self.top, LoopFrame)
+            return self.top.set_loop_var(index, value)
+        self.top.vars[index] = value
 
     def is_param(self, name) -> bool:
         return name in self.top.vars
@@ -70,18 +79,26 @@ class CallStack:
     def get_return(self) -> int:
         return self.top.return_addr
 
-    def get_variable(self, name):
+    def get_variable(self, index):
+        if isinstance(index, LoopVar):
+            if isinstance(self.top, LoopFrame):
+                return self.top.get_loop_var(index)
+            return None
         for place in (self._constants, self.top.vars, self._root_frame.vars):
-            if name in place:
-                return place[name]
+            if index in place:
+                return place[index]
         return None
 
     def push_current(self) -> None:
         self._stack.append(self._current)
         self._current = StackFrame()
 
-    def enter_loop(self, return_addr) -> None:
-        self._stack.append(StackFrame(self.top.vars, return_addr))
+    def enter_loop(self) -> None:
+        self._stack.append(LoopFrame(self.top.vars))
+
+    def exit_loop(self) -> None:
+        assert len(self._stack) > 1
+        self._stack.pop()
 
     def pop_current(self) -> None:
         assert len(self._stack) > 1

@@ -48,7 +48,7 @@ def init_settings(args):
 
     settings_init = settings.use_base(
         config_values.functional).add_overrides(overrides)
-            
+
     if args.config_file:
         settings_init.apply_file(args.config_file)
 

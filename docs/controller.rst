@@ -513,39 +513,36 @@ The VM accesses these variables by
 VM instructions::
    # repeat 5 with brt from x to y begin
 
-                  moveq 10 brt
+   # increment
+   push "x"
+   push "y"
+   op sub
+   push 5
+   push 1
+   op sub
+   op div
 
-                  # increment
-                  push "x"
-                  push "y"
-                  op sub
-                  push 5
-                  push 1
-                  op sub
-                  op div
+   # limit, counter
+   push 5
+   push ...
+   op gt
+   jump JumpContion.IF_TRUE <offset>
 
-                  # limit, counter
-                  push 5
-                  push ...
-                  op gt
-                  jump_if end_of_loop
+   # code goes here...
 
-                  # code goes here...
+   push
+   push
+   push 1
+   op add
+   pop
+   pop
 
-                  push
-                  push
-                  push 1
-                  op add
-                  pop
-                  pop
-
-                  push "brt"
-                  push call_stack.top.var_increment
-                  op add
-                  pop "brt"
-                  pop pc
-
-   end_of_loop:   exit loop
+   push "brt"
+   push call_stack.top.var_increment
+   op add
+   pop "brt"
+   pop pc
+   exit loop
 
 Parsing a Loop
 ~~~~~~~~~~~~~~

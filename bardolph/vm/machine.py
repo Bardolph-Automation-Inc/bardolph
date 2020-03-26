@@ -66,6 +66,7 @@ class Machine:
         for opcode in (OpCode.COLOR,
                        OpCode.CONSTANT,
                        OpCode.END,
+                       OpCode.END_LOOP,
                        OpCode.GET_COLOR,
                        OpCode.JSR,
                        OpCode.JUMP,
@@ -77,6 +78,7 @@ class Machine:
                        OpCode.PARAM,
                        OpCode.PAUSE,
                        OpCode.PUSH,
+                       OpCode.PUSHQ,
                        OpCode.POP,
                        OpCode.POWER,
                        OpCode.TIME_PATTERN,
@@ -97,6 +99,7 @@ class Machine:
         loader = Loader()
         loader.load(program, self._variables)
         self._program = loader.code
+
         self._clock.start()
         while self._pc < len(self._program):
             inst = self._program[self._pc]
@@ -259,17 +262,24 @@ class Machine:
         self._pc = rtn.get_address()
 
     def _jump(self) -> None:
+        # In the current instruction, param0 contains the condition, and
+        # param1 contains the offset.
         inst = self.current_inst
-        if inst.param0 == JumpCondition.ALWAYS:
-            self._pc = self._program[self._pc].param1
+        jump_if = {
+            JumpCondition.ALWAYS: {True: True, False: True},
+            JumpCondition.IF_FALSE: {True: False, False: True},
+            JumpCondition.IF_TRUE: {True: True, False: False}
+        }
+        if jump_if[inst.param0][bool(self._reg.result)]:
+            self._pc += inst.param1
         else:
-            reg_value = self._reg.result
-            cond_true = inst.param0 == JumpCondition.IF_TRUE
-            if reg_value == cond_true:
-                self._pc = self._program[self._pc].param1
+            self._pc += 1
 
-    def _loop(self):
-        self._call_stack.enter_loop(self._pc)
+    def _loop(self) -> None:
+        self._call_stack.enter_loop()
+
+    def _end_loop(self) -> None:
+        self._call_stack.exit_loop()
 
     def _end(self) -> None:
         ret_addr = self._call_stack.get_return()
@@ -280,6 +290,9 @@ class Machine:
 
     def _push(self):
         return self._vm_math.push(self.current_inst.param0)
+
+    def _pushq(self):
+        return self._vm_math.pushq(self.current_inst.param0)
 
     def _pop(self):
         return self._vm_math.pop(self.current_inst.param0)
@@ -324,12 +337,15 @@ class Machine:
         if (self._reg.unit_mode == UnitMode.LOGICAL
                 and units.requires_conversion(reg)):
             return units.as_raw(reg, value)
+        if (self._reg.unit_mode == UnitMode.RAW and reg == Register.HUE
+                and value > 65535):
+            value %= 65536
         return value
 
     def _maybe_logical(self, reg, value) -> int:
         """
         If in logical mode, convert incoming value to logical units. If not
-        in logical mode, no conversion is necessary.
+        in logical mode, or for some registers, no conversion is necessary.
 
         Typically, the incoming value comes from a register, which always
         contains a raw value.
@@ -337,6 +353,8 @@ class Machine:
         if (self._reg.unit_mode == UnitMode.LOGICAL
                 and units.requires_conversion(reg)):
             return units.as_logical(reg, value)
+        if reg == Register.HUE and value > 360:
+            value %= 360
         return value
 
     def _move(self) -> bool:
@@ -347,12 +365,11 @@ class Machine:
         srce = inst.param0
         dest = inst.param1
         if isinstance(srce, Register):
-            value = self._reg.get_by_enum(srce)
+            value = self._maybe_logical(srce, self._reg.get_by_enum(srce))
             if isinstance(dest, Register):
-                self._reg.set_by_enum(dest, value)
+                self._reg.set_by_enum(dest, self._assure_raw(dest, value))
             else:
-                self._call_stack.put_variable(
-                    dest, self._maybe_logical(srce, value))
+                self._call_stack.put_variable(dest, value)
             return True
 
         value = self._call_stack.get_variable(srce)

@@ -7,7 +7,7 @@ from bardolph.parser.expr_parser import ExprParser
 
 class ExprTest(unittest.TestCase):
     def setUp(self):
-        self._parser = ExprParser("5 + -8 * -(hue - 1) * 12 / 4 << 2")
+        self._parser = ExprParser("1")
 
     def test_ast(self):
         code_gen = CodeGen()

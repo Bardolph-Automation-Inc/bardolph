@@ -5,8 +5,8 @@ from .token_types import TokenTypes
 
 
 class Lex:
-    EXPR_REGEX = re.compile(r'^\{.*\}$')
-    TOKEN_REGEX = re.compile(r'#.*$|".*?"|\{.*\}|\S+')
+    EXPR_REGEX = re.compile(r'^\{.*?\}$')
+    TOKEN_REGEX = re.compile(r'#.*$|".*?"|\{.*?\}|\S+')
     NAME_REGEX = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
     NUMBER_REGEX = re.compile(r'^\-?[0-9]*\.?[0-9]+$')
     INT_REGEX = re.compile(r'^\-?[0-9]*$')

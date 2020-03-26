@@ -17,6 +17,7 @@ class Visitor:
         ast.NotEq: Operator.NOTEQ,
         ast.Lt: Operator.LT,
         ast.LtE: Operator.LTE,
+        ast.Gt: Operator.GT,
         ast.GtE: Operator.GTE
     }
 
@@ -62,7 +63,7 @@ class Visitor:
             self._code_gen.add_instruction(OpCode.PUSH, node.id)
 
     def _num(self, node):
-        self._code_gen.add_instruction(OpCode.PUSH, node.n)
+        self._code_gen.add_instruction(OpCode.PUSHQ, node.n)
 
     def _unaryop(self, node):
         self.expression(node.operand)
@@ -84,6 +85,10 @@ class ExprParser:
             self._tree = None
 
     def generate_code(self, code_gen) -> bool:
+        """
+        Generate the VM code to evaluate the expression. When that code is
+        done, the result will be at the top of the stack.
+        """
         if self._tree is None:
             return False
 

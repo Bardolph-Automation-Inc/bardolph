@@ -62,7 +62,7 @@ class EndToEndTest(unittest.TestCase):
             duration 50 set "Table" and group "Pole"
         """
         self._runner.test_code(script, ('Top', 'Middle', 'Bottom', 'Table'),
-                        [('set_color', ([10, 20, 30, 40], 50))])
+                            [('set_color', ([10, 20, 30, 40], 50))])
 
     def test_define_operand(self):
         script = """
@@ -251,6 +251,26 @@ class EndToEndTest(unittest.TestCase):
             assign x {5 + 6}
         """
         self._runner.run_script(script)
+
+    def test_if_expr(self):
+        script = """
+            units raw
+            hue 1 saturation 2 brightness 3 kelvin 4 duration 5
+
+            assign x 10
+            assign y 20
+
+            if {8 >= 7} hue 5
+            if {9 <= 10} saturation 55
+            if {8 > 7} brightness 555
+            if {not x > y} kelvin 5555
+
+            if {8 != 9} duration {50 / 5}
+            if {100 == 10 * 10} set "Top"
+        """
+        self._runner.test_code(
+            script, 'Top', [('set_color', ([5, 55, 555, 5555], 10.0))])
+
 
 if __name__ == '__main__':
     unittest.main()

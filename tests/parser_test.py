@@ -42,7 +42,7 @@ class ParserTest(unittest.TestCase):
     def test_bad_number(self):
         input_string = "hue 5 saturation x"
         self.assertFalse(self.parser.parse(input_string))
-        self.assertIn('Cannot use x as a value.', self.parser.get_errors())
+        self.assertIn('Unknown: "x"', self.parser.get_errors())
 
     def test_single_zone(self):
         input_string = 'set "Strip" zone 7'
@@ -67,20 +67,6 @@ class ParserTest(unittest.TestCase):
         actual = _filter(self.parser.parse(input_string))
         self.assertEqual(expected, actual,
                          "Multi-zone failed: {} {}".format(expected, actual))
-
-    def test_optimizer(self):
-        input_string = 'units raw set "name" brightness 20 set "name"'
-        expected = [
-            Instruction(OpCode.MOVEQ, UnitMode.RAW, Register.UNIT_MODE),
-            Instruction(OpCode.MOVEQ, "name", Register.NAME),
-            Instruction(OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND),
-            Instruction(OpCode.MOVEQ, 20.0, Register.BRIGHTNESS)
-        ]
-        raw_output = self.parser.parse(input_string)
-        self.assertIsNotNone(raw_output, self.parser.get_errors())
-        actual = _filter(raw_output)
-        self.assertEqual(expected, actual,
-                         "Optimizer failed: {} {}".format(expected, actual))
 
 if __name__ == '__main__':
     unittest.main()

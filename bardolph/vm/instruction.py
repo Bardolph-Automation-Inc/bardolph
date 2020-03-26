@@ -3,56 +3,53 @@ from .vm_codes import OpCode
 
 class Instruction:
     def __init__(self, op_code, param0=None, param1=None):
-        self._op_code = op_code
-        self._param0 = param0
-        self._param1 = param1
+        self.op_code = op_code
+        self.param0 = param0
+        self.param1 = param1
 
     def __repr__(self):
-        if self._op_code == OpCode.TIME_PATTERN:
+        if self.op_code == OpCode.TIME_PATTERN:
             return 'Instruction({}, {}, {})'.format(
                 OpCode.TIME_PATTERN, self.param0, repr(self.param1))
-        if self._param1 is None:
-            if self._param0 is None:
-                return 'Instruction({}, None, None)'.format(self._op_code)
-            return 'Instruction({}, {}, None)'.format(
-                self._op_code,
-                Instruction.quote_if_string(self._param0))
+        if self.param1 is None:
+            if self.param0 is None:
+                return 'Instruction({})'.format(self.op_code)
+            return 'Instruction({}, {})'.format(
+                self.op_code,
+                Instruction.quote_if_string(self.param0))
         return 'Instruction({}, {}, {})'.format(
-            self._op_code,
-            Instruction.quote_if_string(self._param0),
-            Instruction.quote_if_string(self._param1))
+            self.op_code,
+            Instruction.quote_if_string(self.param0),
+            Instruction.quote_if_string(self.param1))
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             raise TypeError
-        return (self._op_code == other._op_code
-                and self._param0 == other._param0
-                and self._param1 == other._param1)
-
-    @property
-    def op_code(self) -> OpCode:
-        return self._op_code
+        return (self.op_code == other.op_code
+                and self.param0 == other.param0
+                and self.param1 == other.param1)
 
     def nop(self):
-        self._op_code = OpCode.NOP
-
-    @property
-    def param0(self):
-        return self._param0
-
-    @property
-    def param1(self):
-        return self._param1
+        self.op_code = OpCode.NOP
 
     def as_list_text(self) -> str:
-        if self._op_code not in (
+        if self.op_code not in (
                 OpCode.MOVE, OpCode.MOVEQ, OpCode.TIME_PATTERN):
-            return '{}'.format(self._op_code)
+            return '{}'.format(self.op_code)
         return '{}, {}, {}'.format(
-            self._op_code,
-            Instruction.quote_if_string(self._param0),
-            Instruction.quote_if_string(self._param1))
+            self.op_code,
+            Instruction.quote_if_string(self.param0),
+            Instruction.quote_if_string(self.param1))
 
     @classmethod
     def quote_if_string(cls, obj):
         return ('"{}"' if isinstance(obj, str) else '{}').format(obj)
+
+    @classmethod
+    def do_listing(cls, program):
+        result = ''
+        inst_num = 0
+        for inst in program:
+            result += '{:5d} {}\n'.format(inst_num, inst)
+            inst_num += 1
+        return result

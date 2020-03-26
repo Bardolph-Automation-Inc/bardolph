@@ -14,18 +14,25 @@ class ScriptTest(unittest.TestCase):
 
     def test_script(self):
         script = """
-            units raw saturation 1 brightness 2 kelvin 3
-            assign light_name "Chair"
+            saturation 80 brightness 40
+            define delay 1.20
+            define dur 1.20
 
-            define use_var with x begin
-                assign y x
-                hue y
-                set light_name
-                hue {y / 2}
-                set light_name
+            define set_pole with base_hue begin
+                hue base_hue set "Top"
+                time 0
+                hue {hue + 36} set "Middle"
+                hue {hue + 72} set "Bottom"
+                time delay
             end
 
-            use_var 10
+            duration 3
+            set_pole 36
+
+            duration dur
+            repeat
+                repeat 10 with _hue cycle 72
+                    set_pole _hue
         """
         self._runner.run_script(script)
         lifx = provide(i_controller.Lifx)
