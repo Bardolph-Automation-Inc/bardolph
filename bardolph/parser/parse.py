@@ -7,7 +7,7 @@ from bardolph.controller.routine import Routine
 from bardolph.controller.units import UnitMode
 from bardolph.lib.symbol_table import SymbolType
 from bardolph.lib.time_pattern import TimePattern
-from bardolph.vm.vm_codes import JumpCondition, OpCode, Operand
+from bardolph.vm.vm_codes import OpCode, Operand
 from bardolph.vm.vm_codes import Register, SetOp
 
 from . import lex
@@ -166,9 +166,6 @@ class Parser:
         """
         Process a group, location, or light with an optional set of
         zones. Do this by populating the NAME and OPERAND registers.
-
-        An operand is either a literal string, or a varible/macro containing
-        a string. It gets put into the name register.
         """
         if self._current_token_type == TokenTypes.GROUP:
             operand = Operand.GROUP
@@ -335,11 +332,16 @@ class Parser:
         return self._next_token()
 
     def at_rvalue(self) -> bool:
-        return self._current_token_type in (
-            TokenTypes.EXPRESSION,
-            TokenTypes.LITERAL_STRING,
-            TokenTypes.NAME,
-            TokenTypes.NUMBER)
+        if self._current_token_type not in (
+                TokenTypes.EXPRESSION,
+                TokenTypes.LITERAL_STRING,
+                TokenTypes.NAME,
+                TokenTypes.NUMBER):
+            return False
+        if self._current_token_type != TokenTypes.NAME:
+            return True
+        return not self._call_context.has_symbol_typed(
+            self.current_token, SymbolType.ROUTINE)
 
     def _definition(self) -> bool:
         self._next_token()
@@ -460,13 +462,16 @@ class Parser:
         if not parser.generate_code(self._code_gen):
             return self.token_error('Error parsing expression "{}"')
         self._add_instruction(OpCode.POP, Register.RESULT)
-        jump_loc = self._code_gen.current_offset
-        jump_inst = self._code_gen.add_instruction(
-            OpCode.JUMP, JumpCondition.IF_FALSE)
+        marker = self._code_gen.if_start()
         self._next_token()
         if not self.command_seq():
             return False
-        jump_inst.param1 = self._code_gen.current_offset - jump_loc
+        if self.current_token_type == TokenTypes.ELSE:
+            self._code_gen.if_else(marker)
+            self.next_token()
+            if not self.command_seq():
+                return False
+        self._code_gen.if_end(marker)
         return True
 
     def _repeat(self):
@@ -603,46 +608,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-"""
-    <script> ::= <body> <EOF>
-    <body> ::= <command> *
-    <command> ::=
-        "brightness" <set_reg>
-        | "define" <definition>
-        | "duration" <set_reg>
-        | "get" <name>
-        | "hue" <set_reg>
-        | "kelvin" <set_reg>
-        | "off" <operand_list>
-        | "on" <operand_list>
-        | "pause" <pause>
-        | "saturation" <set_reg>
-        | "set" <operand_list>
-        | "units" <set_units>
-        | "time" <time_spec>
-        | "wait"
-    <set_reg> ::= <name> <number_param> | <name> <literal> | <name> <symbol>
-    <number_param> ::= <number> | <name>
-    <operand_list> ::= <operand> | <operand> <and> *
-    <operand> ::= <light> | "group" <name> | "location" <name>
-    <light> ::= <name> | <name> <zone_list>
-    <zone_list> ::= "zone" <zone_range>
-    <zone_range> ::= <number> | <number> <number>
-    <name> ::= <literal> | <token>
-    <set_units> ::= "logical" | "raw"
-    <time_spec> ::= <number> | <time_pattern_set>
-    <time_pattern_set> ::= <time_pattern> | <time_pattern> "or" <time_pattern>
-    <time_pattern> ::= <hour_pattern> ":" <minute_pattern>
-    <hour_pattern> ::= <digit> | <digit> <digit> | "*" <digit> |
-                        <digit> "*" | "*"
-    <minute_pattern> ::= <digit> <digit> | <digit> "*" | "*" <digit> | "*"
-    <and> ::= "and" <operand_name>
-    <definition> ::= <token> <number> | <token> <literal> | <code_definition>
-    <code_definition> ::= "with" <parameter_decl> <code_block> | <code_block>
-    <parameter_decl> ::= <formal_parameter> | <formal_parameter> <and> <parameter_decl>
-    <formal_parameter> ::= <name>
-    <code_block> ::= "begin" <code_sequence> "end" | <command>
-    <code_sequence> ::= <command> *
-    <literal> ::= "\"" (text) "\""
-"""

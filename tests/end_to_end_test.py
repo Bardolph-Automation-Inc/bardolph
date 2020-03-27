@@ -261,7 +261,7 @@ class EndToEndTest(unittest.TestCase):
             assign y 20
 
             if {8 >= 7} hue 5
-            if {9 <= 10} saturation 55
+            if {9 <= 10} begin saturation 55 end
             if {8 > 7} brightness 555
             if {not x > y} kelvin 5555
 
@@ -271,6 +271,22 @@ class EndToEndTest(unittest.TestCase):
         self._runner.test_code(
             script, 'Top', [('set_color', ([5, 55, 555, 5555], 10.0))])
 
+    def test_if_else(self):
+        script = """
+            units raw hue 1 saturation 2 brightness 3 kelvin 4
+            assign five 5 assign two 2
+            if {five < two} hue 0 else hue 1000 set "Top"
+            if {five < two} begin hue 0 end else begin hue 2000 end set "Top"
+            if {five < two} hue 0 else begin hue 3000 end set "Top"
+            if {five > two} begin hue 4000 end else hue 0 set "Top"
+            if {five > two} begin hue 5000 end else hue 0 set "Top"
+        """
+        self._runner.test_code(script, 'Top', [
+                ('set_color', ([1000, 2, 3, 4], 0.0)),
+                ('set_color', ([2000, 2, 3, 4], 0.0)),
+                ('set_color', ([3000, 2, 3, 4], 0.0)),
+                ('set_color', ([4000, 2, 3, 4], 0.0)),
+                ('set_color', ([5000, 2, 3, 4], 0.0))])
 
 if __name__ == '__main__':
     unittest.main()

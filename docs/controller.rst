@@ -456,28 +456,17 @@ to evenly bring up all the lights from 0% to 100%::
       set all
    end
 
-The phrase `with angle` indicates that the variable is an angle to be
-used as a `hue` setting. This means that its values folow modulo 360
-arithmetic::
+The term `cycle` indicates that the index variable will start at the
+given point, and go through one complete rotation of 360 degrees::
 
-   # the_hue starts at 180 and wraps until it becomes 60.
-   #
-   repeat 10 with angle the_hue 180 to 60 begin
+   repeat 10 with the_hue cycle 180
       hue the_hue
       set all
    end
 
-A special case for an angle is a full 360-degree cycle. In this case,
-the angle doesn't go completely around. This behavior occurs when
-there is no `to` value::
-
-   # Start at 120, circle around and stop one iteration before reaching
-   # 120 again
-   #
-   repeat 10 with angle the_hue 120 begin
-      hue the_hue
-      set all
-   end
+In this exmple, `the_hue` starts with a value of 180. It is then incremented
+10 times. At the end of the last iteration, `the_hue` contains the value
+that comes immediately before 180.
 
 Loop Frame
 ~~~~~~~~~~
@@ -495,87 +484,6 @@ is handled by the generated code, with no specific VM support.
 
 The loop counter and its limit are not visible to the script code after
 they have been initialized. They are attributes of the top LoopFrame.
-
-Loop Instructions
-~~~~~~~~~~~~~~~~~
-The conditional jump instruction has a numeric parameter with the target
-address.
-
-Inside the loop 4 variables are used:
-
-* loop counter with the number of iterations completed
-* loop limit, which controls when the loop exits
-* variable increment, which is added to the index variable with each iteration.
-
-The variable increment is calculated once, before the loop begins.
-The VM accesses these variables by
-
-VM instructions::
-   # repeat 5 with brt from x to y begin
-
-   # increment
-   push "x"
-   push "y"
-   op sub
-   push 5
-   push 1
-   op sub
-   op div
-
-   # limit, counter
-   push 5
-   push ...
-   op gt
-   jump JumpContion.IF_TRUE <offset>
-
-   # code goes here...
-
-   push
-   push
-   push 1
-   op add
-   pop
-   pop
-
-   push "brt"
-   push call_stack.top.var_increment
-   op add
-   pop "brt"
-   pop pc
-   exit loop
-
-Parsing a Loop
-~~~~~~~~~~~~~~
-Sequence:
-
-#. Reach a `repeat` token.
-
-Executing a Loop
-~~~~~~~~~~~~~~~~
-Elements:
-
-#. Test terminating condition and jump if appropriate.
-#. Push stack frame and add index variable.
-#. Execute code and return.
-#. update index variable.
-
-When a loop begins, it first pushes a loop frame with its entry
-point as the return address onto the CallStack. This will probably
-be some kind of `loop` command, which is similar to `call`.
-
-An `end` command at the end of the loop code causes the StackFrame
-to be popped, and the VM's PC is set to top of the loop.
-
-If the loop has an exit condition, to code to evaluate that condition
-follows the
-
-.. index::
-   single: job scheduling
-
-
-Mathematical Expressions
-========================
-
 
 Job Scheduling
 ==============

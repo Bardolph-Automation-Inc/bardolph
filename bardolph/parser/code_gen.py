@@ -1,7 +1,7 @@
 from bardolph.vm.instruction import Instruction
 from bardolph.vm.vm_codes import JumpCondition, OpCode, Operator, Register
 
-class JumpMarker:
+class _JumpMarker:
     def __init__(self, inst, offset):
         self.jump = inst
         self.offset = offset
@@ -88,7 +88,7 @@ class CodeGen:
         ])
 
     def mark(self):
-        return JumpMarker(None, self.current_offset)
+        return _JumpMarker(None, self.current_offset)
 
     def jump_back(self, marker):
         offset = marker.offset - self.current_offset
@@ -96,7 +96,7 @@ class CodeGen:
 
     def if_start(self):
         inst = self.add_instruction(OpCode.JUMP, JumpCondition.IF_FALSE)
-        return JumpMarker(inst, self.current_offset)
+        return _JumpMarker(inst, self.current_offset)
 
     def if_else(self, marker):
         marker.has_else = True

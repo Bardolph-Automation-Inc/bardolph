@@ -11,6 +11,7 @@ class TokenTypes(Enum):
     BREAKPOINT = auto()
     CYCLE = auto()
     DEFINE = auto()
+    ELSE = auto()
     END = auto()
     EOF = auto()
     EXPRESSION = auto()

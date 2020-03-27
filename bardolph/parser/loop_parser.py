@@ -87,9 +87,8 @@ class LoopParser:
     def _index_var_range(self, code_gen) -> bool:
         if not self._parser.rvalue(LoopVar.FIRST):
             return False
-        self._next_token()
         if self._current_token_type != TokenTypes.TO:
-            return self._parser.token_error('Needed "to", got "{}')
+            return self._parser.token_error('Needed "to", got "{}"')
         self._next_token()
         if not self._parser.rvalue(LoopVar.LAST):
             return False

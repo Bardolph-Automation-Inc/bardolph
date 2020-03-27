@@ -629,6 +629,103 @@ visible in all scopes::
   saturation y   # Set saturation to 50.
 
 .. index::
+   single: conditional
+   single: if
+
+Conditionals
+============
+A conditional consists of the `if` keyword, followed by an expression and
+one or more commands. It can also have an `else` clause::
+
+  if {x < 5} off all
+
+  get "Top"
+  if {hue < 100} begin
+    hue 100
+    set "Top"
+  end
+
+  if {x >= 5} begin
+     on all
+     hue 120 set all
+  end else begin
+     off all
+  end
+
+.. index::
+   single: loops
+   single: repeat
+
+Repeat Loops
+============
+An infinitely repeating loop looks like::
+
+  repeat
+    begin
+      on all
+      off all
+    end
+
+Thoretically, this loop will run forever. However, the job control for the VM
+is designed to support graceful cutoff of a script's execution. For ambient
+interior lighting, this is expected to be a common use case.
+
+To repeat a loop a given number of times::
+
+  repeat 10
+    begin
+      on all
+      off all
+    end
+
+The interpolated values in a loop allow you to choose the starting and
+ending points for the lights and the number of steps to take in
+between. For example, to give a light a hue of 120, and then gradually
+transition it to 180 in 5 steps::
+
+  repeat 5 with the_hue from 120 to 180
+    begin
+      hue the_hue
+      set all
+    end
+
+In this example, `the_hue` will have values of 120, 135, 150, 165, and 180.
+
+You an use `repeat while` for a loop based on a logical condition::
+
+  repeat while {x < 10}
+  begin
+    on all
+    off all
+    assign x {x + 1}
+  end
+
+A special use case is to cycle the hue 360° over multiple iterations,
+perhaps in an infinite loop. The `cycle` keyword causes a value to loop
+around with modulo 360 logic, stopping one step short of a complete cycle.
+This keeps the delta between sequential repetitions equal to the increment
+used by the loop as it updates the index variable. For example::
+
+  repeat
+    repeat 4 with the_hue cycle
+      begin
+        hue the_hue
+        set all
+      end
+
+The inner loop gets executed 4 times, with `the_hue` having values of
+0, 90, 180, and 270, the difference being 90°. The next time the
+loop executes, it starts again at 0, which is equivalent to 360°. This
+effectively picks up where the previous loop left off.
+
+You can also specify the starting point::
+
+  repeat 4 with the_hue cycle 45
+  # etc.
+
+In this case, `the_hue` will have values of 45, 135, 225, and 315.
+
+.. index::
    single: get
    single: retrieving colors
 
