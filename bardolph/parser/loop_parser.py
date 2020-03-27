@@ -131,7 +131,6 @@ class LoopParser:
         if self._loop_type == LoopType.INFINITE:
             return True
         if self._loop_type == LoopType.WHILE:
-            self._next_token()
             exp = ExprParser(self._current_token)
             if not exp.generate_code(code_gen):
                 return False

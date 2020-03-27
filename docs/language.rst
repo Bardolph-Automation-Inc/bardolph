@@ -693,11 +693,10 @@ In this example, `the_hue` will have values of 120, 135, 150, 165, and 180.
 
 You an use `repeat while` for a loop based on a logical condition::
 
-  repeat while {x < 10}
+  repeat while {brightness < 50}
   begin
-    on all
-    off all
-    assign x {x + 1}
+    brightness {brightness + 0.1}
+    set all
   end
 
 A special use case is to cycle the hue 360° over multiple iterations,
