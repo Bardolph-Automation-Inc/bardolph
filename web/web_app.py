@@ -1,21 +1,21 @@
+import copy
 import html
 import json
 from os.path import join
 import platform
-import time
 
 from bardolph.lib.i_lib import Settings
-from bardolph.lib.injection import inject
+from bardolph.lib.injection import inject, injected
 from bardolph.lib.job_control import JobControl
 
-from bardolph.controller.i_controller import LightSet
 from bardolph.controller.script_job import ScriptJob
 from bardolph.controller.snapshot import ScriptSnapshot, TextSnapshot
 
 
-class Script:
+class ScriptControl:
     def __init__(self, file_name, repeat=False, run_background=False,
-                 title='', path='', background='', color='', icon=''):
+                 title='', path='', background='', color='',
+                 icon=''):
         self.file_name = html.escape(file_name)
         self.repeat = repeat
         self.run_background = run_background
@@ -24,93 +24,117 @@ class Script:
         self.background = html.escape(background)
         self.color = html.escape(color)
         self.icon = icon
+        self.running = None
 
 class WebApp:
+    """
+    The URL path for a script is also the name of the job for job_control.
+    """
+
     def __init__(self):
         self._scripts = {}
-        self._scripts_list = []
         self._jobs = JobControl()
         self._load_manifest()
 
     @inject(Settings)
-    def _load_manifest(self, settings):
+    def _load_manifest(self, settings=injected):
         # If manifest_name is explicitly None, don't attempt to load a file.
         basename = settings.get_value('manifest_name', 'manifest.json')
         if basename is None:
             return
-
         fname = join('web', basename)
-        script_list = json.load(open(fname))
+        config_list = json.load(open(fname))
         self._scripts = {}
-        self.script_order = []
-        for script_info in script_list:
-            file_name = script_info['file_name']
-            repeat = script_info.get('repeat', False)
-            run_background = script_info.get('run_background', False)
-            title = self.get_script_title(script_info)
-            path = self.get_script_path(script_info)
-            background = script_info['background']
-            color = script_info['color']
-            icon = script_info.get('icon', 'litBulb')
-            new_script = Script(
-                file_name, repeat, run_background, title, path, background,
-                color, icon)
+        for script_config in config_list:
+            file_name = script_config['file_name']
+            repeat = script_config.get('repeat', False)
+            run_background = script_config.get('run_background', False)
+            title = self.get_script_title(script_config)
+            path = self.get_script_path(script_config)
+            background = script_config['background']
+            color = script_config['color']
+            icon = script_config.get('icon', 'litBulb')
+            new_script = ScriptControl(file_name, repeat, run_background, title,
+                                       path, background, color, icon)
             self._scripts[path] = new_script
-            self._scripts_list.append(new_script)
 
     @inject(Settings)
-    def queue_script(self, script, settings):
-        self._jobs.request_stop()
-        fname = join(settings.get_value("script_path", "."), script.file_name)
+    def queue_script(self, script_control, settings=injected):
+        fname = join(
+            settings.get_value("script_path", "."), script_control.file_name)
         job = ScriptJob.from_file(fname)
-        if script.run_background:
-            self._jobs.spawn_job(job, script.repeat)
+        if script_control.run_background:
+            self._jobs.spawn_job(
+                job, script_control.path, script_control.repeat)
         else:
-            self._jobs.add_job(job, script.repeat)
+            self._jobs.add_job(
+                job, script_control.path, script_control.repeat)
+        return True
 
-    @inject(Settings)
     def queue_file(self, file_name, repeat=False, run_background=False):
-        script = Script(file_name, repeat, run_background)
-        self.queue_script(script)
+        # Use the file name for the title.
+        self.queue_script(
+            ScriptControl(file_name, file_name, repeat, run_background))
 
-    def get_script(self, path):
-        return self._scripts.get(path, None)
+    def get_script_control(self, path) -> ScriptControl:
+        script_control = self._scripts.get(path, None)
+        if script_control is not None:
+            script_control = copy.copy(script_control)
+            script_control.running = self._jobs.is_running(script_control.path)
+        return script_control
 
-    def get_script_list(self):
-        return self._scripts_list
+    def get_script_list(self) -> [ScriptControl]:
+        result = []
+        for script in self._scripts.values():
+            script = copy.copy(script)
+            script.running = self._jobs.is_running(script.path)
+            result.append(script)
+        return result
 
-    @inject(LightSet)
-    def get_status(self, lights):
-        return {
+    def get_status(self):
+        status = {
+            'background_jobs': self._jobs.get_background(),
+            'current_job': self._jobs.get_current(),
+            'queued_jobs': self._jobs.get_queued(),
             'lights': TextSnapshot().generate().text,
             'py_version': platform.python_version()
         }
+        return status
 
     @inject(Settings)
-    def get_path_root(self, settings):
+    def get_path_root(self, settings=injected):
         return settings.get_value('path_root', '/')
 
-    def get_script_title(self, script_info):
-        title = script_info.get('title', '')
+    def get_script_title(self, script_config):
+        title = script_config.get('title', '')
         if len(title) == 0:
-            name = self.get_script_path(script_info)
+            name = self.get_script_path(script_config)
             spaced = name.replace('_', ' ').replace('-', ' ')
             title = spaced.title()
         return title
 
-    def get_script_path(self, script_info):
-        path = script_info.get('path', '')
+    def get_script_path(self, script_config):
+        path = script_config.get('path', '')
         if len(path) == 0:
-            path = script_info['file_name']
+            path = script_config['file_name']
             if path[-3:] == ".ls":
                 path = path[:-3]
         return path
 
-    def request_stop(self, stop_background=False):
-        self._jobs.request_stop(stop_background)
+    def stop_script(self, path) -> bool:
+        return self._jobs.stop_job(path)
+
+    def stop_current(self) -> bool:
+        return self._jobs.stop_current()
+
+    def stop_all(self) -> bool:
+        self._jobs.clear_queue()
+        result1 = self._jobs.stop_current()
+        result2 = self._jobs.stop_background()
+        return result1 and result2
 
     @inject(Settings)
-    def snapshot(self, settings):
+    def snapshot(self, settings=injected):
         output_name = join(
             settings.get_value('script_path', '.'), '__snapshot__.ls')
         out_file = open(output_name, 'w')

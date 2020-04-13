@@ -7,6 +7,30 @@
 <pre>
 {{ data.lights }}
 </pre>
-</body>
 
+{% macro sub_listing(agent_list) -%}
+    {% if agent_list %}
+        <ul>
+        {% for agent in agent_list %}
+            <li>{{ agent.name }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No jobs to list.</p>
+    {% endif %}
+{%- endmacro %}
+
+{% if data.current_job %}
+    <p>Active job: data.current_job </p>
+{% else %}
+    <p>No active jobs.</p>
+{% endif %}
+
+<h3>Background Jobs</h3>
+<p> {{ sub_listing(data.background_jobs) }} </p>
+
+<h3>Queue</h3>
+<p> {{ sub_listing(data.queued_jobs) }} </p>
+
+</body>
 </html>

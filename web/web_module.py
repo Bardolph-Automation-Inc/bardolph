@@ -6,8 +6,7 @@ def configure():
     injection.configure()
 
     settings.use_base(config_values.functional).add_overrides({
-        'log_to_console': False,
-        'script_path': 'scripts'
+        'log_to_console': False
     }).configure()
 
     light_module.configure()

@@ -2,18 +2,18 @@
 
 <head>
 <title>Bardolph</title>
-<link 
+<link
   rel="stylesheet" type="text/css"
-  href="static/styles.css" />
+  href="/static/styles.css" />
 
 {% if icon is defined %}
-  <link rel="icon" sizes="192x192" href="static/{{ icon }}-192.png" />
-  <link rel="icon" sizes="512x512" href="static/{{ icon }}-512.png" />
+  <link rel="icon" sizes="192x192" href="/static/{{ icon }}-192.png" />
+  <link rel="icon" sizes="512x512" href="/static/{{ icon }}-512.png" />
 {% endif %}
 
 <script language='javascript'>var path_root = '{{ path_root }}';</script>
-<script src="static/lights.js"></script>
-  
+<script src="/static/lights.js"></script>
+
 </head>
 
 <body class="{{ agent_class }} index" onLoad="addEvents()">
@@ -25,14 +25,21 @@
 
 {% for script in scripts %}
   {% if loop.index is not even %}<div class="commandRow">{% endif %}
-  <div 
-    class="lightCommand"
+  <div
+    {% if script.running %}
+    class = "lightCommand running"
+    {% else %}
+    class = "lightCommand"
+    {% endif %}
     style =
       "color: {{ script.color }}; background-color: {{ script.background }}"
-    id="{{ script.path }}">{{ script.title }}</div>
+    id="{{ script.path }}">
+    {% if script.running %}<img src="/static/litBulb-32.png"/>{% endif %}
+    {{ script.title }}
+  </div>
   {% if loop.index is even or loop.last %}</div>{% endif %}
 {% endfor %}
 
 </div>
-</body>  
+</body>
 </html>

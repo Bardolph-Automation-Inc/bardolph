@@ -1,11 +1,13 @@
 [{
   "file_name": "off-all.ls",
   "path": "off",
+  "icon": "darkBulb",
   "background": "#222",
   "color": "Linen"
 }, {
   "file_name": "on-all.ls",
   "path": "on",
+  "icon": "litBulb",
   "background": "Linen",
   "color": "#222"
 }, {
@@ -53,7 +55,7 @@
   "color": "White"
 }, {
   "file_name": "",
-  "path": "stop",
+  "path": "stop-current",
   "title": "Stop",
   "background": "Maroon",
   "color": "White"

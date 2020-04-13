@@ -269,6 +269,7 @@ class Parser:
     def _time(self):
         self._next_token()
         if self._current_token_type == TokenTypes.AT:
+            self.next_token()
             return self._process_time_patterns()
         return self.rvalue(Register.TIME)
 

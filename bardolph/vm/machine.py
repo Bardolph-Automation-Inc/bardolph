@@ -62,6 +62,7 @@ class Machine:
         self._call_stack = CallStack()
         self._vm_math = VmMath(self._call_stack, self._reg)
         self._enable_pause = True
+        self._keep_running = True
         self._fn_table = {}
         for opcode in (OpCode.COLOR,
                        OpCode.CONSTANT,
@@ -94,14 +95,16 @@ class Machine:
         self._cue_time = 0
         self._call_stack.reset()
         self._vm_math.reset()
+        self._keep_running = True
 
     def run(self, program) -> None:
         loader = Loader()
         loader.load(program, self._variables)
         self._program = loader.code
+        self._keep_running = True
 
         self._clock.start()
-        while self._pc < len(self._program):
+        while self._keep_running and self._pc < len(self._program):
             inst = self._program[self._pc]
             if inst.op_code == OpCode.STOP:
                 break
@@ -110,8 +113,25 @@ class Machine:
                 self._pc += 1
         self._clock.stop()
 
+    def interpret(self, input_stream) -> None:
+        fn_table = self._fn_table.copy()
+        for op_code in (OpCode.END,
+                        OpCode.END_LOOP,
+                        OpCode.JSR,
+                        OpCode.JUMP,
+                        OpCode.LOOP,
+                        OpCode.PARAM):
+            fn_table[op_code] = self._nop
+        self._clock.start()
+        for inst in input_stream:
+            if inst.op_code == OpCode.STOP:
+                break
+            self._fn_table[inst.op_code]()
+        self._clock.stop()
+
     def stop(self) -> None:
-        self._pc = len(self._program)
+        self._keep_running = False
+        self._clock.stop()
 
     def color_to_reg(self, color) -> None:
         self._reg.hue = self._assure_raw(Register.HUE, color[0])

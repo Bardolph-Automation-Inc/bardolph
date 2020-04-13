@@ -1,5 +1,6 @@
 class UnboundException(Exception): pass
 
+injected = False
 
 class Injection:
     providers = {}

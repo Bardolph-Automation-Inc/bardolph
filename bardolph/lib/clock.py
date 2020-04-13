@@ -47,9 +47,8 @@ class Clock(i_lib.Clock):
         return time.time() - self._start_time
 
     def fire(self):
-        if self._keep_going:
-            self._event.set()
-            self._event.clear()
+        self._event.set()
+        self._event.clear()
 
     def wait(self):
         if self._keep_going:
@@ -59,7 +58,8 @@ class Clock(i_lib.Clock):
     def pause_for(self, delay):
         self._cue_time += delay
         while self.et() < self._cue_time:
-            self.wait()
+            if not self.wait():
+                break
 
     def wait_until(self, time_pattern):
         hour, minute = Clock._hour_minute()
@@ -67,7 +67,7 @@ class Clock(i_lib.Clock):
             self.wait()
             hour, minute = Clock._hour_minute()
         self.reset()
-    
+
     @classmethod
     def _hour_minute(cls):
         now = datetime.now()

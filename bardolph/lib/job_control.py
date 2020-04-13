@@ -4,36 +4,43 @@ import threading
 
 
 class Job:
-    def __init__(self, name=None):
-        if name is not None:
-            self._name = name 
-        else:
-            self._name = 'job {}'.format(self.__hash__())
-    
-    @property
-    def name(self):
-        return self._name 
-        
     def execute(self): pass
     def request_stop(self): pass
 
 
 class Agent:
-    def __init__(self, job, callback, repeat=False):
+    """
+    The name serves as the unique identifier. When the job finishes, the
+    callback is invoked with self (this Agent) as the only parameter.
+    """
+    def __init__(self, job, callback, name=None, repeat=False):
         self._job = job
         self._callback = callback
         self._repeat = repeat
+        self._thread = None
+        if name is not None:
+            self._name = name
+        else:
+            self._name = 'job {}'.format(id(self))
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def job(self):
         return self._job
-    
+
     @property
     def repeat(self):
         return self._repeat
 
+    def is_running(self):
+        return self._thread is not None and self._thread.is_alive()
+
     def execute(self):
-        threading.Thread(target=self._execute_and_call).start()
+        self._thread = threading.Thread(target=self._execute_and_call)
+        self._thread.start()
         return self
 
     def request_stop(self):
@@ -41,39 +48,103 @@ class Agent:
         self._job.request_stop()
 
     def _execute_and_call(self):
-        self._job.execute()    
+        self._job.execute()
         return self._callback(self)
 
 
 class JobControl:
-    # By default, jobs are added to the right and pulled out from the left.
-    
+    """
+    Jobs are pulled out from the left (front of the queue). add_job() appends
+    one to the end (right side), while insert_job() inserts it in front (left
+    side).
+    """
     def __init__(self):
-        self._background = set()
+        self._background = {}
         self._active_agent = None
         self._queue = collections.deque()
         self._lock = threading.RLock()
 
-    def add_job(self, job, repeat=False):
-        return self._enqueue_job(job, self._queue.append, repeat)
+    def clear_queue(self) -> None:
+        self._queue.clear()
 
-    def insert_job(self, job, repeat=False):
-        return self._enqueue_job(job, self._queue.appendleft, repeat)
-    
-    def _enqueue_job(self, job, append_fn, repeat):
+    def add_job(self, job, name=None, repeat=False) -> Agent:
+        return self._enqueue_job(job, self._queue.append, name, repeat)
+
+    def insert_job(self, job, name=None, repeat=False) -> Agent:
+        return self._enqueue_job(job, self._queue.appendleft, name, repeat)
+
+    def spawn_job(self, job, name=None, repeat=False) -> Agent:
+        agent = None
         if self._acquire_lock():
             try:
-                append_fn(Agent(job, self._on_execution_done, repeat))
-                if self._active_agent is None:
-                    self.run_next_job()
+                agent = Agent(job, self._on_background_done, name, repeat)
+                self._background[agent.name] = agent
+                agent.execute()
             finally:
-                self._lock.release()
+                self._release_lock()
+        return agent
 
-    def has_jobs(self):
+    def get_queued(self) -> [Agent]:
+        return list(self._queue) if self._queue is not None else None
+
+    def get_background(self) -> [Agent]:
+        if self._background is None:
+            return None
+        return self._background.values()
+
+    def get_current(self) -> Agent:
+        return self._active_agent
+
+    def is_running(self, name) -> bool:
+        if self._active_agent is not None and self._active_agent.name == name:
+            return True
+        return name in self._background
+
+    def stop_background(self) -> bool:
+        result = False
+        if self._acquire_lock():
+            result = True
+            try:
+                # Get a copy to avoid iterating over a list that's undergoing
+                # deletions.
+                agents = self.get_background()
+                if agents is not None:
+                    for agent in list(agents).copy():
+                        agent.request_stop()
+            finally:
+                self._release_lock()
+        return result
+
+    def stop_job(self, name) -> bool:
+        result = False
+        if self._acquire_lock():
+            try:
+                if (self._active_agent is not None and
+                        self._active_agent.name == name):
+                    self._active_agent.request_stop()
+                    result = True
+                elif name in self._background:
+                    self._background[name].request_stop()
+                    result = True
+            finally:
+                self._release_lock()
+        return result
+
+    def stop_current(self) -> bool:
+        if self._active_agent is not None and self._active_agent.is_running():
+            if self._acquire_lock():
+                try:
+                    self._active_agent.request_stop()
+                finally:
+                    self._release_lock()
+                return True
+        return False
+
+    def has_jobs(self) -> bool:
         return (len(self._queue) > 0 or len(self._background) > 0 or
-            self._active_agent is not None)
+                self._active_agent is not None)
 
-    def run_next_job(self):
+    def _run_next_job(self) -> None:
         if self._acquire_lock():
             try:
                 if self._active_agent is None and len(self._queue) > 0:
@@ -82,19 +153,17 @@ class JobControl:
             finally:
                 self._release_lock()
 
-    def request_stop(self, stop_background=False):
-        logging.debug("Stopping jobs.")
+    def _enqueue_job(self, job, append_fn, name, repeat) -> Agent:
+        agent = None
         if self._acquire_lock():
             try:
-                if stop_background:
-                    self._stop_background_jobs()
-                self._queue.clear()
-                agent = self._active_agent
-                if agent is not None:
-                    self._active_agent = None
-                    agent.request_stop()
+                agent = Agent(job, self._on_execution_done, name, repeat)
+                append_fn(agent)
+                if self._active_agent is None:
+                    self._run_next_job()
             finally:
-                self._release_lock()
+                self._lock.release()
+        return agent
 
     def _on_execution_done(self, agent):
         if self._acquire_lock():
@@ -104,16 +173,7 @@ class JobControl:
                     self._queue.append(agent)
             finally:
                 self._release_lock()
-            self.run_next_job()
-
-    def spawn_job(self, job, repeat=False):           
-        if self._acquire_lock():
-            try:
-                agent = Agent(job, self._on_background_done, repeat)
-                self._background.add(agent)
-                agent.execute()
-            finally:
-                self._release_lock()
+            self._run_next_job()
 
     def _on_background_done(self, agent):
         if self._acquire_lock():
@@ -121,17 +181,7 @@ class JobControl:
                 if agent.repeat:
                     agent.execute()
                 else:
-                    self._background.discard(agent)
-            finally:
-                self._release_lock()
-
-    def _stop_background_jobs(self):
-        logging.debug("Stopping background jobs.")
-        if self._acquire_lock():
-            try:
-                agent_list = list(self._background)
-                for agent in agent_list:
-                    agent.request_stop()
+                    del self._background[agent.name]
             finally:
                 self._release_lock()
 
@@ -140,7 +190,6 @@ class JobControl:
             logging.error("Unable to acquire lock.")
             return False
         return True
-    
+
     def _release_lock(self):
         self._lock.release()
-    
