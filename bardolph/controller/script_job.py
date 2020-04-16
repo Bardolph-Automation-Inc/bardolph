@@ -27,7 +27,8 @@ class ScriptJob(Job):
     def load_file(self, file_name):
         self._program = self._parser.load(file_name)
         if self._program is None:
-            logging.error(self._parser.get_errors())
+            logging.error(
+                "{}, {}".format(file_name, self._parser.get_errors()))
         return self._program
 
     def load_string(self, input_string):

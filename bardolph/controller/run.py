@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import os
 
 from ..lib import injection
 from ..lib import job_control
@@ -55,6 +56,10 @@ def init_settings(args):
     overrides = arg_helper.get_overrides(args)
     if overrides is not None:
         settings_init.add_overrides(overrides)
+
+    ini = os.getenv('BARDOLPH_INI')
+    if ini:
+        settings_init.apply_file(ini)
 
     settings_init.configure()
 

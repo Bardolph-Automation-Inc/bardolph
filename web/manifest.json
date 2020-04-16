@@ -28,8 +28,7 @@
 }, {
   "file_name": "night-light.ls",
   "background": "rgb(16, 48, 128)",
-  "color": "white",
-  "repeat": "True"
+  "color": "white"
 }, {
   "file_name": "cycle-color.ls",
   "title": "Color Cycle",
@@ -37,7 +36,6 @@
   "color": "#222"
 }, {
   "file_name": "cycle-color-slow.ls",
-  "repeat": true,
   "title": "Slow Cycle",
   "background": "rgb(32, 192, 192)",
   "color": "#222"

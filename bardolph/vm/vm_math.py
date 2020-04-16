@@ -1,5 +1,3 @@
-from bardolph.controller import units
-
 from .eval_stack import EvalStack
 from .vm_codes import LoopVar, Operator, Register
 
@@ -29,11 +27,10 @@ class VmMath:
         self._eval_stack.clear()
 
     def push(self, srce) -> None:
+        value = None
         if isinstance(srce, Register):
             value = self._reg.get_by_enum(srce)
-            if self._reg.unit_mode == units.UnitMode.LOGICAL:
-                value = units.as_logical(srce, value)
-        elif isinstance(srce, (int, float, units.UnitMode)):
+        elif isinstance(srce, (int, float)):
             value = srce
         elif isinstance(srce, (str, LoopVar)):
             value = self._call_stack.get_variable(srce)
@@ -46,8 +43,6 @@ class VmMath:
     def pop(self, dest) -> None:
         value = self._eval_stack.pop()
         if isinstance(dest, Register):
-            if self._reg.unit_mode == units.UnitMode.LOGICAL:
-                value = units.as_raw(dest, value)
             self._reg.set_by_enum(dest, value)
         elif isinstance(dest, (str, LoopVar)):
             self._call_stack.put_variable(dest, value)

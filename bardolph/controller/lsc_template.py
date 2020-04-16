@@ -5,21 +5,25 @@ import logging
 
 from bardolph.lib import injection
 from bardolph.lib import settings
-from bardolph.lib.time_pattern import TimePattern
-from bardolph.vm import machine
-
 from bardolph.controller import arg_helper
 from bardolph.controller import config_values
-from bardolph.controller.instruction import Instruction, OpCode
-from bardolph.controller.instruction import Operand, Register, SetOp
 from bardolph.controller import light_module
+from bardolph.controller.units import UnitMode
+from bardolph.vm import machine
+from bardolph.vm.instruction import Instruction, OpCode
+from bardolph.vm.vm_codes import JumpCondition, LoopVar, Operand, Operator
+from bardolph.vm.vm_codes import Register, SetOp
 
 assembly = [
     #instructions
 
 ]
 
-current_instruction = 0
+params_0 = (OpCode.BREAKPOINT, OpCode.COLOR, OpCode.END_LOOP, OpCode.LOOP,
+            OpCode.NOP, OpCode.PAUSE, OpCode.POWER, OpCode.STOP, OpCode.WAIT)
+
+params_1 = (OpCode.END, OpCode.GET_COLOR, OpCode.JSR, OpCode.OP, OpCode.POP,
+            OpCode.PUSH, OpCode.PUSHQ, OpCode.ROUTINE)
 
 def get_assembly():
     current_instruction = 0
@@ -31,15 +35,17 @@ def get_assembly():
 def build_instructions():
     program = []
     it = iter(get_assembly())
-
     op_code = next(it, None)
-    while op_code != None:
-        if op_code in (OpCode.SET_REG, OpCode.TIME_PATTERN):
-            param0 = next(it)
-            param1 = next(it)
-            program.append(Instruction(op_code, param0, param1))
+    while op_code is not None:
+        if op_code in params_0:
+            param_count = 0
+        elif op_code in params_1:
+            param_count = 1
         else:
-            program.append(Instruction(op_code))
+            param_count = 2
+        param0 = None if param_count < 1 else next(it)
+        param1 = None if param_count < 2 else next(it)
+        program.append(Instruction(op_code, param0, param1))
         op_code = next(it, None)
     return program
 

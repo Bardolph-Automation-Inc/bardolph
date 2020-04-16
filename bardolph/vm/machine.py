@@ -1,7 +1,7 @@
 import logging
 
 from bardolph.lib.i_lib import Clock, TimePattern
-from bardolph.lib.injection import inject, provide
+from bardolph.lib.injection import inject, injected, provide
 from bardolph.lib.symbol import Symbol
 
 from bardolph.controller import units
@@ -96,6 +96,7 @@ class Machine:
         self._call_stack.reset()
         self._vm_math.reset()
         self._keep_running = True
+        self._enable_pause = True
 
     def run(self, program) -> None:
         loader = Loader()
@@ -134,10 +135,8 @@ class Machine:
         self._clock.stop()
 
     def color_to_reg(self, color) -> None:
-        self._reg.hue = self._assure_raw(Register.HUE, color[0])
-        self._reg.saturation = self._assure_raw(Register.SATURATION, color[1])
-        self._reg.brightness = self._assure_raw(Register.BRIGHTNESS, color[2])
-        self._reg.kelvin = color[3]
+        reg = self._reg
+        reg.hue, reg.saturation, reg.brightness, reg.kelvin = color
 
     def color_from_reg(self) -> [int]:
         return self._reg.get_color()
@@ -158,19 +157,23 @@ class Machine:
     }[self._reg.operand]()
 
     @inject(LightSet)
-    def _color_all(self, light_set) -> None:
-        light_set.set_color(self._reg.get_color(), self._reg.duration)
+    def _color_all(self, light_set=injected) -> None:
+        color = self._assure_raw_color(self._reg.get_color())
+        duration = self._assure_raw(Register.DURATION, self._reg.duration)
+        light_set.set_color(color, duration)
 
     @inject(LightSet)
-    def _color_light(self, light_set) -> None:
+    def _color_light(self, light_set=injected) -> None:
         light = light_set.get_light(self._reg.name)
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            light.set_color(self._reg.get_color(), self._reg.duration)
+            light.set_color(
+                self._assure_raw_color(self._reg.get_color()),
+                self._assure_raw(Register.DURATION, self._reg.duration))
 
     @inject(LightSet)
-    def _color_mz_light(self, light_set) -> None:
+    def _color_mz_light(self, light_set=injected) -> None:
         light = light_set.get_light(self._reg.name)
         if light is None:
             Machine._report_missing(self._reg.name)
@@ -181,10 +184,11 @@ class Machine:
                 end_index = start_index
             light.set_zone_color(
                 start_index, end_index + 1,
-                self._reg.get_color(), self._reg.duration)
+                self._assure_raw_color(self._reg.get_color()),
+                self._assure_raw(Register.DURATION, self._reg.duration))
 
     @inject(LightSet)
-    def _color_group(self, light_set) -> None:
+    def _color_group(self, light_set=injected) -> None:
         lights = light_set.get_group(self._reg.name)
         if lights is None:
             logging.warning("Unknown group: {}".format(self._reg.name))
@@ -192,7 +196,7 @@ class Machine:
             self._color_multiple(lights)
 
     @inject(LightSet)
-    def _color_location(self, light_set) -> None:
+    def _color_location(self, light_set=injected) -> None:
         lights = light_set.get_location(self._reg.name)
         if lights is None:
             logging.warning("Unknown location: {}".format(self._reg.name))
@@ -200,9 +204,10 @@ class Machine:
             self._color_multiple(lights)
 
     def _color_multiple(self, lights) -> None:
-        color = self._reg.get_color()
+        color = self._assure_raw_color(self._reg.get_color())
+        duration = self._assure_raw(Register.DURATION, self._reg.duration)
         for light in lights:
-            light.set_color(color, self._reg.duration)
+            light.set_color(color, duration)
 
     def _power(self) -> None: {
         Operand.ALL: self._power_all,
@@ -212,19 +217,21 @@ class Machine:
     }[self._reg.operand]()
 
     @inject(LightSet)
-    def _power_all(self, light_set) -> None:
-        light_set.set_power(self._reg.get_power(), self._reg.duration)
+    def _power_all(self, light_set=injected) -> None:
+        duration = self._assure_raw(Register.DURATION, self._reg.duration)
+        light_set.set_power(self._reg.get_power(), duration)
 
     @inject(LightSet)
-    def _power_light(self, light_set) -> None:
+    def _power_light(self, light_set=injected) -> None:
         light = light_set.get_light(self._reg.name)
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            light.set_power(self._reg.get_power(), self._reg.duration)
+            duration = self._assure_raw(Register.DURATION, self._reg.duration)
+            light.set_power(self._reg.get_power(), duration)
 
     @inject(LightSet)
-    def _power_group(self, light_set) -> None:
+    def _power_group(self, light_set=injected) -> None:
         lights = light_set.get_group(self._reg.name)
         if lights is None:
             logging.warning(
@@ -233,7 +240,7 @@ class Machine:
             self._power_multiple(light_set.get_group(self._reg.name))
 
     @inject(LightSet)
-    def _power_location(self, light_set) -> None:
+    def _power_location(self, light_set=injected) -> None:
         lights = light_set.get_location(self._reg.name)
         if lights is None:
             logging.warning(
@@ -247,7 +254,7 @@ class Machine:
             light.set_power(power, self._reg.duration)
 
     @inject(LightSet)
-    def _get_color(self, light_set) -> None:
+    def _get_color(self, light_set=injected) -> None:
         light = light_set.get_light(self._reg.name)
         if light is None:
             Machine._report_missing(self._reg.name)
@@ -255,9 +262,10 @@ class Machine:
             if self._reg.operand == Operand.MZ_LIGHT:
                 if self._zone_check(light):
                     zone = self._reg.first_zone
-                    self.color_to_reg(light.get_color_zones(zone, zone + 1)[0])
+                    color = light.get_color_zones(zone, zone + 1)[0]
+                    self.color_to_reg(self._maybe_logical_color(color))
             else:
-                self.color_to_reg(light.get_color())
+                self.color_to_reg(self._maybe_logical_color(light.get_color()))
 
     def _param(self) -> None:
         """
@@ -362,6 +370,16 @@ class Machine:
             value %= 65536
         return value
 
+    def _assure_raw_color(self, color) -> [int]:
+        if self._reg.unit_mode == UnitMode.RAW:
+            return color
+        result = 4 * [0]
+        result[0] = units.as_raw(Register.HUE, color[0])
+        result[1] = units.as_raw(Register.SATURATION, color[1])
+        result[2] = units.as_raw(Register.BRIGHTNESS, color[2])
+        result[3] = color[3]
+        return result
+
     def _maybe_logical(self, reg, value) -> int:
         """
         If in logical mode, convert incoming value to logical units. If not
@@ -377,6 +395,16 @@ class Machine:
             value %= 360
         return value
 
+    def _maybe_logical_color(self, color) -> [int]:
+        if self._reg.unit_mode == UnitMode.LOGICAL:
+            return color
+        result = 4 * [0]
+        result[0] = units.as_logical(Register.HUE, color[0])
+        result[1] = units.as_logical(Register.SATURATION, color[1])
+        result[2] = units.as_logical(Register.BRIGHTNESS, color[2])
+        result[3] = color[3]
+        return result
+
     def _move(self) -> bool:
         """
         Move from variable/register to variable/register.
@@ -385,21 +413,12 @@ class Machine:
         srce = inst.param0
         dest = inst.param1
         if isinstance(srce, Register):
-            value = self._maybe_logical(srce, self._reg.get_by_enum(srce))
-            if isinstance(dest, Register):
-                self._reg.set_by_enum(dest, self._assure_raw(dest, value))
-            else:
-                self._call_stack.put_variable(dest, value)
-            return True
-
-        value = self._call_stack.get_variable(srce)
-        if value is None:
-            return self._trigger_error('Unknown: "{}"'.format(srce))
-        if isinstance(dest, Register):
-            self._reg.set_by_enum(dest, self._assure_raw(dest, value))
+            value = self._reg.get_by_enum(srce)
         else:
-            self._call_stack.put_variable(dest, value)
-        return True
+            value = self._call_stack.get_variable(srce)
+            if value is None:
+                return self._trigger_error('Unknown: "{}"'.format(srce))
+        return self._do_put_value(dest, value)
 
     def _moveq(self) -> bool:
         """
@@ -407,9 +426,19 @@ class Machine:
         """
         value = self.current_inst.param0
         dest = self.current_inst.param1
+        if dest == Register.UNIT_MODE:
+            if self._reg.unit_mode != value:
+                fn = (units.as_logical if value == UnitMode.LOGICAL
+                      else units.as_raw)
+                self._reg.hue = fn(Register.HUE, self._reg.hue)
+                self._reg.saturation = fn(
+                    Register.SATURATION, self._reg.saturation)
+                self._reg.brightness = fn(Register.HUE, self._reg.hue)
+        return self._do_put_value(dest, value)
 
+    def _do_put_value(self, dest, value) -> bool:
         if isinstance(dest, Register):
-            self._reg.set_by_enum(dest, self._assure_raw(dest, value))
+            self._reg.set_by_enum(dest, value)
         else:
             self._call_stack.put_variable(dest, value)
         return True

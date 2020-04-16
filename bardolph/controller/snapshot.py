@@ -118,19 +118,20 @@ class InstructionSnapshot(Snapshot):
         self._light_name = light.name
 
     def record_setting(self, reg, value):
-        self._snapshot += 'OpCode.SET_REG, {}, {},\n'.format(
-            reg, _quote_if_string(value))
+        self._snapshot += '    OpCode.MOVEQ, {}, {},\n'.format(
+            _quote_if_string(value), reg)
 
     def handle_power(self, power):
         self._power = power
 
     def end_light(self):
-        self._snapshot += 'OpCode.SET_REG, Register.NAME, "{}",\n'.format(
+        self._snapshot += '    OpCode.MOVEQ, "{}", Register.NAME,\n'.format(
             self._light_name)
-        self._snapshot += 'OpCode.SET_REG, Register.OPERAND, Operand.LIGHT,\n'
-        self._snapshot += 'OpCode.COLOR,\n'
-        self._snapshot += 'OpCode.SET_REG, Register.POWER, {},\n'.format(self._power)
-        self._snapshot += 'OpCode.POWER,\n'
+        self._snapshot += '    OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND,\n'
+        self._snapshot += '    OpCode.COLOR,\n'
+        self._snapshot += '    OpCode.MOVEQ, {}, Register.POWER,\n'.format(
+                            self._power)
+        self._snapshot += '    OpCode.POWER,\n'
 
     @property
     def text(self):
@@ -280,8 +281,9 @@ def main():
         _do_gen(TextSnapshot)
     if do_py:
         snap = InstructionSnapshot()
-        instructions = snap.generate().text
-        lsc.output_python(lsc.program_code(instructions))
+        text = '    OpCode.MOVEQ, UnitMode.RAW, Register.UNIT_MODE,\n'
+        text += snap.generate().text
+        lsc.output_python(lsc.program_code(text))
 
 
 if __name__ == '__main__':

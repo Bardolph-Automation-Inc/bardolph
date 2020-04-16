@@ -13,11 +13,9 @@ from bardolph.controller.snapshot import ScriptSnapshot, TextSnapshot
 
 
 class ScriptControl:
-    def __init__(self, file_name, repeat=False, run_background=False,
-                 title='', path='', background='', color='',
-                 icon=''):
+    def __init__(self, file_name, run_background=False, title='', path='',
+                background='', color='', icon=''):
         self.file_name = html.escape(file_name)
-        self.repeat = repeat
         self.run_background = run_background
         self.path = html.escape(path)
         self.title = html.escape(title)
@@ -39,7 +37,7 @@ class WebApp:
     @inject(Settings)
     def _load_manifest(self, settings=injected):
         # If manifest_name is explicitly None, don't attempt to load a file.
-        basename = settings.get_value('manifest_name', 'manifest.json')
+        basename = settings.get_value('manifest_file_name', 'manifest.json')
         if basename is None:
             return
         fname = join('web', basename)
@@ -47,15 +45,14 @@ class WebApp:
         self._scripts = {}
         for script_config in config_list:
             file_name = script_config['file_name']
-            repeat = script_config.get('repeat', False)
             run_background = script_config.get('run_background', False)
             title = self.get_script_title(script_config)
             path = self.get_script_path(script_config)
             background = script_config['background']
             color = script_config['color']
             icon = script_config.get('icon', 'litBulb')
-            new_script = ScriptControl(file_name, repeat, run_background, title,
-                                       path, background, color, icon)
+            new_script = ScriptControl(file_name, run_background, title, path,
+                                        background, color, icon)
             self._scripts[path] = new_script
 
     @inject(Settings)
@@ -64,17 +61,15 @@ class WebApp:
             settings.get_value("script_path", "."), script_control.file_name)
         job = ScriptJob.from_file(fname)
         if script_control.run_background:
-            self._jobs.spawn_job(
-                job, script_control.path, script_control.repeat)
+            self._jobs.spawn_job(job, script_control.path)
         else:
-            self._jobs.add_job(
-                job, script_control.path, script_control.repeat)
+            self._jobs.add_job(job, script_control.path)
         return True
 
-    def queue_file(self, file_name, repeat=False, run_background=False):
+    def queue_file(self, file_name, run_background=False):
         # Use the file name for the title.
         self.queue_script(
-            ScriptControl(file_name, file_name, repeat, run_background))
+            ScriptControl(file_name, file_name, run_background))
 
     def get_script_control(self, path) -> ScriptControl:
         script_control = self._scripts.get(path, None)

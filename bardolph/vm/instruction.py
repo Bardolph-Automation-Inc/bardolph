@@ -33,9 +33,12 @@ class Instruction:
         self.op_code = OpCode.NOP
 
     def as_list_text(self) -> str:
-        if self.op_code not in (
-                OpCode.MOVE, OpCode.MOVEQ, OpCode.TIME_PATTERN):
-            return '{}'.format(self.op_code)
+        if self.param0 is None and self.param1 is None:
+            return str(self.op_code)
+        if self.param1 is None:
+            return '{}, {}'.format(
+                self.op_code,
+                Instruction.quote_if_string(self.param0))
         return '{}, {}, {}'.format(
             self.op_code,
             Instruction.quote_if_string(self.param0),

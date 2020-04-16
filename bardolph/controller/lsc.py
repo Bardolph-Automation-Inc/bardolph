@@ -21,12 +21,14 @@ def program_code(instructions):
             else:
                 output += line
     return output
-    
+
 def instruction_text(file_name):
     program = Parser().load(file_name)
     if program is None:
         return None
-    return ',\n'.join(map(lambda inst: inst.as_list_text(), program))
+    text = '    '
+    text += ',\n    '.join(map(lambda inst: inst.as_list_text(), program))
+    return text
 
 def output_python(output_text, output_name=None):
     if output_name is None:
