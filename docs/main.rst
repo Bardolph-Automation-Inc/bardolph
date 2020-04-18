@@ -2,12 +2,12 @@
 
 .. figure:: logo.png
    :align: center
-    
+
    http://www.bardolph.org
 
 Introduction
 ############
- 
+
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
@@ -15,19 +15,19 @@ Introduction
 **Bardolph** is a facility for controlling `LIFX <https://www.lifx.com>`_ lights
 through a simple scripting language. It can be used
 to control lights in an automated way with a minimal
-syntax. The intended audience is people who are pretty good with command-line 
+syntax. The intended audience is people who are pretty good with command-line
 tools and have some kind of experience with scripting and/or software
-development. 
+development.
 
-The program does not use the Internet to access the bulbs, and no login is 
-required; all of its communication occurs over the local WiFi network. You 
+The program does not use the Internet to access the bulbs, and no login is
+required; all of its communication occurs over the local WiFi network. You
 can edit a script with a basic text editor and run it from the command
 line.
 
-This project relies on the 
+This project relies on the
 `lifxlan <https://pypi.org/project/lifxlan>`_
 Python library to access the bulbs. You need to have it installed for the code
-in this project to run. If you run the web server, you will also need 
+in this project to run. If you run the web server, you will also need
 `flup <https://www.saddi.com/software/flup>`_ and
 `Flask <https://palletsprojects.com/p/flask>`_.
 
@@ -83,7 +83,7 @@ cycles on a Raspberry Pi Zero.
 You can kill the script and quit by pressing Ctrl-C. You may want to run the
 program as a background job, which will terminate when the script is done.
 
-As a convenience, you can pass a script as a command-line parameter using 
+As a convenience, you can pass a script as a command-line parameter using
 `lsrun -s`, followed by the script code in a quoted string. For example, to
 turn off all the lights from the keyboard:
 
@@ -93,7 +93,7 @@ turn off all the lights from the keyboard:
 
 .. index::
    single: web server; overview
-   
+
 Web Server
 ==========
 .. image:: web.png
@@ -101,7 +101,7 @@ Web Server
 
 The web server component makes scripts available in a user-friendly manner.
 It implements a simple web page that lists available scripts and provides a
-1:1 mapping betwen a script and a URL. The server is designed to run locally 
+1:1 mapping betwen a script and a URL. The server is designed to run locally
 on a WiFi network.
 
 For example, if have a machine with the hostname
@@ -118,7 +118,7 @@ The theory of operation for the web server can be found in :ref:`web_server`.
 
 .. index::
    single: Python interface; overview
-   
+
 Python Interface
 ================
 I've attempted to make it easy to embed Bardolph scripts in your Python code.
@@ -130,7 +130,7 @@ another 5 seconds:
 .. code-block:: python
 
   from bardolph.controller import ls_module
-  
+
   ls_module.configure()
   ls_module.queue_script('time 5 duration 1.5 off all on all')
 
@@ -178,7 +178,7 @@ To do a quick sanity check:
 .. code-block:: bash
 
   lsrun -h
-  
+
 This should display a help message. To make sure Bardolph is able to access
 your actual bulbs:
 
@@ -192,7 +192,7 @@ which groups/locations they belong to.
 The source distribution includes some examples in a directory named `scripts`.
 For example:
 
-.. code-block:: bash 
+.. code-block:: bash
 
   lsrun scripts/on-all.ls
 
@@ -205,11 +205,11 @@ For a more colorful demonstration:
 If you don't have any bulbs, or prefer not to change the color
 of those you do have, use the "fakes" option:
 
-.. code-block:: bash 
+.. code-block:: bash
 
   lsrun -f scripts/on-all.ls
 
-The fake bulbs sent output to `stdout` that indiciates what commands 
+The fake bulbs sent output to `stdout` that indiciates what commands
 would normally be sent to the actual devices.
 
 For full documentation on the command-line tools, please see
@@ -220,15 +220,15 @@ Uninstall
 .. code-block:: bash
 
   pip uninstall bardolph
- 
+
 
 .. index:
    single: system requirements
-   
-System Requirements 
+
+System Requirements
 ###################
 The program has been tested on Python versions at or above 3.5.1. I
-haven't tried it, but I'm almost certain that it won't run on any 2.x 
+haven't tried it, but I'm almost certain that it won't run on any 2.x
 version.
 
 Because I haven't done any stress testing, I don't know the limits on
@@ -256,9 +256,7 @@ These are among the missing features that I'll be working on, in no particular
 order:
 
 * Easy-to-use web server.
-* Flow of control, such as loops, branching, and subroutines.
-* Mathematical expressions.
-* Support for tiles.
+* Support for tile devices.
 
 Project Name Source
 ###################

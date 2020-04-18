@@ -7,7 +7,7 @@ sys.path.insert(0, 'bardolph/parser')
 
 
 project = 'Bardolph'
-copyright = '2019, Al Fontes'
+copyright = '2020, Al Fontes'
 author = 'Al Fontes'
 
 

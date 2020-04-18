@@ -355,7 +355,9 @@ class Machine:
         if isinstance(time, TimePattern):
             self._clock.wait_until(time)
         elif time > 0:
-            self._clock.pause_for(time / 1000.0)
+            if self._reg.unit_mode == UnitMode.RAW:
+                time /= 1000.0
+            self._clock.pause_for(time)
 
     def _assure_raw(self, reg, value) -> int:
         """

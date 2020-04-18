@@ -25,7 +25,7 @@ these  differences:
 
 For example, if you want to just turn off the lights, you may
 find that navigating an app complicates a simple task. In my case,
-I simply unlock the phone and turn off the lights off with a single 
+I simply unlock the phone and turn off the lights off with a single
 tap on a home screen shortcut.
 
 .. image:: home.png
@@ -44,12 +44,12 @@ Raspberry Pi W that sits in a corner of my apartment.
 
 .. figure:: server.jpg
    :align: center
-   
+
    This is my server.
 
 Running the Server
 ##################
-The server executes within the 
+The server executes within the
 `Flask framework <https://flask.palletsprojects.com>`_. If you run it,
 you probably should become familiar with Flask.
 
@@ -90,7 +90,7 @@ running the server. After you start the server, you can access it with:
 http://localhost:5000.
 
 To stop the server,  press Ctrl-C.
-  
+
 
 .. index::
    single: manifest
@@ -102,17 +102,16 @@ scripts, the web app builds a list of colored boxes, each of which is
 a link to URL that, when accessed, causes a script to be run.
 
 The file `manifest.json` in the `scripts` directory specifies the list of
-scripts that will be available on the web site. That list also contains 
-metadata for the scripts, mostly to control the appearance of the web page. 
+scripts that will be available on the web site. That list also contains
+metadata for the scripts, mostly to control the appearance of the web page.
 
 For example:
 
 ::
 
   // ...
-  {  
+  {
     "file_name": "all_off.ls",
-    "repeat": false,
     "path": "off",
     "title": "All Off",
     "background": "#222",
@@ -122,7 +121,7 @@ For example:
 
 
 This snippet is used to launch the script "all-off.ls". Because "repeat" is
-false, the script is run only once when you access the URL. 
+false, the script is run only once when you access the URL.
 
 The "path" setting determines the path on the web site that runs this script.
 In this example, the manifest specifies that the URL
@@ -146,7 +145,7 @@ For many scripts, default behaviors can be used to simplify the manifest:
 ::
 
   // ...
-  {  
+  {
     "file_name": "reading.ls",
     "background": "#222",
     "color": "Linen"
@@ -156,7 +155,7 @@ For many scripts, default behaviors can be used to simplify the manifest:
 
 If no value is supplied for "title", the server will generate it from the
 name of the script. It will replace any underscore or dash with a space, and
-capitalize each word. For example, `reading.ls` yields "Reading", 
+capitalize each word. For example, `reading.ls` yields "Reading",
 while `all-off.ls` would yield "All Off".
 
 The default for "path" is the base name of the file. In this example, the URL
@@ -168,8 +167,8 @@ Clicking on a script button queues up the associated file containing that
 script. Subsequent clicks append scripts to the end of the queue. As each
 script finishes, the server executes the next in line.
 
-Some scripts are run as repeatable: they are immediately started again when 
-they have finished executing. Such scripts are designed to run continuously 
+Some scripts are run as repeatable: they are immediately started again when
+they have finished executing. Such scripts are designed to run continuously
 until stopped from the outside.
 
 Aside from listing the scripts which are contained in the manifest, the home page
@@ -191,7 +190,7 @@ lists the status of all the known lights in a very plain output with no CSS.
 
 .. note::
   Clicking on a script appends it to the end of the queue. This means that
-  you won't see anything happen if a lengthy script is already running. 
+  you won't see anything happen if a lengthy script is already running.
   When this happens, it's easy to conclude that the system is somehow not
   working. If you want to launch a script and have it start without waiting
   for the current one to finish, you should first click on the "Stop" link.
@@ -232,7 +231,7 @@ That response is then passed up the chain to the user's browser.
 
 HTTP Considerations
 ===================
-You can use  a different WSGI container and/or FastCGI integration. 
+You can use  a different WSGI container and/or FastCGI integration.
 For an example, see the integration with flup as implemented in
 `wsgy.py`, in the root of the source distribution.
 

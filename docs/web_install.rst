@@ -1,6 +1,6 @@
 .. figure:: logo.png
    :align: center
-   
+
    http://www.bardolph.org
 
 .. index::
@@ -13,7 +13,7 @@ Web Server Installation
 .. index::
    single: web server; installation
 
-This page contains instructions for installation of the web server. 
+This page contains instructions for installation of the web server.
 If you just want to run scripts from the command
 lline, please refer to the simpler instructions in :ref:`installation`.
 
@@ -26,7 +26,7 @@ local web server which is available 24/7. This means it
 should be cheap to buy and consume a small amount of power.
 
 The `Raspberry Pi Zero-W <https://www.raspberrypi.org/products/raspberry-pi-zero-w>`_
-has been a good fit for my everyday use. Other Raspberry Pi models will 
+has been a good fit for my everyday use. Other Raspberry Pi models will
 work as well, but the Zero-W is among the cheapest, and is entirely capable
 enough for this purpose.
 
@@ -55,7 +55,7 @@ the scope of this document:
    or keyboard attached. For more information, see the
    `Raspberry Pi remote access documentation
    <https://www.raspberrypi.org/documentation/remote-access/ssh/>`_.
-   
+
 If your device has a physical ethernet port, you can use a wired
 connection instead of WiFi, but it needs to be on the same network
 that the bulbs are on.
@@ -103,7 +103,7 @@ Still logged in as the `lights` user:
 .. code-block:: bash
 
   pip install bardolph
-  
+
 .. note:: Python 3.5 or higher is required in all cases. If your system
    defaults to Python 2.x, you probably need to use
    `pip3` instead of `pip` throughout these instructions. Notable
@@ -112,24 +112,24 @@ Still logged in as the `lights` user:
 
 After this intallation, the `lsc`, `lsrun`, and `lscap` commands will be
 placed into your `~/.local/bin` directory, which you should add to your
-path. 
+path.
 
 This installation also publishes Python modules for parsing and executing
 scripts.
 
 As of this writing, the default `.profile` on in Raspbian adds `~/.local/bin`
-to your path, but only if it exists. Therefore, either log out and back in
-again, or:
+to your path, but only if the directory exists when you log in. Therefore,
+either log out and back in again, or:
 
 .. code-block:: bash
-  
-  source ~/.profile 
+
+  source ~/.profile
 
 If you are using a different operating system, or your `.profile` doesn't
 add the path, you'll need to do so yourself.
 
 Testing the Installation
-======================== 
+========================
 To do a quick sanity check:
 
 .. code-block:: bash
@@ -137,7 +137,7 @@ To do a quick sanity check:
   lsrun -h
 
 This should display a help screen. To make sure Bardolph is able to access
-your actual bulbs:
+your lights:
 
 .. code-block:: bash
 
@@ -170,10 +170,10 @@ for more information. However, the basic installation can be done with
 
 This also installs `spawn-fcgi`.
 
-To use the lighttpd configuration supplied in the Bardolph source 
+To use the lighttpd configuration supplied in the Bardolph source
 distribution, you need create symbolic links to the root of the project,
 or copy the configuration files to `/etc/lighttpd`. I prefer symbolic
-links, because the configuration files get updated automatically 
+links, because the configuration files get updated automatically
 whenever you refresh the source code from github.com.
 
 For example, if you downloaded the code from github to `~lights/bardolph`:
@@ -187,7 +187,7 @@ For example, if you downloaded the code from github to `~lights/bardolph`:
 
 .. index::
    single: web logging configuration
-   
+
 Log Directory Setup
 -------------------
 This is another step you take as a user with `sudo` access, such as the
@@ -207,7 +207,7 @@ logs in one place.
 
 .. index::
    single: start HTTP server
-   
+
 Restart HTTP Server With New Configuration
 ------------------------------------------
 By default, the `lighttpd` daemon will already be running. You need to
@@ -228,11 +228,11 @@ Application Server
 From this step forward, you should be logged in as user `lights`.
 
 The HTTP server communicates with the outside world via HTTP on port 80,
-but all of the program logic and UI implemtation is in a web app, 
+but all of the program logic and UI implemtation is in a web app,
 contained in a Python module.
 
-That web app runs within 
-`Flask <https://palletsprojects.com/p/flask>`_. It also uses 
+That web app runs within
+`Flask <https://palletsprojects.com/p/flask>`_. It also uses
 `flup <https://www.saddi.com/software/flup>`_ for its
 `WSGI <https://wsgi.readthedocs.io>`_ implementation. The core Bardolph
 code relies on
@@ -271,9 +271,9 @@ again. To do so, `ssh` to the server as user `lights` and:
 
    cd bardolph
    ./start_fcgi
-   
+
 If you are clever enough with Linux, you can probably set up an init script
-to do this. I'm investigatng this and will update these docs when it's ready. 
+to do this. I'm investigatng this and will update these docs when it's ready.
 
 By default, lighttpd is launched when the system boots, so you should not
 need to manually start that process.
@@ -310,7 +310,7 @@ Uninstalling
 ============
 Uninstall with:
 
-.. code-block:: bash 
+.. code-block:: bash
 
   pip uninstall bardolph
 
