@@ -11,7 +11,10 @@ function addEvents() {
 }
 
 function onClick(event) {
-  if (event.target.className.includes("running")) {
+  // Need to use indexOf here because includes() is missing from TV's
+  // implementation of Javascript.
+  //
+  if (event.target.className.indexOf('running') >= 0) {
     window.location = path_root + 'stop/' + event.target.id;
   } else {
     window.location = path_root + event.target.id;
