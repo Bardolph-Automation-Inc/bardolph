@@ -28,10 +28,6 @@ class LightSet(i_controller.LightSet):
         self._location_dict = {}
         self._num_successful_discovers = 0
         self._num_failed_discovers = 0
-        self._last_discover = None
-
-    def __len__(self):
-        return self.get_count()
 
     @classmethod
     def configure(cls):
@@ -43,9 +39,9 @@ class LightSet(i_controller.LightSet):
 
     @inject(Lifx)
     def discover(self, lifx):
-        logging.info("discover()")
-        self._last_discover = time.time()
-
+        logging.info('start discover. so far, successes = {}, fails = {}'
+                     .format(self._num_successful_discovers,
+                             self._num_failed_discovers))
         try:
             for lifx_light in lifx.get_lights():
                 light = Light(lifx_light)
@@ -55,18 +51,16 @@ class LightSet(i_controller.LightSet):
                 LightSet._update_memberships(
                     light, light.location, self._location_dict)
         except lifxlan.errors.WorkflowException as ex:
+            self._num_failed_discovers += 1
             logging.warning("In discover():\n{}".format(ex))
             return False
+
+        self._num_successful_discovers += 1
         return True
 
     def refresh(self):
-        logging.debug("refresh()")
-        if self.discover():
-            self._num_successful_discovers += 1
-        else:
-            self._num_failed_discovers += 1
+        self.discover()
         self._garbage_collect()
-        self._last_discover = time.time()
 
     @classmethod
     def _update_memberships(cls, light, current_set_name, set_dict):
@@ -100,14 +94,17 @@ class LightSet(i_controller.LightSet):
     @inject(Settings)
     def _garbage_collect(self, settings):
         # Get rid of a light's proxy if it hasn't responded for a while.
+        logging.debug("garbage collect, currently have {} lights"
+                      .format(len(self._light_dict)))
         max_age = int(settings.get_value('light_gc_time', 20 * 60))
         target_lights = []
-        for light_name in self._light_dict.keys():
-            light = self._light_dict[light_name]
+        for item in self._light_dict.items():
+            # Maps light name to light
+            light = item[1]
             if light.age > max_age:
                 LightSet._remove_memberships(light, self._group_dict)
                 LightSet._remove_memberships(light, self._location_dict)
-                target_lights.append(light_name)
+                target_lights.append(item[0])
         for light_name in target_lights:
             logging.debug("_garbage_collect() deleting {}".format(light_name))
             del self._light_dict[light_name]
@@ -135,10 +132,6 @@ class LightSet(i_controller.LightSet):
     @property
     def count(self):
         return len(self._light_dict)
-
-    @property
-    def last_discover(self):
-        return self._last_discover
 
     @property
     def successful_discovers(self):

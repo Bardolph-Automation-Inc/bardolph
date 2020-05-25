@@ -1,3 +1,4 @@
+from bardolph.controller.units import UnitMode
 from bardolph.vm.instruction import Instruction
 from bardolph.vm.vm_codes import JumpCondition, OpCode, Operator, Register
 
@@ -79,7 +80,8 @@ class CodeGen:
         If literal is True, then the second operand is a literal value and
         should be embedded verbatim in the instruction.
         """
-        push = OpCode.PUSHQ if isinstance(op1, (int, float)) else OpCode.PUSH
+        push = OpCode.PUSHQ if isinstance(
+            op1, (int, float, UnitMode)) else OpCode.PUSH
         self.add_list([
             (OpCode.PUSH, op0),
             (push, op1),

@@ -42,8 +42,10 @@ class Agent:
         self._job.request_stop()
 
     def _execute_and_call(self):
-        self._job.execute()
-        return self._callback(self)
+        try:
+            self._job.execute()
+        finally:
+            self._callback(self)
 
 
 class JobControl:
