@@ -2,7 +2,7 @@
 
 https://www.bardolph.org
 
-# Introduction, or Why I Built This #
+# Introduction, or Why I Did This #
 
 Bardolph is intended for people like me: someone who wants to experiment with
 their lights and perhaps use the results in a practical setting. Although I may
@@ -199,22 +199,23 @@ Another special kind of loop focuses on hue settings. A *cycle* loop type allows
 a script to cleanly rotate through the entire 360° range of hues using a
 specified number of steps.
 
-For example, consider cycling through 3 colors. In this case, the hue settings
-will be 0, 120, and 240. The code for this is:
+For example, consider a loop where the hue goes from 0 to 360, stepping
+throough 5 colors. In this case, the hue settings
+will be 0, 72, 144, 216, and 288. The code for this is:
 ```
-repeat 3 with _hue cycle begin
+repeat 5 with _hue cycle begin
   # Use _hue.
 end
 ```
-Note that the increment in this case is 360 / 3 = 120. If that increment were
-again added, the hue would equal 360 and become zero. By starting the loop
-at 0 again, the script effectively continues the cycle.
+Note that the increment in this case is 360 / 5 = 72. If that increment were
+again added, the hue would reach 360 and become zero. Instead, the loop starts
+at 0 again, and the script effectively continues the cycle.
 
 That scenario, where the hue cycles infinitely with values between 0 and 360,
 can be coded with:
 ```
 repeat
-    repeat 3 with _hue cycle begin
+    repeat 5 with _hue cycle begin
         hue _hue
         set all
     end
