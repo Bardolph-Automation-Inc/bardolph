@@ -3,11 +3,14 @@
 import unittest
 
 from bardolph.controller import i_controller
+from bardolph.fakes.fake_lifx import Action
 from bardolph.lib.injection import provide
 from tests.script_runner import ScriptRunner
 from tests import test_module
 
 class EndToEndTest(unittest.TestCase):
+    _ALL_LIGHTS = ('Top', 'Middle', 'Bottom', 'Table', 'Chair', 'Strip')
+
     def setUp(self):
         test_module.configure()
         self._runner = ScriptRunner(self)
@@ -22,12 +25,12 @@ class EndToEndTest(unittest.TestCase):
         lifx = provide(i_controller.Lifx)
         for light in lifx.get_lights():
             if light.get_label() == 'Top':
-                expected = [('set_color', ([11, 22, 33, 2500], 0))]
+                expected = [(Action.SET_COLOR, ([11, 22, 33, 2500], 0))]
             elif light.get_label() == 'Bottom':
-                expected = [('set_color', ([44, 55, 66, 2500], 0))]
+                expected = [(Action.SET_COLOR, ([44, 55, 66, 2500], 0))]
             else:
                 expected = []
-            self.assertListEqual(light.call_list(), expected)
+            self.assertListEqual(light.get_call_list(), expected)
 
     def test_power(self):
         script = 'on "Top" off "Bottom"'
@@ -35,12 +38,12 @@ class EndToEndTest(unittest.TestCase):
         lifx = provide(i_controller.Lifx)
         for light in lifx.get_lights():
             if light.get_label() == "Top":
-                expected = [('set_power', (65535, 0))]
+                expected = [(Action.SET_POWER, (65535, 0))]
             elif light.get_label() == "Bottom":
-                expected = [('set_power', (0, 0))]
+                expected = [(Action.SET_POWER, (0, 0))]
             else:
                 expected = []
-            self.assertListEqual(light.call_list(), expected)
+            self.assertListEqual(light.get_call_list(), expected)
 
     def test_and(self):
         script = """
@@ -51,10 +54,10 @@ class EndToEndTest(unittest.TestCase):
         lifx = provide(i_controller.Lifx)
         for light in lifx.get_lights():
             if light.get_label() in ('Bottom', 'Middle', 'Top'):
-                expected = [('set_color', ([1, 2, 3, 4], 5))]
+                expected = [(Action.SET_COLOR, ([1, 2, 3, 4], 5))]
             else:
                 expected = []
-            self.assertListEqual(light.call_list(), expected)
+            self.assertListEqual(light.get_call_list(), expected)
 
     def test_mixed_and(self):
         script = """
@@ -62,7 +65,7 @@ class EndToEndTest(unittest.TestCase):
             duration 50 set "Table" and group "Pole"
         """
         self._runner.test_code(script, ('Top', 'Middle', 'Bottom', 'Table'),
-                            [('set_color', ([10, 20, 30, 40], 50))])
+                            [(Action.SET_COLOR, ([10, 20, 30, 40], 50))])
 
     def test_define_operand(self):
         script = """
@@ -72,8 +75,8 @@ class EndToEndTest(unittest.TestCase):
             on light_name
         """
         self._runner.test_code(script, 'Top', [
-            ('set_color', ([1, 2, 3, 4], 5)),
-            ('set_power', (65535, 5.0))])
+            (Action.SET_COLOR, ([1, 2, 3, 4], 5)),
+            (Action.SET_POWER, (65535, 5.0))])
 
     def test_define_value(self):
         script = """
@@ -82,7 +85,7 @@ class EndToEndTest(unittest.TestCase):
             set "Top"
         """
         self._runner.test_code(
-            script, 'Top', [('set_color', ([1, 2, 3, 4], 500))])
+            script, 'Top', [(Action.SET_COLOR, ([1, 2, 3, 4], 500))])
 
     def test_nested_define(self):
         script = """
@@ -91,7 +94,7 @@ class EndToEndTest(unittest.TestCase):
             set "Top"
         """
         self._runner.test_code(
-            script, 'Top', [('set_color', ([1, 2, 3, 4], 500))])
+            script, 'Top', [(Action.SET_COLOR, ([1, 2, 3, 4], 500))])
 
     def test_zones(self):
         script = """
@@ -101,8 +104,9 @@ class EndToEndTest(unittest.TestCase):
             set "Strip" zone 1
         """
         self._runner.test_code(script, 'Strip', [
-            ('set_zone_color', (0, 6, [5, 10, 15, 20], 25.0)),
-            ('set_zone_color', (1, 2, [5, 10, 15, 20], 25.0))])
+            (Action.SET_ZONE_COLOR, (0, 6, [5, 10, 15, 20], 25.0)),
+            (Action.SET_ZONE_COLOR, (1, 2, [5, 10, 15, 20], 25.0))
+        ])
 
     def test_set_zone(self):
         script = """
@@ -110,7 +114,7 @@ class EndToEndTest(unittest.TestCase):
             set "Strip" zone 5 7
         """
         self._runner.test_code(script, 'Strip',
-                        [('set_zone_color', (5, 8, [10, 20, 30, 40], 50))])
+            [(Action.SET_ZONE_COLOR, (5, 8, [10, 20, 30, 40], 50))])
 
     def test_get_zone(self):
         # LIFXLan treats range as non-inclusive.
@@ -119,15 +123,16 @@ class EndToEndTest(unittest.TestCase):
             get "Strip" zone nine get "Strip" zone 9
         """
         self._runner.test_code(script, 'Strip', [
-            ('get_color_zones', (9, 10)),
-            ('get_color_zones', (9, 10))])
+            (Action.GET_ZONE_COLOR, (9, 10)),
+            (Action.GET_ZONE_COLOR, (9, 10))])
 
     def test_routine_get_zone(self):
         script = """
             units raw define get_z with x and z get x zone z
             get_z "Strip" 5
         """
-        self._runner.test_code(script, 'Strip', [('get_color_zones', (5, 6))])
+        self._runner.test_code(script, 'Strip',
+            [(Action.GET_ZONE_COLOR, (5, 6))])
 
     def test_define_zones(self):
         script = """
@@ -138,8 +143,8 @@ class EndToEndTest(unittest.TestCase):
             set light zone z2
         """
         self._runner.test_code(script, 'Strip', [
-            ('set_zone_color', (0, 6, [50, 100, 150, 200], 789)),
-            ('set_zone_color', (5, 6, [50, 100, 150, 200], 789))])
+            (Action.SET_ZONE_COLOR, (0, 6, [50, 100, 150, 200], 789)),
+            (Action.SET_ZONE_COLOR, (5, 6, [50, 100, 150, 200], 789))])
 
     def test_group(self):
         script = """
@@ -150,9 +155,9 @@ class EndToEndTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_call_list(('Top', 'Middle', 'Bottom'), [
-            ('set_color', ([100, 10, 1, 1000], 0))])
+            (Action.SET_COLOR, ([100, 10, 1, 1000], 0))])
         self._runner.check_call_list(('Table', 'Chair', 'Strip'), [
-            ('set_power', (65535, 0))])
+            (Action.SET_POWER, (65535, 0))])
 
     def test_location(self):
         script = """
@@ -162,8 +167,8 @@ class EndToEndTest(unittest.TestCase):
             on location "Home"
         """
         self._runner.test_code_all(script, [
-            ('set_color', ([100, 10, 1, 1000], 0)),
-            ('set_power', (65535, 0))])
+            (Action.SET_COLOR, ([100, 10, 1, 1000], 0)),
+            (Action.SET_POWER, (65535, 0))])
 
     def test_simple_routine(self):
         script = """
@@ -173,7 +178,7 @@ class EndToEndTest(unittest.TestCase):
             do_set "Table"
         """
         self._runner.test_code(script, 'Table',
-                        [('set_color', ([100, 10, 1, 1000], 0))])
+                        [(Action.SET_COLOR, ([100, 10, 1, 1000], 0))])
 
     def test_compound_routine(self):
         script = """
@@ -187,7 +192,7 @@ class EndToEndTest(unittest.TestCase):
             units logical
         """
         self._runner.test_code(script, ('Table', 'Bottom'),
-                        [('set_color', ([600, 50, 5, 5000], 0))])
+                        [(Action.SET_COLOR, ([600, 50, 5, 5000], 0))])
 
     def test_nested_param(self):
         script = """
@@ -201,8 +206,8 @@ class EndToEndTest(unittest.TestCase):
             set "Table"
         """
         self._runner.test_code(script, 'Table', [
-                        ('set_color', ([600, 60, 6, 6000], 0)),
-                        ('set_color', ([700, 60, 6, 6000], 0))])
+                        (Action.SET_COLOR, ([600, 60, 6, 6000], 0)),
+                        (Action.SET_COLOR, ([700, 60, 6, 6000], 0))])
 
     def test_variables(self):
         script = """
@@ -223,13 +228,13 @@ class EndToEndTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_call_list(
-            'Table', [('set_color', ([5, 1, 2, 3], 0))])
+            'Table', [(Action.SET_COLOR, ([5, 1, 2, 3], 0))])
         self._runner.check_call_list('Chair', [
-            ('set_color', ([5, 1, 2, 3], 0)),
-            ('set_color', ([5, 1, 2, 3], 0)),
-            ('set_color', ([10, 1, 2, 3], 0)),
-            ('set_color', ([100, 1, 2, 3], 0)),
-            ('set_color', ([100, 1, 100, 3], 0))])
+            (Action.SET_COLOR, ([5, 1, 2, 3], 0)),
+            (Action.SET_COLOR, ([5, 1, 2, 3], 0)),
+            (Action.SET_COLOR, ([10, 1, 2, 3], 0)),
+            (Action.SET_COLOR, ([100, 1, 2, 3], 0)),
+            (Action.SET_COLOR, ([100, 1, 100, 3], 0))])
 
     def test_nested_variables(self):
         script = """
@@ -244,7 +249,7 @@ class EndToEndTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_call_list('Chair', [
-            ('set_color', ([1, 7500, 3, 50], 0))])
+            (Action.SET_COLOR, ([1, 7500, 3, 50], 0))])
 
     def test_expression(self):
         script = """
@@ -269,7 +274,7 @@ class EndToEndTest(unittest.TestCase):
             if {100 == 10 * 10} set "Top"
         """
         self._runner.test_code(
-            script, 'Top', [('set_color', ([5, 55, 555, 5555], 10.0))])
+            script, 'Top', [(Action.SET_COLOR, ([5, 55, 555, 5555], 10.0))])
 
     def test_if_else(self):
         script = """
@@ -282,11 +287,62 @@ class EndToEndTest(unittest.TestCase):
             if {five > two} begin hue 5000 end else hue 0 set "Top"
         """
         self._runner.test_code(script, 'Top', [
-                ('set_color', ([1000, 2, 3, 4], 0.0)),
-                ('set_color', ([2000, 2, 3, 4], 0.0)),
-                ('set_color', ([3000, 2, 3, 4], 0.0)),
-                ('set_color', ([4000, 2, 3, 4], 0.0)),
-                ('set_color', ([5000, 2, 3, 4], 0.0))])
+                (Action.SET_COLOR, ([1000, 2, 3, 4], 0.0)),
+                (Action.SET_COLOR, ([2000, 2, 3, 4], 0.0)),
+                (Action.SET_COLOR, ([3000, 2, 3, 4], 0.0)),
+                (Action.SET_COLOR, ([4000, 2, 3, 4], 0.0)),
+                (Action.SET_COLOR, ([5000, 2, 3, 4], 0.0))])
+
+    def test_multiple_get_logical(self):
+        script = """
+            duration 1 hue 30 saturation 75 brightness 100 set "Top"
+            time 1
+            hue 60 set all
+            get "Top" hue 30 set all
+            get "Top" hue 60 set all
+            get "Top" hue 30 set all
+            units raw brightness 10000 units logical saturation 50 set all
+        """
+        self._runner.run_script(script)
+        self._runner.check_call_list('Top', [
+            (Action.SET_COLOR, ([5461, 49151, 65535, 0], 1000)),
+            (Action.GET_COLOR, ([10922, 49151, 65535, 0])),
+            (Action.GET_COLOR, ([5461, 49151, 65535, 0])),
+            (Action.GET_COLOR, ([10922, 49151, 65535, 0]))
+        ])
+        self._runner.check_global_call_list([
+            (Action.SET_COLOR_ALL, ([10922, 49151, 65535, 0], 1000)),
+            (Action.SET_COLOR_ALL, ([5461, 49151, 65535, 0], 1000)),
+            (Action.SET_COLOR_ALL, ([10922, 49151, 65535, 0], 1000)),
+            (Action.SET_COLOR_ALL, ([5461, 49151, 65535, 0], 1000)),
+            (Action.SET_COLOR_ALL, ([5461, 32768, 10000, 0], 1000))
+        ])
+
+    def test_multiple_get_raw(self):
+        script = """
+            units raw
+            duration 1 hue 1000 saturation 2000 brightness 5000 set "Top"
+            time 1
+            hue 3000 set all
+            get "Top" hue 4000 set all
+            get "Top" hue 3000 set all
+            get "Top" hue 4000 set all
+            units logical brightness 50 units raw hue 6000 set all
+        """
+        self._runner.run_script(script)
+        self._runner.check_call_list('Top', [
+            (Action.SET_COLOR, ([1000, 2000, 5000, 0], 1)),
+            (Action.GET_COLOR, ([3000, 2000, 5000, 0])),
+            (Action.GET_COLOR, ([4000, 2000, 5000, 0])),
+            (Action.GET_COLOR, ([3000, 2000, 5000, 0]))
+        ])
+        self._runner.check_global_call_list([
+            (Action.SET_COLOR_ALL, ([3000, 2000, 5000, 0], 1)),
+            (Action.SET_COLOR_ALL, ([4000, 2000, 5000, 0], 1)),
+            (Action.SET_COLOR_ALL, ([3000, 2000, 5000, 0], 1)),
+            (Action.SET_COLOR_ALL, ([4000, 2000, 5000, 0], 1)),
+            (Action.SET_COLOR_ALL, ([6000, 2000, 32768, 0], 1))
+        ])
 
 if __name__ == '__main__':
     unittest.main()

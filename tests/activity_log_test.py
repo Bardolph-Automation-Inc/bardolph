@@ -2,13 +2,13 @@
 
 import unittest
 
-from bardolph.fakes.fake_lifx import ActivityLog
+from bardolph.fakes.fake_lifx import ActivityMonitor
 
 class ActivityLogTest(unittest.TestCase):
     def setUp(self): pass
 
     def test_calls(self):
-        activities = ActivityLog()
+        activities = ActivityMonitor()
         activities.log_call("a", (1, 2))
         activities.log_call("b", (3, 4))
         activities.log_call("a", (5, 6))

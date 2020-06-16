@@ -6,10 +6,11 @@ import time
 
 import lifxlan
 
-from ..controller.i_controller import Lifx
-from ..lib.injection import bind_instance, inject
-from ..lib.i_lib import Settings
+from bardolph.lib.color import rounded_color
+from bardolph.lib.injection import bind_instance, inject
+from bardolph.lib.i_lib import Settings
 
+from .i_controller import Lifx
 from . import i_controller
 from .light import Light
 
@@ -155,12 +156,12 @@ class LightSet(i_controller.LightSet):
 
     @inject(Lifx)
     def set_color(self, color, duration, lifx):
-        lifx.set_color_all_lights(color, duration)
+        lifx.set_color_all_lights(rounded_color(color), duration)
         return True
 
     @inject(Lifx)
     def set_power(self, power_level, duration, lifx):
-        lifx.set_power_all_lights(power_level, duration)
+        lifx.set_power_all_lights(round(power_level), duration)
         return True
 
 

@@ -14,3 +14,6 @@ def average_color(colors):
     for i in range(0, 4):
         avg.append(round(totals[i] / count))
     return avg
+
+def rounded_color(color):
+    return [round(c) for c in color]

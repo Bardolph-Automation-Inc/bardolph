@@ -61,7 +61,7 @@ def as_raw(reg, logical_value, use_float=False):
         else:
             value = (logical_value % 360.0) / 360.0 * 65535.0
     elif reg in (Register.BRIGHTNESS, Register.SATURATION):
-        if logical_value == 100.0:
+        if logical_value >= 100.0:
             value = 65535.0
         else:
             value = logical_value / 100.0 * 65535.0

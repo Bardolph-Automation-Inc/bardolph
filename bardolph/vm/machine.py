@@ -31,12 +31,7 @@ class Registers:
         self.unit_mode = UnitMode.LOGICAL
 
     def get_color(self) -> [int]:
-        return [
-            round(self.hue),
-            round(self.saturation),
-            round(self.brightness),
-            round(self.kelvin)
-        ]
+        return [self.hue, self.saturation, self.brightness, self.kelvin]
 
     def get_by_enum(self, reg):
         return getattr(self, reg.name.lower())
@@ -379,7 +374,7 @@ class Machine:
         result[0] = units.as_raw(Register.HUE, color[0])
         result[1] = units.as_raw(Register.SATURATION, color[1])
         result[2] = units.as_raw(Register.BRIGHTNESS, color[2])
-        result[3] = color[3]
+        result[3] = round(color[3])
         return result
 
     def _maybe_logical(self, reg, value) -> int:
@@ -398,7 +393,7 @@ class Machine:
         return value
 
     def _maybe_logical_color(self, color) -> [int]:
-        if self._reg.unit_mode == UnitMode.LOGICAL:
+        if self._reg.unit_mode == UnitMode.RAW:
             return color
         result = 4 * [0]
         result[0] = units.as_logical(Register.HUE, color[0])
@@ -435,7 +430,8 @@ class Machine:
                 self._reg.hue = fn(Register.HUE, self._reg.hue)
                 self._reg.saturation = fn(
                     Register.SATURATION, self._reg.saturation)
-                self._reg.brightness = fn(Register.HUE, self._reg.hue)
+                self._reg.brightness = fn(
+                    Register.BRIGHTNESS, self._reg.brightness)
         return self._do_put_value(dest, value)
 
     def _do_put_value(self, dest, value) -> bool:

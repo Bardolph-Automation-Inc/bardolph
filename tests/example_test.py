@@ -2,6 +2,7 @@
 
 import unittest
 
+from bardolph.fakes.fake_lifx import Action
 from tests.script_runner import ScriptRunner
 from tests import test_module
 
@@ -20,7 +21,7 @@ class ExampleTest(unittest.TestCase):
             set "Table"
         """
         self._runner.test_code(script, ('Table'),
-                               [('set_color', ([120, 100, 75, 2700], 0))])
+                               [(Action.SET_COLOR, ([120, 100, 75, 2700], 0))])
 
     def test_multizone(self):
         script = """
@@ -31,9 +32,9 @@ class ExampleTest(unittest.TestCase):
             set "Strip" zone 0 8
         """
         self._runner.test_code(script, 'Strip', [
-            ('set_color', ([150, 100, 50, 2700], 1.5)),
-            ('set_zone_color', (5, 6, [150, 100, 50, 2700], 1.5)),
-            ('set_zone_color', (0, 9, [150, 100, 50, 2700], 1.5))
+            (Action.SET_COLOR, ([150, 100, 50, 2700], 1.5)),
+            (Action.SET_ZONE_COLOR, (5, 6, [150, 100, 50, 2700], 1.5)),
+            (Action.SET_ZONE_COLOR, (0, 9, [150, 100, 50, 2700], 1.5))
         ])
 
     def test_and(self):
@@ -44,10 +45,10 @@ class ExampleTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_call_list('Strip', [
-            ('set_zone_color', (0, 6, [120, 75, 75, 2700], 1.5)),
+            (Action.SET_ZONE_COLOR, (0, 6, [120, 75, 75, 2700], 1.5)),
         ])
         self._runner.check_call_list('Table', [
-            ('set_color', ([120, 75, 75, 2700], 1.5))
+            (Action.SET_COLOR, ([120, 75, 75, 2700], 1.5))
         ])
 
     def test_group(self):
@@ -58,8 +59,8 @@ class ExampleTest(unittest.TestCase):
             set location "Home"
         """
         self._runner.test_code_all(script, [
-            ('set_power', (65535, 0.0)),
-            ('set_color', ([120, 80, 75, 2700], 0.0))
+            (Action.SET_POWER, (65535, 0)),
+            (Action.SET_COLOR, ([120, 80, 75, 2700], 0))
         ])
 
     def test_macro_definition(self):
@@ -74,10 +75,10 @@ class ExampleTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_call_list('Chair', [
-            ('set_color', ([120, 80, 50, 2700], 0.0))
+            (Action.SET_COLOR, ([120, 80, 50, 2700], 0))
         ])
         self._runner.check_call_list('Strip', [
-            ('set_zone_color', (5, 11, [120, 80, 50, 2700], 0.0)),
+            (Action.SET_ZONE_COLOR, (5, 11, [120, 80, 50, 2700], 0)),
         ])
 
 

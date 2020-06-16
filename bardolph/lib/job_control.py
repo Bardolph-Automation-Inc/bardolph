@@ -17,10 +17,7 @@ class Agent:
         self._job = job
         self._callback = callback
         self._thread = None
-        if name is not None:
-            self._name = name
-        else:
-            self._name = 'job {}'.format(id(self))
+        self._name = name or 'job {}'.format(id(self))
 
     @property
     def name(self):
