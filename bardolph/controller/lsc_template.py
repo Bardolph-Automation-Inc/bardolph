@@ -50,20 +50,20 @@ def build_instructions():
     return program
 
 def main():
+    injection.configure()
+
     ap = argparse.ArgumentParser()
     ap.add_argument(
-        '-d', '--debug', help='do debug-level logging', action='store_true')
+        '-v', '--verbose', help='do debug-level logging', action='store_true')
     ap.add_argument(
         '-f', '--fakes', help='use fake lights', action='store_true')
     arg_helper.add_n_argument(ap)
     args = ap.parse_args()
 
-    injection.configure()
-    settings_init = settings.use_base(config_values.functional)
     overrides = {
         'sleep_time': 0.1
     }
-    if args.debug:
+    if args.verbose:
         overrides['log_level'] = logging.DEBUG
         overrides['log_to_console'] = True
     if args.fakes:
@@ -72,6 +72,7 @@ def main():
     if n_arg is not None and not args.fakes:
         overrides.update(n_arg)
 
+    settings_init = settings.use_base(config_values.functional)
     settings_init.add_overrides(overrides).configure()
     light_module.configure()
     machine.Machine().run(build_instructions())

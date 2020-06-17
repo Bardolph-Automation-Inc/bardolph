@@ -117,12 +117,26 @@ This is equivalent to:
 
   python -m bardolph.controller.lsc
 
+You can set the name of the output file
+with the `-o` parameter. Note that the file name needs to be the first
+parameter.
+
+.. code-block:: bash
+
+  # ok
+  lsc evening.ls -o evening.py
+
+  # error
+  lsc -o evening.py evening.ls
+
+.. code-block:: bash
+
 Only one file name may be provided. The generated file can be run from the
 command line like any other Python module:
 
 .. code-block:: bash
 
-  lsc evening.ls > evening.py
+  lsc evening.ls -o evening.py
   python evening.py
 
 The generated Python code relies on Bardolph's Python modules, which
@@ -137,13 +151,13 @@ The generated program has two options:
 
 * `-f` or `--fakes`: Instead of accessing the lights, use "fake" lights that
   just send output to the log.
-* `-d` or `--debug`: Use debug-level logging.
+* `-v` or `--verbose`: Use debug-level logging.
 
 For example, after you've generated the Python program:
 
 .. code-block:: bash
 
-  python evening.py -fd
+  python evening.py -fv
 
 This would not affect any physical lights, but would send text to the screen
 indicating what the program would do.
