@@ -11,9 +11,7 @@ class Action(Enum):
     GET_ZONE_COLOR = auto()
     GET_POWER = auto()
     SET_COLOR = auto()
-    SET_COLOR_ALL = auto()
     SET_POWER = auto()
-    SET_POWER_ALL = auto()
     SET_ZONE_COLOR = auto()
 
 
@@ -142,13 +140,13 @@ class Lifx(i_controller.Lifx, ActivityMonitor):
         return self._lights
 
     def set_color_all_lights(self, color, duration):
-        self.log_call(Action.SET_COLOR_ALL, (color, duration))
+        self.log_call(Action.SET_COLOR, (color, duration))
         logging.info("Color (all) {}, {}".format(color, duration))
         for light in self.get_lights():
             light.quietly().set_color(color, duration)
 
     def set_power_all_lights(self, power_level, duration):
-        self.log_call(Action.SET_POWER_ALL, (power_level, duration))
+        self.log_call(Action.SET_POWER, (power_level, duration))
         logging.info("Power (all) {} {}".format(power_level, duration))
         for light in self.get_lights():
             light.quietly().set_power(power_level, duration)

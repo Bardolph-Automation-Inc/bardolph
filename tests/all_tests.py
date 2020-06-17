@@ -7,6 +7,7 @@ from tests.call_context_test import CallContextTest
 from tests.call_stack_test import CallStackTest
 from tests.clock_test import ClockTest
 from tests.code_gen_test import CodeGenTest
+from tests.define_test import DefineTest
 from tests.end_to_end_test import EndToEndTest
 from tests.example_test import ExampleTest
 from tests.expr_test import ExprTest
@@ -31,6 +32,7 @@ for test_class in (
     CallStackTest,
     ClockTest,
     CodeGenTest,
+    DefineTest,
     EndToEndTest,
     ExampleTest,
     ExprTest,

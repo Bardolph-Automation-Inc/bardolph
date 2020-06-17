@@ -549,17 +549,13 @@ and called::
   define shut_off_all off all
   shut_off_all
 
-A routine can have one or more parameters delineated by the `with` and
-`and` keywords::
+A routine can have one or more parameters if the name is followed by the `with`
+keyword::
 
-  define set_mz with mz_light and mz_zone
+  define set_mz with mz_light mz_zone
     set mz_light zone mz_zone
 
   set_mz "Strip" 7
-
-Note that the routine's parameters are separated by the `and` keyword
-only in the definition. Neither `with` nor `and` appear in the
-routine call.
 
 If a routine contains multiple commands, they need to be contained
 in `begin` and `end` keywords::
@@ -576,15 +572,16 @@ in `begin` and `end` keywords::
   partial_shut_off
   off_3_seconds "Chair"
 
-A routine can call another and pass along incoming parameters. As noted
-above, the parameters are passed by value::
+A routine can call another and pass along incoming parameters. The called
+routine must already be defined; there currently is no support for forward
+declarations. As noted above, the parameters are passed by value::
 
-  define delayed_off with light_name and delay begin
+  define delayed_off with light_name delay begin
     time delay
     off light_name
   end
 
-  define slow_off with light_name and delay begin
+  define slow_off with light_name delay begin
     duration 30
     delayed_off light_name delay
   end

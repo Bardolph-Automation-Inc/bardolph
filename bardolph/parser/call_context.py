@@ -92,6 +92,9 @@ class CallContext:
             routine = symbol.value
         return routine
 
+    def has_routine(self, name):
+        return self._global_of_type(name, SymbolType.ROUTINE) is not None
+
     def get_macro(self, name):
         macro = self._global_of_type(name, SymbolType.MACRO)
         return None if macro is None else macro.value

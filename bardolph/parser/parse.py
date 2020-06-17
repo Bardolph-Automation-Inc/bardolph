@@ -325,7 +325,7 @@ class Parser:
             self._add_instruction(OpCode.POP, Register.RESULT)
             value = Register.RESULT
         elif self._current_token_type == TokenTypes.REGISTER:
-            value = self._current_reg
+            value = self._current_reg()
         else:
             return self.token_error('Cannot use {} as a value.')
 
@@ -341,8 +341,17 @@ class Parser:
             return False
         if self._current_token_type != TokenTypes.NAME:
             return True
-        return not self._call_context.has_symbol_typed(
-            self.current_token, SymbolType.ROUTINE)
+        return not self._call_context.has_routine(self.current_token)
+
+    def at_light(self) -> bool:
+        if self._current_token_type == TokenTypes.LITERAL_STRING:
+            return True
+
+        if self._current_token_type == TokenTypes.NAME:
+            return self._call_context.has_symbol_typed(
+                SymbolType.MACRO, SymbolType.PARAM, SymbolType.VAR)
+
+        return not self._call_context.has_routine(self.current_token)
 
     def _definition(self) -> bool:
         self._next_token()
@@ -416,8 +425,8 @@ class Parser:
         routine.add_param(name)
         self._call_context.add_variable(name)
         self._next_token()
-        while self._current_token_type == TokenTypes.AND:
-            self._next_token()
+        while (self._current_token_type == TokenTypes.NAME and not
+                self._call_context.has_routine(self._current_token)):
             name = self._current_token
             if routine.has_param(name):
                 self.token_error('Duplicate parameter name: "{}"')
