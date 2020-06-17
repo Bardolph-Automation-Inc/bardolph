@@ -28,8 +28,6 @@ def init_args():
         '-f', '--fakes', help='use fake lights', action='store_true')
     arg_helper.add_n_argument(parser)
     parser.add_argument(
-        '-r', '--repeat', help='repeat until key pressed', action='store_true')
-    parser.add_argument(
         '-s', '--script', help='run script from command line', action='store')
     parser.add_argument(
         '-v', '--verbose', help='verbose output', action='store_true')
@@ -72,9 +70,9 @@ def main():
 
     jobs = job_control.JobControl()
     if args.script is not None:
-        jobs.add_job(ScriptJob.from_string(args.script), args.repeat)
+        jobs.add_job(ScriptJob.from_string(args.script))
     for file_name in args.file:
-        jobs.add_job(ScriptJob.from_file(file_name), args.repeat)
+        jobs.add_job(ScriptJob.from_file(file_name))
 
 
 if __name__ == "__main__":

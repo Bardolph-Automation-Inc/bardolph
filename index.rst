@@ -1,16 +1,17 @@
 .. figure:: docs/logo.png
    :align: center
-   
+
    http://www.bardolph.org
- 
+
 .. _index:
 
 Bardolph Project
 ================
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-   
+   :caption: Contents
+
    docs/main
    docs/installation
    docs/command_line
@@ -20,4 +21,4 @@ Bardolph Project
    docs/python_interface
    docs/controller
 
-* :ref:`search`
+* :ref:`genindex`

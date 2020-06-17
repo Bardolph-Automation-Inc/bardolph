@@ -33,7 +33,7 @@ class DefineTest(unittest.TestCase):
         self._runner.test_code(
             script, 'Top', [(Action.SET_COLOR, ([1, 2, 3, 4], 500))])
 
-    def test_assign_regs(self):
+    def test_assign_registers(self):
         script = """
             assign y 0
             hue 10

@@ -19,5 +19,6 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 html_favicon = 'www/logo_ico.png'
-html_theme = 'nature'
+# html_theme = 'nature'
+html_theme = 'sphinx_rtd_theme'
 html_static_path = ['web/static']

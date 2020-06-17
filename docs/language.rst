@@ -606,11 +606,14 @@ outside of the routine::
 
   define do_brightness with x begin
     assign x 50     # Overwrite local copy.
+    assigh y 50     # Local variable
     brightness x    # Set brightness to 50.
   end
 
+  assign x 200
   assign y 100
   do_brightness y
+  hue x             # x unchanged: set hue to 200.
   saturation y      # y unchanged: set saturation to 100.
 
 Variables assigned outside of a routine are considered global and are
@@ -743,6 +746,18 @@ the entire device::
 
   get "Strip" zone 5
   get "Strip"
+
+Here's an example of a routine that changes a light's brightness, but keeps
+the other settings the same::
+
+  define set_brt with light brt begin
+    get light
+    brightness brt
+    duration 1.5
+    set light
+  end
+
+  set_brt "Chair Side" 25
 
 Note that you cannot get values for locations, groups, multiple zones,
 or multiple lights::

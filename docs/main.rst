@@ -227,17 +227,14 @@ Uninstall
 
 System Requirements
 ###################
-The program has been tested on Python versions at or above 3.5.1. I
-haven't tried it, but I'm almost certain that it won't run on any 2.x
-version.
-
-Because I haven't done any stress testing, I don't know the limits on
+The program has been tested on Python versions at or above 3.5.1. Because I
+haven't done any stress testing, I don't know the limits on
 script size. Note that the application loads the encoded script into memory
 before executing it.
 
-I've run the program on MacOS 10.14.5 & 10.15, Debian Linux Stretch, and the
-June, 2019, release of Raspbian. It works fine for me on a Raspberry Pi Zero W,
-controlling 5 bulbs.
+I've run the program on MacOS 10.15.5, Debian Linux Stretch, and the
+February, 2020, release of Raspbian. It works fine for me on a Raspberry Pi
+Zero W, controlling 5 bulbs. I haven't gotten my hands on a 4, yet.
 
 Supported Devices
 =================

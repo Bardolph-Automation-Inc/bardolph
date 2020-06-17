@@ -1,6 +1,6 @@
 .. figure:: logo.png
    :align: center
-    
+
    http://www.bardolph.org
 
 .. index::
@@ -17,20 +17,20 @@ most often.
 .. index::
    single: discovery delay
 
-.. note:: During initialization, the process of discovering bulbs can take a 
+.. note:: During initialization, the process of discovering bulbs can take a
   while. Basically, a "report" message gets broadcast over the WiFi network,
   and each bulb announces its presence. If the number
   of bulbs is unknown, the discover process has no choice but to wait a
   specific amount of time  for them to stop answering. To minimize that delay,
   use the optional `-n` or `--num-lights` flag to specify the actual number
   of lights. For example:
-  
+
   .. code-block:: bash
-  
+
     # I have 5 bulbs in my apartment.
     lscap -n 5
     lsrun --num-lights 5 scripts/on-all.ls
-    
+
   With this option, discovery stops as soon as the expected
   number has been found, which is usually much faster.
 
@@ -44,7 +44,7 @@ To run a script from the command line:
 .. code-block:: bash
 
   lsrun name.ls
- 
+
 In this context, "name" contains the name of a script. This is essentially
 equivalent to:
 
@@ -73,7 +73,6 @@ syntax. For example:
 
 Available options:
 
-* `-r` or `--repeat`: Repeat the scripts indefinitely, until Ctrl-C is pressed.
 * `-s` or `--script`: Run text from the command line as a script.
 * `-v` or `--verbose`: Generate full debugging output while running.
 * `-f` or `--fake`: Don't operate on real lights. Instead, use "fake" lights that
@@ -95,7 +94,7 @@ off again, you can do the following from the command line:
 .. code-block:: bash
 
   lsrun -s 'on all time 60 off all'
-  
+
 .. index::
    single: lsc
    single: compiler
@@ -110,38 +109,26 @@ The syntax is:
 
 .. code-block:: bash
 
-  lsc name.ls 
+  lsc name.ls
 
 This is equivalent to:
- 
+
 .. code-block:: bash
 
   python -m bardolph.controller.lsc
 
-Only one file name may be provided. You can set the name of the output file
-with the `-o` parameter. Note that the file name needs to be the first
-parameter. For example::
+Only one file name may be provided. The generated file can be run from the
+command line like any other Python module:
 
 .. code-block:: bash
 
-  # ok
-  lsc evening.ls -o evening.py
-
-  # error
-  lsc -o evening.py evening.ls  
-
-The generated file can be run from the command line like any other Python
-module:
-
-.. code-block:: bash
-
-  lsc evening.ls -o evening.py
+  lsc evening.ls > evening.py
   python evening.py
 
 The generated Python code relies on Bardolph's Python modules, which
 should be available after installation.
 
-If you want to use this your own Python code, you can import the
+If you want to use this in your own Python code, you can import the
 generated file as a module and call the function `run_script()`.
 
 Command Line Options
@@ -186,7 +173,9 @@ output it produces, notably:
 * `-t` or `--text`: outputs text to `stdout`, in a human-friendly listing of all
   the known bulbs, groups, and locations.
 * `-p` or `--py`: generates Python code based on the current state of
-  all discovered bulbs. If you save that output in a Python file, 
+  all discovered bulbs. If you save that output in a Python file,
   you can run it later to restore those setttings.
 * `-n` or `--num-lights`: Specify the number of lights that are on the network.
+  If you know how many lights are connected, using this option can make a
+  noticable reduction in initialization time.
 
