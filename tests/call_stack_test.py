@@ -18,7 +18,7 @@ class CallStackTest(unittest.TestCase):
         stack.put_param('c', 4)
         self.assertIsNone(stack.get_variable('c'))
         stack.push_current()
-        self.assertEqual(stack.get_variable('a'), 1)
+        self.assertEqual(stack.get_variable('a'), 3)
         self.assertEqual(stack.get_variable('c'), 4)
 
         stack.pop_current()

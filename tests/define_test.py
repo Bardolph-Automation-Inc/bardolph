@@ -159,6 +159,27 @@ class DefineTest(unittest.TestCase):
         self._runner.check_call_list('Chair', [
             (Action.SET_COLOR, ([1, 7500, 3, 50], 0))])
 
+    def test_nested_assignment(self):
+        script = """
+            # Assign to global variable inside routine
+
+            units raw
+            assign y 100
+
+            define set_global begin
+                assign y 50
+            end
+
+            hue y set "Top"
+            set_global
+            hue y set "Top"
+        """
+        self._runner.run_script(script)
+        self._runner.check_call_list('Top', [
+            (Action.SET_COLOR, ([100, 0, 0, 0], 0)),
+            (Action.SET_COLOR, ([50, 0, 0, 0], 0))
+        ])
+
     def test_simple_routines(self):
         script = """
             hue 180 saturation 50 brightness 50 duration 100 time 0 kelvin 0

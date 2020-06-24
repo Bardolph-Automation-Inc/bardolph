@@ -129,8 +129,6 @@ parameter.
   # error
   lsc -o evening.py evening.ls
 
-.. code-block:: bash
-
 Only one file name may be provided. The generated file can be run from the
 command line like any other Python module:
 

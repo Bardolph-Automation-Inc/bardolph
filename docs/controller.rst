@@ -5,8 +5,12 @@
 
    http://www.bardolph.org
 
+*************************************
 Controller and Virtual Machine Module
-#####################################
+*************************************
+
+.. contents:: Contents
+
 This document is the first draft of an description of Bardolph's core module
 that interprets a script and accesses the lights. It serves as documentation
 of some of the program logic, as well as design notes for certain parts of the
@@ -52,7 +56,10 @@ instructions are:
 
 * call
 * color
+* constant
 * end
+* end_loop
+* jsr
 * jump
 * move
 * moveq
@@ -201,7 +208,7 @@ routine definition, it exists in local scope and hides any global variable
 of the same name.
 
 Parsing Variable Usage
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 In all cases, `param0` is a string containing the name of the variable.
 
 Sequence:
@@ -219,7 +226,7 @@ Sequence:
       `param0` is a string containing the name.
 
 Executing Variable Usage
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 In a `moveq` instruction, `param0` is aways considered to be a literal
 value, including when it is a string.
 
@@ -270,7 +277,7 @@ VM bears the responsibility of transforming that name to the entry point of
 the routine.
 
 Call Context
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 The *call context* is used by the *parser*. The purpose of the call context
 is to provide information about symbols at compile time. This includes a
 Symbol's name, its type and possibly its value.
@@ -291,7 +298,7 @@ with a name but no value.
 Upon exit, the stack is popped and the routine's parameters go out of scope.
 
 Stack Frame
-~~~~~~~~~~~
+^^^^^^^^^^^
 The *stack frame* is used by the *virtual machine*. It tracks return
 addresses for when routines exit, and manages parameters.
 
@@ -320,7 +327,7 @@ resolve a variable name first checks the top of the stack. If the name
 isn't found, the call stack then checks the root frame.
 
 Parsing a Routine
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 Because nested routine definitions will not be allowed (at first), the call
 context should never have a stack longer than one, which means it's not
 really a stack. It's just toggling between main code and routine definitions.
@@ -343,7 +350,7 @@ Sequence:
 #. Store Routine object in call context globals.
 
 Parsing a Call to a Routine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Each parameter to a routine call can be a literal (number, string, or
 time stamp), a reference to a macro, or a Symbol.
 
@@ -364,7 +371,7 @@ instruction is an instance of Symbol. During execution, upon detecting that
 in the call stack, then in its globals.
 
 Running Code
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 The output of the parser contains code that is executed immediately, with
 routine definitions mixed in. The loader puts the immediate code the
 *main* segment while collecting the routine code in a *routine segment*.
@@ -419,13 +426,15 @@ Executing:
 
 Loops
 -----
-A counting loop has the syntax:
+A counting loop has the syntax::
 
-   `repeat` number_of_iterations
-   `with` index_var
-   `from` starting_value `to` ending_value"
+   repeat <iteration model>
+   with <variable>
+   from <starting value> to <ending value>
 
-If number_of_iterations is missing, the loop is considered infinite, and
+Note that
+
+If `iteration_model` is omitted, the loop is considered infinite, and
 repeats until the VM stops executing the code::
 
    # Repeat until the VM is told to stop executing the code.
@@ -435,14 +444,79 @@ repeats until the VM stops executing the code::
       hue 180 set all
    end
 
-   # Execute the code 5 times.
-   #
-   repeat 5 begin
-      time 2 on all
-      time 10 off all
-   end
+The `iteration_model` can be a symbol, constant, or arithmetic
+expression, indicating a discreet number of iterations. The generated
+VM code evaluates the limit once, before beginning the loop::
 
-The inclusion of `with` sets up a kind of index variable that is updated
+    # Execute the code 5 times.
+    #
+    repeat 5 begin
+        #...
+    end
+
+    define five 5
+    repeat five begin
+        # ...
+    end
+
+    # Execute the code 3 times.
+    #
+    repeat {five - 2} begin
+        #...
+    end
+
+Iterating over Lights
+^^^^^^^^^^^^^^^^^^^^^
+(Not implemented, yet. Currently undergoing development) Lastly, the
+iteration can occur over a set of lights, locations, or groups. This type
+of iteration has one of the following syntaxes:
+
+.. code-block:: lightbulb
+
+    repeat <name> in all
+        # do something
+
+    repeat name in groups
+        # do something
+
+    repeat name in locations
+        # do something
+
+    repeat name in <light set>
+        # do something
+
+In the last case, the `<light_set>` placeholder can be replaced with one or more
+lights, groups, and locations, connected by `and`::
+
+    repeat the_light in "Top" and "Middle"
+        on the_light
+
+    repeat the_light in "Middle" and "Top" and group "Furniture"
+        on the_light
+
+The lights are traversed using the order in which they appear in the code.
+For example, the top `repeat` first turns on the light "Top", and then
+"Middle". In the lower loop, they are turned on in the opposite order.
+
+Within each group, the lights are traversed in alphabetical order of their
+names. This guarantees that the order will always be the same.
+
+As an example, to reduce the brightness of all lights by 10%:
+
+.. code-block:: lightbulb
+
+    repeat light in all
+    begin
+        get light
+        brightness {brightness * 0.9}
+        if {brightness < 0.1}
+            brightness 0
+        set light
+    end
+
+Range of Values
+^^^^^^^^^^^^^^^
+The addition of `with` sets up a kind of index variable that is updated
 with each loop. The limits given indicate what the first and last desired
 values are. Using that and the number of repetitions, the VM evenly divides
 the range and sets the varaiable to the interpolated values. For example,
@@ -469,7 +543,7 @@ In this exmple, `the_hue` starts with a value of 180. It is then incremented
 that comes immediately before 180.
 
 Loop Frame
-~~~~~~~~~~
+^^^^^^^^^^
 A LoopFrame is a specialized StackFrame that is used with loops. Inside
 a loop, some variables go into scope, but none become hidden. Therefore,
 a LoopFrame inherits all of the variables contained in its parent frame.

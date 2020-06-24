@@ -5,8 +5,9 @@
 
    http://www.bardolph.org
 
+************
 Introduction
-############
+************
 
 .. toctree::
    :maxdepth: 1
@@ -45,7 +46,9 @@ They should work with whatever lights may be on the network.  For a more complet
 description of the scripting langage, please see
 :ref:`language`.
 
-Here is a script, named `all_on.ls`, that will turn on all your lights::
+Here is a script, named `all_on.ls`, that will turn on all your lights
+
+.. code-block:: lightbulb
 
   duration 1.5 on all
 
@@ -63,7 +66,9 @@ In this case, `lsrun` is a small Python program that becomes available after you
 install Bardolph. It is a thin layer that executes the `run.py` module.
 
 Another example, `on5.ls`, turns on all the lights, waits for 5 minutes, and
-then turns them all off again::
+then turns them all off again
+
+.. code-block:: lightbulb
 
   duration 1.5 on all
   time 300 off all

@@ -68,7 +68,8 @@ class CallStack:
         if isinstance(index, LoopVar):
             assert isinstance(self.top, LoopFrame)
             return self.top.set_loop_var(index, value)
-        self.top.vars[index] = value
+        dest = self._root_frame if index in self._root_frame.vars else self.top
+        dest.vars[index] = value
 
     def is_param(self, name) -> bool:
         return name in self.top.vars
