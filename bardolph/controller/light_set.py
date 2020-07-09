@@ -8,18 +8,18 @@ import lifxlan
 
 from bardolph.lib.color import rounded_color
 from bardolph.lib.injection import bind_instance, inject
+from bardolph.lib.sorted_list import SortedList
 from bardolph.lib.i_lib import Settings
 
 from .i_controller import Lifx
 from . import i_controller
 from .light import Light
 
-
 class LightSet(i_controller.LightSet):
     """
-    Groups and locations are stored in dictionaries of set() objects. Each
-    dictionary is keyed on group or location name. The value
-    associated with a group or location name is a set of Light objects.
+    The lights are stored in _light_dict, keyed on light name. Locations and
+    groups are stored in _location_dict and _group_dict as lists of strings
+    containing light names.
     """
     the_instance = None
 
@@ -27,6 +27,7 @@ class LightSet(i_controller.LightSet):
         self._light_dict = {}
         self._group_dict = {}
         self._location_dict = {}
+        self._light_names = SortedList()
         self._num_successful_discovers = 0
         self._num_failed_discovers = 0
 
@@ -47,6 +48,7 @@ class LightSet(i_controller.LightSet):
             for lifx_light in lifx.get_lights():
                 light = Light(lifx_light)
                 self._light_dict[light.name] = light
+                self._light_names.add(light.name)
                 LightSet._update_memberships(
                     light, light.group, self._group_dict)
                 LightSet._update_memberships(
@@ -65,30 +67,21 @@ class LightSet(i_controller.LightSet):
 
     @classmethod
     def _update_memberships(cls, light, current_set_name, set_dict):
+        LightSet._remove_memberships(light, set_dict)
         if current_set_name not in set_dict:
-            # New set
-            LightSet._remove_memberships(light, set_dict)
-            set_dict[current_set_name] = set([light])
-        elif light not in set_dict[current_set_name]:
-            # Changed set or newer light object has same name
-            LightSet._remove_memberships(light, set_dict)
-            set_dict[current_set_name].add(light)
+            set_dict[current_set_name] = SortedList(light.name)
+        else:
+            set_dict[current_set_name].add(light.name)
 
     @classmethod
     def _remove_memberships(cls, light, set_dict):
         # Remove the light from every set in set_dict that it belongs to.
         target_set_names = []
-        for set_name in set_dict.keys():
-            the_set = set_dict[set_name]
-            target_light = None
-            for member in the_set:
-                if member.name == light.name:
-                    target_light = member
-                    break
-            if target_light is not None:
-                the_set.discard(target_light)
-                if len(the_set) == 0:
-                    target_set_names.append(set_name)
+        for list_name in set_dict.keys():
+            the_list = set_dict[list_name]
+            the_list.remove(light.name)
+            if len(the_list) == 0:
+                target_set_names.append(list_name)
         for set_name in target_set_names:
             del set_dict[set_name]
 
@@ -99,40 +92,35 @@ class LightSet(i_controller.LightSet):
                       .format(len(self._light_dict)))
         max_age = int(settings.get_value('light_gc_time', 20 * 60))
         target_lights = []
-        for item in self._light_dict.items():
-            # Maps light name to light
-            light = item[1]
-            if light.age > max_age:
+        for light in self._light_dict.values():
+            if light.get_age() > max_age:
                 LightSet._remove_memberships(light, self._group_dict)
                 LightSet._remove_memberships(light, self._location_dict)
-                target_lights.append(item[0])
+                target_lights.append(light.name)
         for light_name in target_lights:
             logging.debug("_garbage_collect() deleting {}".format(light_name))
+            self._light_names.remove(light_name)
+            self._light_dict[light_name] = None
             del self._light_dict[light_name]
 
     @property
-    def light_names(self):
+    def light_names(self) -> SortedList:
         """ list of strings """
-        return self._light_dict.keys()
-
-    @property
-    def lights(self):
-        """ list of Lights. """
-        return self._light_dict.values()
+        return self._light_names
 
     @property
     def group_names(self):
         """ list of strings """
-        return self._group_dict.keys()
+        return SortedList(self._group_dict.keys())
 
     @property
     def location_names(self):
         """ list of strings """
-        return self._location_dict.keys()
+        return SortedList(self._location_dict.keys())
 
     @property
     def count(self):
-        return len(self._light_dict)
+        return len(self._light_list)
 
     @property
     def successful_discovers(self):
@@ -146,12 +134,12 @@ class LightSet(i_controller.LightSet):
         """ returns an instance of i_lib.Light, or None if it's not there """
         return self._light_dict.get(name, None)
 
-    def get_group(self, name):
-        """ list of Lights """
+    def get_group(self, name) -> SortedList:
+        """ list of light names """
         return self._group_dict.get(name, None)
 
-    def get_location(self, name):
-        """ list of Lights. """
+    def get_location(self, name) -> SortedList:
+        """ list of light names. """
         return self._location_dict.get(name, None)
 
     @inject(Lifx)

@@ -8,9 +8,9 @@
 
 .. _language:
 
-**************************
-Lightbulb Script Reference
-**************************
+******************
+Language Reference
+******************
 
 This page describes the syntax and capabilities of Bardolph's scripting
 language. For information on how to run a script, please see
@@ -70,18 +70,20 @@ Here's an example, showing some comments
 
     # comment
     hue 360 # red
-    saturation 100  # 100% saturation
-    brightness 60.0 # 60% brightness
+    saturation 100    # 100% saturation
+    brightness 60.0   # 60% brightness
     kelvin 2700
+
     set all
-    on all
 
-This script sets the colors of all known lights to a bright shade of red and
-turns all of them on.
+This script sets the colors of all known lights to a bright shade of red.
+Note that the `set` command is what actually causes the lights to adopt the
+new settings and change their colors. The `all` parameter causes the given
+settings to be applied to all of the lights found on the network.
 
-When a value isn't specified a second time, the VM uses the existing value.
+When a setting isn't specified a second time, the VM uses the existing value.
 For example, the following reuses numbers for `saturation`, `brightness`,
-and `kelvin`
+and `kelvin`:
 
 .. code-block:: lightbulb
 
@@ -116,11 +118,12 @@ Names are handled with case-sensitive logic.
 
 .. index::
    single: individual lights
+   single: lights; set color
 
 Individual Lights
 =================
 Scripts can control individual lights by name. For example, if you have a light
-named "Table", you can set its color with
+named "Table", you can set its color with:
 
 .. code-block:: lightbulb
 
@@ -130,7 +133,7 @@ named "Table", you can set its color with
 A light's name is configured when you do initial setup with the LIFX software.
 
 When they appear in a script, bulb names must be in quotation marks. They
-can  contain spaces, but  may not contain a linefeed. For example
+can  contain spaces, but  may not contain a linefeed. For example:
 
 .. code-block:: lightbulb
 
@@ -154,21 +157,23 @@ With multiple-zone lights, the `set` command works the same,
 but you can limit which zones it affects. It can set all of
 them to the same color, set the color of a single zone, or set
 it for a range of them. For example, I have a Z LED strip, which
-I named "Strip". I can set the entire device to one color with
+I named "Strip". I can set the entire device to one color with:
 
 .. code-block:: lightbulb
 
   hue 150 saturation 100 brightness 50 kelvin 2700 duration 1.5
   set "Strip"
 
-To set only one zone, add a `zone` clause with a single number
+To set only one zone, add a `zone` clause with a single number:
 
 .. code-block:: lightbulb
 
   set "Strip" zone 5
 
 To set multiple zones, specify a range with starting and ending
-zone numbers::
+zone numbers:
+
+.. code-block:: lightbulb
 
   set "Strip" zone 0 8
 
@@ -183,7 +188,7 @@ and 3.
 
 Power Command
 =============
-The commands to turn the lights on or off resemble the `set` command
+The commands to turn the lights on or off resemble the `set` command:
 
 .. code-block:: lightbulb
 
@@ -209,7 +214,7 @@ Abbreviations
 =============
 Scripts can be much terser with shorthand color setting names: `h` (hue),
 `s` (saturation), `b` (brightness), and `k` (kelvin). The following two
-lines do the same thing
+lines do the same thing:
 
 .. code-block:: lightbulb
 
@@ -264,7 +269,7 @@ This script will:
 #. Wait 2 seconds.
 #. Turn both lights on *simultaneously*.
 
-This contrasts with
+This contrasts with:
 
 .. code-block:: lightbulb
 
@@ -292,7 +297,7 @@ bulbs. For example, with a multi-zone light named "Strip" and a bulb named
   set "Strip" zone 0 5 and "Table"
 
 Here's an example of simultaneously setting multiple zones on the
-same light
+same light:
 
 .. code-block:: lightbulb
 
@@ -304,7 +309,7 @@ It's important to note that delay time calculations are based on when
 the script started. The delay is not calculated based on the completion
 time of the previous instruction.
 
-For example
+For example:
 
 .. code-block:: lightbulb
 
@@ -333,7 +338,7 @@ Wait for Time of Day
 =====================
 Instead of waiting for a delay to elapse, you can specify the specific time
 thatan action occurs, using the `at` modifier with the `time` command. For
-example, to turn on all the lights at 8:00 a.m.
+example, to turn on all the lights at 8:00 a.m.:
 
 .. code-block:: lightbulb
 
@@ -367,7 +372,7 @@ These are not valid patterns:
 
 Note that the language is procedural, not declarative. This means that the
 script is executed from top to bottom. For example, assume you run this script
-at 8:00 a.m.
+at 8:00 a.m.:
 
 .. code-block:: lightbulb
 
@@ -380,7 +385,7 @@ take, you can launch a script in repeat mode and let it run indefinitely.
 
 You can combine patterns to create more complicated behavior. For example, this
 will turn on the lights the next time it's either 15 or 45 minutes past the
-hour
+hour:
 
 .. code-block:: lightbulb
 
@@ -388,7 +393,9 @@ hour
 
 This type of script would typically be run in repeat mode.
 
-After a scheduled wait, the delay timer is essentially reset. For example::
+After a scheduled wait, the delay timer is essentially reset. For example:
+
+.. code-block:: lightbulb
 
   time at 12:00 on all
   time 60 off all
@@ -421,7 +428,9 @@ This script will:
 #. Turn the lights red (360).
 
 A script can contain both pauses and timed delays. After a pause, the delay
-timer is reset. For example::
+timer is reset. For example:
+
+.. code-block:: lightbulb
 
   time at 12:00 on all
   pause off all
@@ -437,14 +446,14 @@ it turns off all the lights, waits 10 s, and turns them on again.
 
 Wait With No Action
 ===================
-To wait for the next time interval without doing anything
+To wait for the next time interval without doing anything:
 
 .. code-block:: lightbulb
 
   wait
 
 This can be useful to keep a script active until the last command has been
-executed. For example
+executed. For example:
 
 .. code-block:: lightbulb
 
@@ -461,7 +470,7 @@ Groups and Locations
 ====================
 The `set`, `on`, and `off` commands can be applied to groups and locations.
 For example, if you have a location called "Living Room", you can turn them
-on and set them all to the same color with
+on and set them all to the same color with:
 
 .. code-block:: lightbulb
 
@@ -470,13 +479,13 @@ on and set them all to the same color with
   set location "Living Room"
 
 Continuing the same example, you can also set the color of all the lights in
-the "Reading Lights" group with
+the "Reading Lights" group with:
 
 .. code-block:: lightbulb
 
   set group "Reading Lights"
 
-You can combine lights, groups, and locations with the `and` keyword
+You can combine lights, groups, and locations with the `and` keyword:
 
 .. code-block:: lightbulb
 
@@ -488,7 +497,7 @@ You can combine lights, groups, and locations with the `and` keyword
 
 Macro Definitions
 =================
-A macro can be defined to hold a commonly-used name or number
+A macro can be defined to hold a commonly-used name or number:
 
 .. code-block:: lightbulb
 
@@ -500,7 +509,7 @@ A macro can be defined to hold a commonly-used name or number
 
 A macro can be used for a light name or a value to be used to set a
 parameter. It can also be used as a zone number with multi-zone
-lights
+lights:
 
 .. code-block:: lightbulb
 
@@ -511,14 +520,14 @@ lights
   define zone_1 5 define zone_2 10
   set "Strip" zone zone_1 zone_2
 
-Macros may refer to other existing macros
+Macros may refer to other existing macros:
 
 .. code-block:: lightbulb
 
   define blue 240
   define b blue
 
-A macro can be defined only once, which makes it suitable for constants
+A macro can be defined only once, which makes it suitable for constants:
 
 .. code-block:: lightbulb
 
@@ -540,7 +549,7 @@ copied into a variable. The syntax is:
 
 A variable can contain a number, a string, or a time pattern. Once
 it has been initialized, it can be used as a name or a value for a
-color or time setting. For example
+color or time setting. For example:
 
 .. code-block:: lightbulb
 
@@ -554,7 +563,7 @@ color or time setting. For example
   time at dinner_time on "Table"
 
 An existing variable can be assigned to another. A variable can also get
-a copy of a color setting. For example
+a copy of a color setting. For example:
 
 .. code-block:: lightbulb
 
@@ -563,7 +572,7 @@ a copy of a color setting. For example
   hue 240
   assign y hue   # y now contains 240
 
-Assignment of one variable to another has by-value semantics
+Assignment of one variable to another has by-value semantics:
 
 .. code-block:: lightbulb
 
@@ -583,7 +592,7 @@ Mathematical Expressions
 ========================
 An expression can be used wherever a number is needed. The syntax
 for an expression is to contain it in curly braces. For example, to
-put 5 + 4 into x
+put 5 + 4 into x:
 
 .. code-block:: lightbulb
 
@@ -594,7 +603,7 @@ expressions in Python. It can contain numbers, references to variables,
 registers, and the standard operators `+`, `-`, `*`, `/`, and `()`.
 Currently, no mathematical functions are available.
 
-Registers can provide values
+Registers can provide values:
 
 .. code-block:: lightbulb
 
@@ -612,7 +621,7 @@ Routine Definitions
 ===================
 A subprogram, hereafter called a *routine* can be defined as a
 sequence of commands. Here's a simple exmple of a routine being defined
-and called
+and called:
 
 .. code-block:: lightbulb
 
@@ -620,7 +629,7 @@ and called
   shut_off_all
 
 A routine can have one or more parameters if the name is followed by the `with`
-keyword
+keyword:
 
 .. code-block:: lightbulb
 
@@ -630,7 +639,7 @@ keyword
   set_mz "Strip" 7
 
 If a routine contains multiple commands, they need to be contained
-in `begin` and `end` keywords
+in `begin` and `end` keywords:
 
 .. code-block:: lightbulb
 
@@ -650,7 +659,7 @@ in `begin` and `end` keywords
 
 A routine can call another and pass along incoming parameters. The called
 routine must already be defined; there currently is no support for forward
-declarations. As noted above, the parameters are passed by value
+declarations. As noted above, the parameters are passed by value:
 
 .. code-block:: lightbulb
 
@@ -668,7 +677,7 @@ declarations. As noted above, the parameters are passed by value
 
   slow_off "Chair" 10
 
-A routine may not be re-defined. Routine definitions may not be nested
+A routine may not be re-defined. Routine definitions may not be nested:
 
 .. code-block:: lightbulb
 
@@ -684,7 +693,7 @@ A routine may not be re-defined. Routine definitions may not be nested
 Variables defined inside a routine are local and go out of scope when the
 routine returns. Because parameters are passed by value, assignment to a
 parameter overwrites the local copy but does not affect any variable
-outside of the routine
+outside of the routine:
 
 .. code-block:: lightbulb
 
@@ -702,7 +711,7 @@ outside of the routine
   saturation y      # y unchanged: set saturation to 100.
 
 Variables assigned outside of a routine are considered global and are
-visible in all scopes
+visible in all scopes:
 
 .. code-block:: lightbulb
 
@@ -723,7 +732,7 @@ visible in all scopes
 Conditionals
 ============
 A conditional consists of the `if` keyword, followed by an expression and
-one or more commands. It can also have an `else` clause
+one or more commands. It can also have an `else` clause:
 
 .. code-block:: lightbulb
 
@@ -745,10 +754,11 @@ one or more commands. It can also have an `else` clause
 .. index::
    single: loops
    single: repeat
+   single: iteration
 
 Repeat Loops
 ============
-An infinitely repeating loop looks like
+An infinitely repeating loop looks like:
 
 .. code-block:: lightbulb
 
@@ -762,7 +772,7 @@ Thoretically, this loop will run forever. However, the job control for the VM
 is designed to support graceful cutoff of a script's execution. For ambient
 interior lighting, this is expected to be a common use case.
 
-To repeat a loop a given number of times
+To repeat a loop a given number of times:
 
 .. code-block:: lightbulb
 
@@ -775,7 +785,7 @@ To repeat a loop a given number of times
 The interpolated values in a loop allow you to choose the starting and
 ending points for the lights and the number of steps to take in
 between. For example, to give a light a hue of 120, and then gradually
-transition it to 180 in 5 steps
+transition it to 180 in 5 steps:
 
 .. code-block:: lightbulb
 
@@ -787,7 +797,7 @@ transition it to 180 in 5 steps
 
 In this example, `the_hue` will have values of 120, 135, 150, 165, and 180.
 
-You an use `repeat while` for a loop based on a logical condition
+You an use `repeat while` for a loop based on a logical condition:
 
 .. code-block:: lightbulb
 
@@ -801,7 +811,7 @@ A special use case is to cycle the hue 360° over multiple iterations,
 perhaps in an infinite loop. The `cycle` keyword causes a value to loop
 around with modulo 360 logic, stopping one step short of a complete cycle.
 This keeps the delta between sequential repetitions equal to the increment
-used by the loop as it updates the index variable. For example
+used by the loop as it updates the index variable. For example:
 
 .. code-block:: lightbulb
 
@@ -817,7 +827,7 @@ The inner loop gets executed 4 times, with `the_hue` having values of
 loop executes, it starts again at 0, which is equivalent to 360°. This
 effectively picks up where the previous loop left off.
 
-You can also specify the starting point
+You can also specify the starting point:
 
 .. code-block:: lightbulb
 
@@ -832,7 +842,7 @@ In this case, `the_hue` will have values of 45, 135, 225, and 315.
 
 Retrieving Current Color
 ========================
-The `get` command retrieves the current settings from a single light
+The `get` command retrieves the current settings from a single light:
 
 .. code-block:: lightbulb
 
@@ -846,7 +856,7 @@ overrides only `hue`. The `set` command then sets all the
 other lights to the resulting color.
 
 From a multi-zone light, you can retrieve the color of a single zone or
-the entire device
+the entire device:
 
 .. code-block:: lightbulb
 
@@ -854,7 +864,7 @@ the entire device
   get "Strip"
 
 Here's an example of a routine that changes a light's brightness, but keeps
-the other settings the same
+the other settings the same:
 
 .. code-block:: lightbulb
 
@@ -868,7 +878,7 @@ the other settings the same
   set_brt "Chair Side" 25
 
 Note that you cannot get values for locations, groups, multiple zones,
-or multiple lights
+or multiple lights:
 
 .. code-block:: lightbulb
 
@@ -897,7 +907,7 @@ by the `LIFX API <https://lan.developer.lifx.com>`_.
 If you prefer to send unmodified numbers to the bulbs as specified by that
 API, you can use `raw` values (and switch back to `logical` units as desired).
 "Raw" refers to an integer between 0 and 65535 that gets transmitted unmodified
-to the bulbs. These two actions are equivalent
+to the bulbs. These two actions are equivalent:
 
 .. code-block:: lightbulb
 
@@ -924,7 +934,7 @@ you can't expect precision much better than 1/10 of a second.
 When in logical mode, a value moved between a variable and a setting
 is subject to conversion. Following is an example that illustrates this
 behavior. Note that 50% in logical units is equivalent to 32767 in raw
-units
+units:
 
 .. code-block:: lightbulb
 

@@ -261,7 +261,7 @@ def main():
     do_text = args.text or (not (do_py or do_script or do_dict or do_list))
 
     injection.configure()
-    settings_init = settings.use_base(
+    settings_init = settings.using(
         config_values.functional).add_overrides({'single_light_discover': True})
     if args.use_fakes:
         settings_init.add_overrides({'use_fakes': True})

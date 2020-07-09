@@ -1,5 +1,7 @@
+from bardolph.controller.units import UnitMode
+
 from .eval_stack import EvalStack
-from .vm_codes import LoopVar, Operator, Register
+from .vm_codes import LoopVar, Operand, Operator, Register
 
 class VmMath:
     # a was the top of the stack, and b was the element below it.
@@ -14,7 +16,9 @@ class VmMath:
         Operator.LTE: lambda a, b: a <= b,
         Operator.NOTEQ: lambda a, b: a != b,
         Operator.OR: lambda a, b: a or b,
+        Operator.MOD: lambda a, b: a % b,
         Operator.MUL: lambda a, b: a * b,
+        Operator.POW: lambda a, b: a ** b,
         Operator.SUB: lambda a, b: a - b
     }
 
@@ -30,7 +34,7 @@ class VmMath:
         value = None
         if isinstance(srce, Register):
             value = self._reg.get_by_enum(srce)
-        elif isinstance(srce, (int, float)):
+        elif isinstance(srce, (int, float, UnitMode)) or srce == Operand.NULL:
             value = srce
         elif isinstance(srce, (str, LoopVar)):
             value = self._call_stack.get_variable(srce)

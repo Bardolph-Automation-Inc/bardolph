@@ -46,7 +46,7 @@ def main():
     args = parser.parse_args()
 
     injection.configure()
-    settings.use_base(config_values.functional).configure()
+    settings.using(config_values.functional).configure()
 
     input_file = args.file
     program = instruction_text(input_file)

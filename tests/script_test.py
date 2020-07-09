@@ -13,12 +13,7 @@ class ScriptTest(unittest.TestCase):
         self._runner = ScriptRunner(self)
 
     def test_script(self):
-        script = """
-            repeat while {brightness < 50.0} begin
-                brightness {brightness + 5}
-                set all
-            end
-        """
+        script = 'if {1 and 2 < 3} set all'
         self._runner.run_script(script)
         lifx = provide(i_controller.Lifx)
         for light in lifx.get_lights():

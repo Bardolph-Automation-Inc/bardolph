@@ -1,10 +1,11 @@
-class UnboundException(Exception): pass
-
-injected = False
+class UnboundException(Exception):
+    def __init__(self, intf):
+        super().__init__('No implementation for {}'.format(intf))
 
 class Injection:
     providers = {}
 
+injected = None
 
 class Binder:
     """ Parameter implementation is a class to be used as the factory. """
@@ -42,7 +43,8 @@ def inject(*interfaces):
 
 def provide(interface):
     if interface not in Injection.providers:
-        raise UnboundException("interface {}".format(interface))
+        msg = "interface {}".format(interface)
+        raise UnboundException(msg)
 
     creator = Injection.providers[interface]
     return creator()

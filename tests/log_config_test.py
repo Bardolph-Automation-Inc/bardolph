@@ -16,7 +16,7 @@ _log_settings = {
 class LogConfigTest(unittest.TestCase):
     def setUp(self):
         injection.configure()
-        settings.use_base(_log_settings).configure()
+        settings.using(_log_settings).configure()
 
     @patch('logging.basicConfig')
     @patch('logging.info')

@@ -16,9 +16,11 @@ from tests.job_control_test import JobControlTest
 from tests.lex_test import LexTest
 from tests.light_set_test import LightSetTest
 from tests.log_config_test import LogConfigTest
+from tests.loop_test import LoopTest
 from tests.machine_test import MachineTest
 from tests.parser_test import ParserTest
 from tests.settings_test import SettingsTest
+from tests.sorted_list_test import SortedListTest
 from tests.time_pattern_test import TimePatternTest
 from tests.units_test import UnitsTest
 from tests.vm_math_test import VmMathTest
@@ -41,9 +43,11 @@ for test_class in (
     LexTest,
     LightSetTest,
     LogConfigTest,
+    LoopTest,
     MachineTest,
     ParserTest,
     SettingsTest,
+    SortedListTest,
     TimePatternTest,
     UnitsTest,
     VmMathTest,

@@ -96,8 +96,12 @@ Here is an example that illustrates this behavior::
    units logical         # no change: x = 32767
    assign x brightness   # x = 50
 
-Move and Moveq
---------------
+.. index::
+    single: move instruction
+    single: moveq instruction
+
+Move - `move` and `moveq`
+-------------------------
 These are the basic instructions for moving data between registers and
 variables.  In a `move` instruction, the source and destination can each
 be a variable or a register. The VM determines the appropriate action by
@@ -135,8 +139,11 @@ the symbol isn't in either dictionary, an error has occurred. The parser
 should catch that error and report it; if it doesn't, there's a bug in
 the parse code.
 
-Set Color
----------
+.. index::
+    single: set instruction
+
+Set Color - `set`
+-----------------
 To execute the `color` command, the VM reads the values from its `hue`,
 `saturation`, `brightness`, and `kelvin` registers to assemble a color for the
 target device. If the `operand` register contains `light`, the `name` register
@@ -145,8 +152,11 @@ contains "group" or "location", the `name` register will be treated as the
 name of a group or location. Lastly, if `operand` contains "all", the VM
 will set all known lights to that color.
 
-Get Color - get
----------------
+.. index::
+    single: get instruction
+
+Get Color - `get`
+-----------------
 This command retrieves current color information from lights themselves and
 sets the registers accordingly. The affected registers are hug, saturation,
 brightness, and kelvin.
@@ -160,8 +170,11 @@ stored in the registers.
 If the "operand" register contains `group` or `location`, then the registers
 receive the arithmetic mean of the lights belonging to that group or location.
 
-Set Power - power
------------------
+.. index::
+    single: power instruction
+
+Set Power - `power`
+-------------------
 Similar to the `color` instruction, `power` relies on the `operand` and `name`
 registers to determine which lights to turn on or off. The content of the
 `power` determines whether to turn the lights on or off.
@@ -171,12 +184,141 @@ mean turn the lights on, and will send 65535 to the lights. As with the `set`
 command, the targetd lights are specified by the content of the `operand`
 register.
 
-Pause for Keypress - pause
---------------------------
+.. index::
+    single: pause instruction
+
+Pause for Keypress - `pause`
+----------------------------
 Display a message on the console, and wait for the user to press a key. If they
 press !, the script will continue to run and ignore any subsequent pause
 instructions. Pressing 'q' stops the execution and exits. Any other key resumes
 normal execution of the script.
+
+.. index::
+    single: disc, discn, discl, discp instruction
+    single: lights; discover
+
+Discover Lights - `disc`, `discn`, `discl`, and `discp`
+-------------------------------------------------------
+Discover the lights on the network. The `operand` register determines what to
+look for: lights, groups, or locations. Each mnemonic has a different purpose:
+
+* `disc` - start discover.
+* `discn` - get next element in whatever list is being traversed.
+* `discl` - start discover, but get the last element instead of the first.
+* `discp` - get the previous element.
+
+Typically, `disc` will be used with `discn`, while `discl` and `discp` will
+be used together.
+
+A forward iteration process works as follows:
+
+* With a `disc` instruction, get the first element.
+* In subsequent `discn` instructions, pass in the last element
+  that was returned.
+
+Because the lights are ordered by name, the next light is determinate
+and code always processes the lights in the same order.
+
+A reverse iteration works the same. In all the following discussion,
+logic using `disc` and `discn` will also work with `discl` and `discp`,
+except the iteration will be in reverse order. This is helpful when you
+want to push all the lights onto a stack.
+
+For all of these instructions, the `operand` register determines what
+information about the lights is obtained.
+
+In all cases the VM instruction has two parameters, but one or both may
+contain None. When a parameter in the instruction is None, it is not passed
+to the implementation of the mnemonic.
+
+`disc` With No Parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^
+This returns the first element's name in the `result` register. That element
+depends on whther `operand` register is set to `light`, `group`, or `location`.
+The first name is put into the `result` register, or None if no lights are
+available.
+
+`disc` With One Parameter
+^^^^^^^^^^^^^^^^^^^^^^^^^
+In this case, the `operand` must contain either `group` or `location`. The
+parameter contains the group or location name. The name of the first member
+light is returned in the `result` register.
+
+`discn` With One Parameter
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is used when iterating over all lights, or doing a shallow traversal
+across all groups or locations. Depending on the content of the `operand`
+register, this gets the next light, group, or location. The parameter must
+contain the name of the current element. The name is put into the `result`
+register, or None if the end has been reached.
+
+`discn` With Two Parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Two parameters are used here to iterate over all the lights *within* a
+group or location. In this case, the `operand` register must contain `group`
+or `location`. The first parameter is the name of the group or location that
+is being traversed, and the second parameter is the name of the last light
+obtained from that group. The name is put into the `result` register, or None
+if the end has been reached.
+
+All Lights
+^^^^^^^^^^
+To perform some process on all lights:
+
+#. set `operand` register to `all`
+#. `disc` command with no parameters.
+#. The `result` register contains the name of the current light in
+   the iteration.
+#. `discn` instruction with the current light as the first parameter.
+#. Repeat until the `result` register contains `None`.
+
+To continue to the next light, use `disc` with the name of the first light as
+the parameter. Continue the iteration by passing in the most recent name in
+each `disc` instruction. When the end of the list has been found, the `result`
+register will contain `None`.
+
+Iterate Groups and Locations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+To iterate over all of the groups:
+
+#. set `operand` register to `group`
+#. `disc` with no parameters
+#. The `result` register contains the name of the current group in
+   the iteration.
+#. `discn` instruction with the current group as the first parameter.
+   The next group gets put into the `result` register.
+#. Repeat until the `result` register contains `None`.
+
+To iterate within a group:
+
+#. set `operand` register to `group`
+#. `disc` with the name of a group in the first parameter.
+#. The `result` register contains the name of the current light in
+   the iteration.
+#. `discn` instruction with the group as the first parameter and the
+   current light in the second parameter. The next group gets put into the
+   `result` register.
+#. This iteration process continues until the `result` register contains
+   `None`.
+
+If the `operand` register contains `location`, then locations undergo
+processing analagous to the above.
+
+Counting
+^^^^^^^^
+The `count` command gets the number specified by the contents of the `operand`
+register. If `operand` contains `all`, the `result` register gets the total
+number of lights.
+
+If the `operand` register contains `group`, `count` with no parameters gives
+the number of groups. The `count` command with one parameter treats that
+parameter as a group name, and returns the number of lights in that group.
+
+Similar behavior occurs with `location` in the `operand` register.
+
+.. index::
+    single: wait instruction
 
 Wait
 ----
@@ -186,11 +328,11 @@ a time pattern, then the VM idles until the system time matches the
 pattern.
 
 .. index::
-   single: operand register
+    single: operand register
 
 Operand
 -------
-Setting the "operand" register indicates what the next "set" or "power"
+Setting the `operand` register indicates what the next "set" or "power"
 instrucion will affect. Meaningful values for this register are "light",
 "group", and "location". If the register is empty, the behavior is undefined.
 
@@ -199,7 +341,7 @@ VM's "name" register, which could be a name of a light, the name of a group, or
 location.
 
 .. index::
-   single: variables
+    single: variables
 
 Variables
 ---------

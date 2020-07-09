@@ -11,7 +11,8 @@ from bardolph.controller.units import UnitMode
 
 from .call_stack import CallStack
 from .loader import Loader
-from .vm_codes import JumpCondition, OpCode, Operand, Register, SetOp
+from .vm_codes import JumpCondition, LoopVar, OpCode, Operand, Register, SetOp
+from .vm_discover import VmDiscover
 from .vm_math import VmMath
 
 class Registers:
@@ -56,11 +57,17 @@ class Machine:
         self._reg = Registers()
         self._call_stack = CallStack()
         self._vm_math = VmMath(self._call_stack, self._reg)
+        self._vm_discover = VmDiscover(self._call_stack, self._reg)
         self._enable_pause = True
         self._keep_running = True
         self._fn_table = {}
-        for opcode in (OpCode.COLOR,
+        for opcode in (OpCode.BREAKPOINT,
+                       OpCode.COLOR,
                        OpCode.CONSTANT,
+                       OpCode.DISC,
+                       OpCode.DISCL,
+                       OpCode.DISCN,
+                       OpCode.DISCP,
                        OpCode.END,
                        OpCode.END_LOOP,
                        OpCode.GET_COLOR,
@@ -107,22 +114,6 @@ class Machine:
             self._fn_table[inst.op_code]()
             if inst.op_code not in (OpCode.END, OpCode.JSR, OpCode.JUMP):
                 self._pc += 1
-        self._clock.stop()
-
-    def interpret(self, input_stream) -> None:
-        fn_table = self._fn_table.copy()
-        for op_code in (OpCode.END,
-                        OpCode.END_LOOP,
-                        OpCode.JSR,
-                        OpCode.JUMP,
-                        OpCode.LOOP,
-                        OpCode.PARAM):
-            fn_table[op_code] = self._nop
-        self._clock.start()
-        for inst in input_stream:
-            if inst.op_code == OpCode.STOP:
-                break
-            self._fn_table[inst.op_code]()
         self._clock.stop()
 
     def stop(self) -> None:
@@ -184,19 +175,21 @@ class Machine:
 
     @inject(LightSet)
     def _color_group(self, light_set=injected) -> None:
-        lights = light_set.get_group(self._reg.name)
-        if lights is None:
+        light_names = light_set.get_group(self._reg.name)
+        if light_names is None:
             logging.warning("Unknown group: {}".format(self._reg.name))
         else:
-            self._color_multiple(lights)
+            self._color_multiple(
+                [light_set.get_light(name) for name in light_names])
 
     @inject(LightSet)
     def _color_location(self, light_set=injected) -> None:
-        lights = light_set.get_location(self._reg.name)
-        if lights is None:
+        light_names = light_set.get_location(self._reg.name)
+        if light_names is None:
             logging.warning("Unknown location: {}".format(self._reg.name))
         else:
-            self._color_multiple(lights)
+            self._color_multiple(
+                [light_set.get_light(name) for name in light_names])
 
     def _color_multiple(self, lights) -> None:
         color = self._assure_raw_color(self._reg.get_color())
@@ -227,21 +220,23 @@ class Machine:
 
     @inject(LightSet)
     def _power_group(self, light_set=injected) -> None:
-        lights = light_set.get_group(self._reg.name)
-        if lights is None:
+        light_names = light_set.get_group(self._reg.name)
+        if light_names is None:
             logging.warning(
                 'Power invoked for unknown group "{}"'.format(self._reg.name))
         else:
-            self._power_multiple(light_set.get_group(self._reg.name))
+            self._power_multiple(
+                [light_set.get_light(name) for name in light_names])
 
     @inject(LightSet)
     def _power_location(self, light_set=injected) -> None:
-        lights = light_set.get_location(self._reg.name)
-        if lights is None:
+        light_names = light_set.get_location(self._reg.name)
+        if light_names is None:
             logging.warning(
                 "Power invoked for unknown location: {}".format(self._reg.name))
         else:
-            self._power_multiple(lights)
+            self._power_multiple(
+                [light_set.get_light(name) for name in light_names])
 
     def _power_multiple(self, lights) -> None:
         power = self._reg.get_power()
@@ -329,9 +324,24 @@ class Machine:
     def _unary_op(self, operator):
         return self._vm_math.unary_op(operator)
 
+    def _disc(self) -> None:
+        self._vm_discover.disc(self.current_inst.param0)
+
+    def _discl(self) -> None:
+        self._vm_discover.discl(self.current_inst.param0)
+
+    def _discn(self) -> None:
+        self._vm_discover.discn(
+            self.current_inst.param0, self.current_inst.param1)
+
+    def _discp(self) -> None:
+        self._vm_discover.discp(
+            self.current_inst.param0, self.current_inst.param1)
+
     def _pause(self) -> None:
         if self._enable_pause:
-            print("Press any to continue, q to quit, ! to run.")
+            print("Press any key to continue, q to quit, "
+                  + "! to run without stopping again.")
             char = getch()
             if char == 'q':
                 self.stop()
@@ -411,10 +421,8 @@ class Machine:
         dest = inst.param1
         if isinstance(srce, Register):
             value = self._reg.get_by_enum(srce)
-        else:
+        elif isinstance(srce, (str, LoopVar)):
             value = self._call_stack.get_variable(srce)
-            if value is None:
-                return self._trigger_error('Unknown: "{}"'.format(srce))
         return self._do_put_value(dest, value)
 
     def _moveq(self) -> bool:
@@ -456,15 +464,14 @@ class Machine:
         return True
 
     @classmethod
-    def _report_missing(cls, name):
+    def _report_missing(cls, name) -> None:
         logging.warning("Light \"{}\" not found.".format(name))
 
     def _power_param(self):
         return 65535 if self._reg.power else 0
 
-    @classmethod
-    def _breakpoint(cls):
-        breakpoint()
+    def _breakpoint(self) -> None:
+        print("At breakpoint.")
 
     def _trigger_error(self, message) -> bool:
         logging.error(message)

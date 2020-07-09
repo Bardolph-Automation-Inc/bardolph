@@ -45,7 +45,7 @@ def init_settings(args):
     if args.fakes:
         overrides['use_fakes'] = True
 
-    settings_init = settings.use_base(
+    settings_init = settings.using(
         config_values.functional).add_overrides(overrides)
 
     if args.config_file:

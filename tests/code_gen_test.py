@@ -8,13 +8,13 @@ from bardolph.vm.vm_codes import JumpCondition, OpCode
 class CodeGenTest(unittest.TestCase):
     def test_if_else(self):
         code_gen = CodeGen()
-        marker = code_gen.if_start()
+        marker = code_gen.if_true_start()
         code_gen.add_instruction(OpCode.NOP)
         code_gen.if_else(marker)
         code_gen.add_instruction(OpCode.NOP)
         code_gen.if_end(marker)
 
-        marker = code_gen.if_start()
+        marker = code_gen.if_true_start()
         code_gen.add_instruction(OpCode.NOP)
         code_gen.if_end(marker)
 

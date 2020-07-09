@@ -38,8 +38,7 @@ class Light:
     def multizone(self):
         return self._multizone
 
-    @property
-    def age(self):
+    def get_age(self):
         #seconds
         return time.time() - self._birth
 

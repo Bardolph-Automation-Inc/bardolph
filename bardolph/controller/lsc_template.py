@@ -72,7 +72,7 @@ def main():
     if n_arg is not None and not args.fakes:
         overrides.update(n_arg)
 
-    settings_init = settings.use_base(config_values.functional)
+    settings_init = settings.using(config_values.functional)
     settings_init.add_overrides(overrides).configure()
     light_module.configure()
     machine.Machine().run(build_instructions())

@@ -9,7 +9,7 @@ class Settings:
 
     def __init__(self):
         self._config = Settings._the_config
-        
+
     def __contains__(self, name):
         return name in self._config
 
@@ -42,9 +42,9 @@ class Builder:
     def configure(self):
         Settings._the_config = self._config
         injection.bind(Settings).to(i_lib.Settings)
-        
 
-def use_base(initial=None):
+
+def using(initial=None):
     return Builder(initial)
 
 

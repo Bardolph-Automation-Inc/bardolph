@@ -2,8 +2,9 @@
 
 import unittest
 
-from bardolph.controller import i_controller
+from bardolph.controller import i_controller, light_set
 from bardolph.controller.units import UnitMode
+from bardolph.fakes import fake_lifx
 from bardolph.lib.injection import provide
 from bardolph.vm.instruction import Instruction
 from bardolph.vm.machine import Machine
@@ -28,15 +29,13 @@ class MachineTest(unittest.TestCase):
             "Test g1 l1", "Test g1 l2", "Test g2 l1", "Test g2 l2"
         ]
 
-        lifx = provide(i_controller.Lifx)
-        lifx.init_from([
+        fake_lifx.using([
             (self._names[0], self._group0, self._location0, self._colors[0]),
             (self._names[1], self._group0, self._location1, self._colors[1]),
             (self._names[2], self._group1, self._location0, self._colors[2]),
             (self._names[3], self._group1, self._location1, self._colors[3])
-        ])
-        light_set = provide(i_controller.LightSet)
-        light_set.discover()
+        ]).configure()
+        light_set.configure()
 
     @classmethod
     def code_for_get(cls, name, operand):

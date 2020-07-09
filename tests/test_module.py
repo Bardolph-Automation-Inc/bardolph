@@ -6,7 +6,7 @@ from bardolph.fakes import fake_clock, fake_lifx
 
 def configure():
     injection.configure()
-    settings.use_base({
+    settings.using({
         'log_level': logging.ERROR,
         'log_to_console': True,
         'single_light_discover': True,

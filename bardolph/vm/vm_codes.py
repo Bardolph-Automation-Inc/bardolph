@@ -26,6 +26,10 @@ class OpCode(Enum):
     BREAKPOINT = auto()
     COLOR = auto()
     CONSTANT = auto()
+    DISC = auto()
+    DISCL = auto()
+    DISCN = auto()
+    DISCP = auto()
     END = auto()
     END_LOOP = auto()
     GET_COLOR = auto()
@@ -54,29 +58,29 @@ class JumpCondition(Enum):
 
 class LoopVar(Enum):
     COUNTER = auto()
+    CURRENT = auto()
     FIRST = auto()
     INCR = auto()
     LAST = auto()
 
 class Operator(Enum):
     ADD = auto()
-    DIV = auto()
-    MUL = auto()
-    SUB = auto()
-
-    UADD = auto()
-    USUB = auto()
-    NOT = auto()
-
     AND = auto()
-    OR = auto()
-
+    DIV = auto()
     EQ = auto()
-    NOTEQ = auto()
     LT = auto()
     LTE = auto()
     GT = auto()
     GTE = auto()
+    MOD = auto()
+    MUL = auto()
+    NOT = auto()
+    NOTEQ = auto()
+    OR = auto()
+    POW = auto()
+    SUB = auto()
+    UADD = auto()
+    USUB = auto()
 
 class Operand(Enum):
     ALL = auto()
@@ -84,6 +88,7 @@ class Operand(Enum):
     GROUP = auto()
     LOCATION = auto()
     MZ_LIGHT = auto()
+    NULL = auto()
 
 class SetOp(Enum):
     """ Used with TimePattern """

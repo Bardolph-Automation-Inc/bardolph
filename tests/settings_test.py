@@ -16,20 +16,20 @@ override = {
 
 class SettingsTest(unittest.TestCase):
     def test_base(self):
-        settings.use_base(base).configure()
+        settings.using(base).configure()
         s = settings.Settings()
         self.assertEqual(1, s.get_value('one'))
         self.assertEqual(2, s.get_value('two'))
 
     def test_override(self):
-        settings.use_base(base).add_overrides(override).configure()
+        settings.using(base).add_overrides(override).configure()
         s = settings.Settings()
         self.assertEqual(1, s.get_value('one'))
         self.assertEqual(22, s.get_value('two'))
         self.assertEqual(4, s.get_value('four'))
 
     def test_apply_file(self):
-        settings.use_base(base).apply_file('tests/test_apply_file.ini').configure()
+        settings.using(base).apply_file('tests/test_apply_file.ini').configure()
         s = settings.Settings()
         self.assertEqual('11', s.get_value('one'))
         self.assertEqual('22', s.get_value('two'))

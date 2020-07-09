@@ -123,18 +123,16 @@ class Light(ActivityMonitor):
 
 
 class Lifx(i_controller.Lifx, ActivityMonitor):
-    inits = []
+    _inits = None
 
     def __init__(self):
         ActivityMonitor.__init__(self)
-        self.init_from(Lifx.inits)
-
-    def init_from(self, inits):
-        self._lights = [
-            Light(init[0], init[1], init[2], init[3],
-                  None if len(init) < 5 else init[4])
-            for init in inits
-        ]
+        self._lights = []
+        if self._inits is not None:
+            for init in self._inits:
+                self._lights.append(
+                    Light(init[0], init[1], init[2], init[3],
+                            None if len(init) < 5 else init[4]))
 
     def get_lights(self):
         return self._lights
@@ -151,9 +149,24 @@ class Lifx(i_controller.Lifx, ActivityMonitor):
         for light in self.get_lights():
             light.quietly().set_power(power_level, duration)
 
+
+class _Reinit:
+    def configure(self):
+        bind_instance(Lifx()).to(i_controller.Lifx)
+
+
 def configure():
+    using_large_set().configure()
+
+
+def using(inits):
+    Lifx._inits = inits.copy()
+    return _Reinit()
+
+
+def using_large_set():
     # light name, group, location
-    Lifx.inits = [
+    Lifx._inits = [
         ('Table', 'Furniture', 'Home', [1, 2, 3, 4], False),
         ('Top', 'Pole', 'Home', [10, 20, 30, 40], False),
         ('Middle', 'Pole', 'Home', [100, 200, 300, 400], False),
@@ -161,5 +174,15 @@ def configure():
         ('Chair', 'Furniture', 'Home',
             [10000, 20000, 30000, 4004], False),
         ('Strip', 'Furniture', 'Home', [4, 3, 2, 1], True)
-    ]
-    bind_instance(Lifx()).to(i_controller.Lifx)
+    ].copy()
+    return _Reinit()
+
+
+def using_small_set():
+    color = [1, 2, 3, 4]
+    Lifx._inits = [
+        ('light_1', 'x', 'y', color, False),
+        ('light_2', 'group', 'loc', color, False),
+        ('light_0', 'group', 'loc', color, False)
+    ].copy()
+    return _Reinit()

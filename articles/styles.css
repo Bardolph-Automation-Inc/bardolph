@@ -1,0 +1,22 @@
+    p {
+        font-family: Optima, Helvetica, san-serif;
+    }
+
+    .title {
+        font-family: Cardo, Garamond, serif;
+        font-size: 3rem;
+        padding-bottom: 0.2em;
+        text-align: center;
+    }
+
+    .heading1 {
+        font-family: Cardo, Garamond, serif;
+        font-size: 2rem;
+        padding-bottom: 0.2em;
+    }
+
+    .listing {
+        font-family: monospace;
+        white-space: pre;
+        margin-left: 4rem;
+    }

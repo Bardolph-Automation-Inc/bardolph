@@ -9,7 +9,7 @@ class LsModule:
     @classmethod
     def configure(cls):
         injection.configure()
-        settings.use_base(config_values.functional).configure()
+        settings.using(config_values.functional).configure()
         light_module.configure()
         LsModule._jobs = job_control.JobControl()
 

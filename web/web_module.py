@@ -7,7 +7,7 @@ from . import web_app, i_web
 def configure():
     injection.configure()
 
-    settings_init = settings.use_base(config_values.functional)
+    settings_init = settings.using(config_values.functional)
     settings_init.add_overrides({
         'log_to_console': False
     })

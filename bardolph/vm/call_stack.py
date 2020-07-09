@@ -4,8 +4,8 @@ from .vm_codes import LoopVar
 
 class StackFrame:
     def __init__(self, variables=None, return_addr=None):
-        self.vars = variables if variables is not None else {}
-        self.return_addr = return_addr if return_addr is not None else 0
+        self.vars = variables or {}
+        self.return_addr = return_addr or 0
 
     def clear(self):
         self.vars.clear()
