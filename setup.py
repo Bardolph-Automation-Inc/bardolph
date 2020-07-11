@@ -5,10 +5,10 @@ with open("README.md", "r") as f:
 
 setup(
     name="bardolph",
-    version="0.0.42",
+    version="0.0.43",
     author="Al Fontes",
     author_email="bardolph@fontes.org",
-    description="Simple script interpreter for LIFX light bulbs",
+    description="Simple scripting language for LIFX lights",
     long_description=long_description_md,
     long_description_content_type='text/markdown',
     url="http://www.bardolph.org",

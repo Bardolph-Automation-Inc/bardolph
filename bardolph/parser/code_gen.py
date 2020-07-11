@@ -116,66 +116,47 @@ class CodeGen:
         marker.jump.param1 = self.current_offset - marker.offset + 1
 
     def iter_lights(self, operand, code) -> None:
-        # If operand is not all, when the generated code starts, the first
-        # register must already contain the name of the group or location.
-        if operand == Operand.ALL:
-            self._traverse_all(code. OpCode.DISC, OpCode.DISCN)
-        else:
-            self._traverse_vertical(operand, code, OpCode.DISC, OpCode.DISCN)
-
-    def iter_lights_reverse(self, operand, code) -> None:
-        # If operand is not all, when the generated code starts, the first
-        # register must already contain the name of the group or location.
-        if operand == Operand.ALL:
-            self._traverse_all(code, OpCode.DISCL)
-        else:
-            self._traverse_vertical(operand, code, OpCode.DISCL)
-
-    def iter_sets(self, operand, code) -> None:
-        self._iter_sets(operand, code, OpCode.DISC)
-
-    def iter_sets_reverse(self, operand, code) -> None:
-        self._iter_sets(operand, code, OpCode.DISCL)
-
-    def _traverse_all(self, code, disc_op) -> None:
-        """
-        Gemerate code to iterate over all of the lights.
-
-        Parameters:
-            operand: Operand.GROUP or Operand.LOCATION.
-            code: what to execute for each light
-            disc_op: OpCode.DISC (forward) or OpCode.DISCL (reverse)
-        """
+        """ Generate code to iterate over all of the lights. """
         self.add_list([
             (OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND),
-            disc_op
+            OpCode.DISC
         ])
+        loop_marker = self.mark()
+        self.add_instruction(OpCode.MOVE, Register.RESULT, LoopVar.CURRENT)
+        self.test_op(Operator.NOTEQ, LoopVar.CURRENT, Operand.NULL)
+        if_marker = self.if_true_start()
+        self._code.extend(list(code))
+        self.add_list([
+            (OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND),
+            (OpCode.DNEXT, LoopVar.CURRENT)
+        ])
+        self.jump_back(loop_marker)
+        self.if_end(if_marker)
+
+    def iter_sets(self, operand, code) -> None:
+        """ Iterate over all groups or locations. """
+        self.add_instruction(OpCode.MOVEQ, operand, Register.OPERAND)
+        self.add_instruction(OpCode.DISC)
         loop_marker = self.mark()
         self.add_instruction(OpCode.MOVE, Register.RESULT, LoopVar.CURRENT)
         self.test_op(Operator.NOTEQ, Register.RESULT, Operand.NULL)
         if_marker = self.if_true_start()
         self._code.extend(list(code))
         self.add_list([
-            (OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND),
-            (CodeGen._disc_next_op(disc_op), LoopVar.CURRENT, Operand.ALL)
+            (OpCode.MOVEQ, operand, Register.OPERAND),
+            (OpCode.DNEXT, LoopVar.CURRENT)
         ])
         self.jump_back(loop_marker)
         self.if_end(if_marker)
 
-
-    def _traverse_vertical(self, operand, code, disc_op) -> None:
+    def iter_members(self, operand, code):
         """
-        Gemerate code to iterate over lights within a group or location.
-        The generated code assumes that the name is in the result register.
-
-        Parameters:
-            operand: Operand.GROUP or Operand.LOCATION.
-            code: what to execute for each light in the group
-            disc_op: OpCode.DISC (forward) or OpCode.DISCL (reverse)
+        Generate code to iterate over all members of a group or location. The
+        name must be in LoopVar.FIRST.
         """
         self.add_list([
             (OpCode.MOVEQ, operand, Register.OPERAND),
-            (disc_op, LoopVar.FIRST)
+            (OpCode.DISCM, LoopVar.FIRST)
         ])
         loop_marker = self.mark()
         self.add_instruction(OpCode.MOVE, Register.RESULT, LoopVar.CURRENT)
@@ -184,38 +165,10 @@ class CodeGen:
         self._code.extend(list(code))
         self.add_list([
             (OpCode.MOVEQ, operand, Register.OPERAND),
-            (CodeGen._disc_next_op(disc_op), LoopVar.CURRENT, LoopVar.FIRST)
+            (OpCode.DNEXTM, LoopVar.FIRST, LoopVar.CURRENT)
         ])
         self.jump_back(loop_marker)
         self.if_end(if_marker)
-
-    def _iter_sets(self, operand, code, disc_op) -> None:
-        """
-        Iterate over all groups or locations.
-
-        Parameters:
-            operand: Operand.GROUP or Operand.LOCATION.
-        """
-        self.add_instruction(OpCode.MOVEQ, operand, Register.OPERAND)
-        self.add_instruction(disc_op, Operand.ALL)
-        loop_marker = self.mark()
-        self.add_instruction(OpCode.MOVE, Register.RESULT, LoopVar.CURRENT)
-        self.test_op(Operator.NOTEQ, Register.RESULT, Operand.NULL)
-        if_marker = self.if_true_start()
-        self._code.extend(list(code))
-        self.add_list([
-            (OpCode.MOVEQ, operand, Register.OPERAND),
-            (CodeGen._disc_next_op(disc_op), LoopVar.CURRENT, Operand.ALL)
-        ])
-        self.jump_back(loop_marker)
-        self.if_end(if_marker)
-
-    @classmethod
-    def _disc_next_op(cls, disc_op):
-        assert disc_op in (OpCode.DISC, OpCode.DISCL), str(disc_op)
-        if disc_op == OpCode.DISC:
-            return OpCode.DISCN
-        return OpCode.DISCP
 
     @classmethod
     def _push_op(cls, oper) -> OpCode:

@@ -23,8 +23,11 @@ def program_code(instructions):
     return output
 
 def instruction_text(file_name):
-    program = Parser().load(file_name)
+    parser = Parser()
+    program = parser.load(file_name)
     if program is None:
+        print("Error compiling {}".format(file_name))
+        print(parser.get_errors())
         return None
     text = '    '
     text += ',\n    '.join(map(lambda inst: inst.as_list_text(), program))

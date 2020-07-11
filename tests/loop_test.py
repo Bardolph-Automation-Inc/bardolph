@@ -91,6 +91,22 @@ class LoopTest(unittest.TestCase):
             (Action.SET_COLOR, ([19660, 0, 0, 0], 0))
         ])
 
+    def test_nested_cycle(self):
+        script = """
+            saturation 90 brightness 75 kelvin 2700
+
+            repeat 5 with base_hue cycle begin
+                time 0
+                repeat all as the_light with the_hue cycle base_hue begin
+                    hue the_hue
+                    set the_light
+                end
+                time 3
+                wait
+            end
+        """
+        self._runner.run_script(script)
+
     def test_while(self):
         script = """
             hue 180 saturation 10 brightness 10 kelvin 500

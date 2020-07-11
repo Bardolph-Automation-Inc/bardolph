@@ -167,7 +167,7 @@ class TextSnapshot(Snapshot):
         for name in names:
             self._text += '{}\n'.format(name)
             for light in get_fn(name):
-                self._text += '   {}\n'.format(light.name)
+                self._text += '   {}\n'.format(light)
 
     def generate(self):
         super().generate()

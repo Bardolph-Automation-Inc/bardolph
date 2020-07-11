@@ -21,71 +21,76 @@ class VmDiscoverTest(unittest.TestCase):
     def test_all_lights(self):
         self._reg.operand = Operand.LIGHT
         self._discover.disc()
-        for name in ('light_00', 'light_01', 'light_02'):
-            self._assert_and_discn(name)
+        for name in ('light_02', 'light_01', 'light_00'):
+            self._assert_and_next(name)
         self.assertEqual(self._reg.result, Operand.NULL)
 
-    def test_all_lights_rev(self):
+    def test_all_lights_fwd(self):
         self._reg.operand = Operand.LIGHT
-        self._discover.discl()
-        for name in ('light_02', 'light_01', 'light_00'):
-            self._assert_and_discp(name)
+        self._reg.disc_forward = True
+        self._discover.disc()
+        for name in ('light_00', 'light_01', 'light_02'):
+            self._assert_and_next(name)
         self.assertEqual(self._reg.result, Operand.NULL)
 
     def test_all_groups(self):
         self._reg.operand = Operand.GROUP
-        self._discover.disc(Operand.ALL)
-        self._assert_and_discn('group', Operand.ALL)
-        self._assert_and_discn('x', Operand.ALL)
+        self._discover.disc()
+        self._assert_and_next('x')
+        self._assert_and_next('group')
         self.assertEqual(self._reg.result, Operand.NULL)
 
-    def test_all_groups_rev(self):
+    def test_all_groups_fwd(self):
         self._reg.operand = Operand.GROUP
-        self._discover.discl(Operand.ALL)
-        self._assert_and_discp('x', Operand.ALL)
-        self._assert_and_discp('group', Operand.ALL)
+        self._reg.disc_forward = True
+        self._discover.disc()
+        self._assert_and_next('group')
+        self._assert_and_next('x')
         self.assertEqual(self._reg.result, Operand.NULL)
 
     def test_all_locations(self):
         self._reg.operand = Operand.LOCATION
-        self._discover.disc(Operand.ALL)
-        self._assert_and_discn('loc', Operand.ALL)
-        self._assert_and_discn('y', Operand.ALL)
+        self._discover.disc()
+        self._assert_and_next('y')
+        self._assert_and_next('loc')
         self.assertEqual(self._reg.result, Operand.NULL)
 
-    def test_all_locations_rev(self):
+    def test_all_locations_fwd(self):
         self._reg.operand = Operand.LOCATION
-        self._discover.discl(Operand.ALL)
-        self._assert_and_discp('y', Operand.ALL)
-        self._assert_and_discp('loc', Operand.ALL)
+        self._reg.disc_forward = True
+        self._discover.disc()
+        self._assert_and_next('loc')
+        self._assert_and_next('y')
         self.assertEqual(self._reg.result, Operand.NULL)
 
     def test_group_membership(self):
         self._reg.operand = Operand.GROUP
-        self._discover.disc('group')
-        self._assert_and_discn('light_00', 'group')
-        self._assert_and_discn('light_02', 'group')
+        self._discover.discm('group')
+        self._assert_and_nextm('group', 'light_02')
+        self._assert_and_nextm('group', 'light_00')
         self.assertEqual(self._reg.result, Operand.NULL)
 
-    def test_group_membership_rev(self):
+    def test_group_membership_fwd(self):
         self._reg.operand = Operand.GROUP
-        self._discover.discl('group')
-        self._assert_and_discp('light_02', 'group')
-        self._assert_and_discp('light_00', 'group')
+        self._reg.disc_forward = True
+        self._discover.discm('group')
+        self._assert_and_nextm('group', 'light_00')
+        self._assert_and_nextm('group', 'light_02')
         self.assertEqual(self._reg.result, Operand.NULL)
 
     def test_location_membership(self):
         self._reg.operand = Operand.LOCATION
-        self._discover.disc('loc')
-        self._assert_and_discn('light_00', 'loc')
-        self._assert_and_discn('light_02', 'loc')
+        self._discover.discm('loc')
+        self._assert_and_nextm('loc','light_02')
+        self._assert_and_nextm('loc', 'light_00')
         self.assertEqual(self._reg.result, Operand.NULL)
 
-    def test_location_membership_rev(self):
+    def test_location_membership_fwd(self):
         self._reg.operand = Operand.LOCATION
-        self._discover.discl('loc')
-        self._assert_and_discp('light_02', 'loc')
-        self._assert_and_discp('light_00', 'loc')
+        self._reg.disc_forward = True
+        self._discover.discm('loc')
+        self._assert_and_nextm('loc', 'light_00')
+        self._assert_and_nextm('loc', 'light_02')
         self.assertEqual(self._reg.result, Operand.NULL)
 
     @classmethod
@@ -98,13 +103,13 @@ class VmDiscoverTest(unittest.TestCase):
         ]).configure()
         light_set.configure()
 
-    def _assert_and_discn(self, name0, name1=None):
-        self.assertEqual(self._reg.result, name0)
-        self._discover.discn(name0, name1)
+    def _assert_and_next(self, name):
+        self.assertEqual(self._reg.result, name)
+        self._discover.dnext(name)
 
-    def _assert_and_discp(self, name0, name1=None):
-        self.assertEqual(self._reg.result, name0)
-        self._discover.discp(name0, name1)
+    def _assert_and_nextm(self, set, name):
+        self.assertEqual(self._reg.result, name)
+        self._discover.dnextm(set, name)
 
 if __name__ == '__main__':
     unittest.main()

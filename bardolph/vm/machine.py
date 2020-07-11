@@ -17,18 +17,19 @@ from .vm_math import VmMath
 
 class Registers:
     def __init__(self):
-        self.hue = 0
-        self.saturation = 0
-        self.brightness = 0
-        self.kelvin = 0
-        self.duration = 0
+        self.hue = 0.0
+        self.saturation = 0.0
+        self.brightness = 0.0
+        self.kelvin = 0.0
+        self.disc_forward = False
+        self.duration = 0.0
         self.first_zone = None
         self.last_zone = None
         self.power = False
         self.result = None
         self.name = None
         self.operand = None
-        self.time = 0  # ms.
+        self.time = 0.0  # ms.
         self.unit_mode = UnitMode.LOGICAL
 
     def get_color(self) -> [int]:
@@ -65,9 +66,9 @@ class Machine:
                        OpCode.COLOR,
                        OpCode.CONSTANT,
                        OpCode.DISC,
-                       OpCode.DISCL,
-                       OpCode.DISCN,
-                       OpCode.DISCP,
+                       OpCode.DISCM,
+                       OpCode.DNEXT,
+                       OpCode.DNEXTM,
                        OpCode.END,
                        OpCode.END_LOOP,
                        OpCode.GET_COLOR,
@@ -325,17 +326,16 @@ class Machine:
         return self._vm_math.unary_op(operator)
 
     def _disc(self) -> None:
-        self._vm_discover.disc(self.current_inst.param0)
+        self._vm_discover.disc()
 
-    def _discl(self) -> None:
-        self._vm_discover.discl(self.current_inst.param0)
+    def _discm(self) -> None:
+            self._vm_discover.discm(self.current_inst.param0)
 
-    def _discn(self) -> None:
-        self._vm_discover.discn(
-            self.current_inst.param0, self.current_inst.param1)
+    def _dnext(self) -> None:
+        self._vm_discover.dnext(self.current_inst.param0)
 
-    def _discp(self) -> None:
-        self._vm_discover.discp(
+    def _dnextm(self) -> None:
+        self._vm_discover.dnextm(
             self.current_inst.param0, self.current_inst.param1)
 
     def _pause(self) -> None:

@@ -198,12 +198,15 @@ normal execution of the script.
     single: disc, discn, discl, discp instruction
     single: lights; discover
 
-Discover Lights - `disc`, `discn`, `discl`, and `discp`
+Discover Lights - `disc`, `discm`, `discl`, and `disclm`
 -------------------------------------------------------
 Discover the lights on the network. The `operand` register determines what to
 look for: lights, groups, or locations. Each mnemonic has a different purpose:
 
-* `disc` - start discover.
+* `disc` - start discover. Takes no parameters, and uses the content of the
+    `operand` register to choose lights, groups, or locations.
+* `discm` - start discovering members. Takes one parameter, which is the name
+    of a group or a location, as specified by the `operand` parameter.
 * `discn` - get next element in whatever list is being traversed.
 * `discl` - start discover, but get the last element instead of the first.
 * `discp` - get the previous element.

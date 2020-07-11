@@ -10,85 +10,37 @@ class VmDiscover:
         self._call_stack = call_stack
         self._reg = reg
 
-    def disc(self, target=None) -> None:
-        self._disc(0, self._first_set, target)
-
-    def discl(self, target=None) -> None:
-        self._disc(-1, self._last_set, target)
-
-    def _disc(self, index, fn, target) -> None:
-        """
-        Discover the first light, group, or location matching the criteria.
-
-        If the operand register is light, get the first of all the lights.
-        The target parameter is unused in this case.
-
-        If the operand register is group or location:
-            If target is Operand.ALL: start traversal of all groups or locations
-            If target is a string: start traversal within the group or location
-                having that name.
-        """
-        if self._reg.operand == Operand.LIGHT:
-            self._light_or_null(index)
-        elif target == Operand.ALL:
-            fn()
-        else:
-            self._member_or_null(target, index)
-
-    @inject(LightSet)
-    def _light_or_null(self, index, light_set) -> None:
-        """Use index as a subscript into the list of light names. If the
-            list is empty or the name is not present, put null into the result
-            register. Otherwise, put the light name into the result reg.
-        """
-        name_list = light_set.light_names
+    def disc(self) -> None:
+        name_list = self._names_by_oper()
         if len(name_list) == 0:
             self._reg.result = Operand.NULL
         else:
-            self._reg.result = name_list[index] or Operand.NULL
+            index = 0 if self._reg.disc_forward else -1
+            self._reg.result = name_list[index]
 
-    def _first_set(self) -> None:
-        name_list = self._names_by_oper()
-        self._reg.result = name_list[0] if len(name_list) > 0 else Operand.NULL
-
-    def _last_set(self) -> None:
-        name_list = self._names_by_oper()
-        self._reg.result = name_list[-1] if len(name_list) > 0 else Operand.NULL
-
-    def _member_or_null(self, name, index) -> None:
-        name = self._param_to_value(name)
-        name_list = self._set_by_oper(name)
-        if name_list is not None and len(name_list) > 0:
+    def discm(self, name) -> None:
+        name_list = self._set_by_oper(self._param_to_value(name))
+        if name_list and len(name_list) > 0:
+            index = 0 if self._reg.disc_forward else -1
             self._reg.result = name_list[index] or Operand.NULL
         else:
             self._reg.result = Operand.NULL
 
-    def discp(self, current, set_name=None) -> None:
-        self._discnp(current, set_name, SortedList.prev)
-
-    def discn(self, current, set_name=None) -> None:
-        self._discnp(current, set_name, SortedList.next)
-
-    def _discnp(self, current, target, fn) -> None:
-        """
-        Discover the next or previous light, group, or location matching the
-        criteria.
-
-        If the operand register is light, get the subsequent light in the set
-        of all lights.
-
-        If the operand register is group or location:
-            If target is Operand.ALL: get the subsequent group or location
-            If target is a string: get the subsequent light within the group or
-                location having that name.
-        """
+    def dnext(self, current) -> None:
+        name_list = self._names_by_oper()
         current = self._param_to_value(current)
-        target = self._param_to_value(target)
-        if self._reg.operand == Operand.LIGHT or target == Operand.ALL:
-            name_list = self._names_by_oper()
+        if not self._reg.disc_forward:
+            self._reg.result = name_list.prev(current) or Operand.NULL
         else:
-            name_list = self._set_by_oper(target)
-        self._reg.result = fn(name_list, current) or Operand.NULL
+            self._reg.result = name_list.next(current) or Operand.NULL
+
+    def dnextm(self, name, current) -> None:
+        name_list = self._set_by_oper(self._param_to_value(name))
+        current = self._param_to_value(current)
+        if not self._reg.disc_forward:
+            self._reg.result = name_list.prev(current) or Operand.NULL
+        else:
+            self._reg.result = name_list.next(current) or Operand.NULL
 
     def _param_to_value(self, param):
         if isinstance(param, (str, Operand)):
@@ -111,4 +63,5 @@ class VmDiscover:
             return light_set.group_names
         elif self._reg.operand == Operand.LOCATION:
             return light_set.location_names
+        assert self._reg.operand == Operand.LIGHT
         return light_set.light_names

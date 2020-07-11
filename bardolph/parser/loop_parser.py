@@ -11,24 +11,24 @@ from .code_gen import CodeGen
 from .expr_parser import ExprParser
 from .token_types import TokenTypes
 
-class LoopType(Enum):
+class _LoopType(Enum):
     ALL = auto()
     COUNTED = auto()
     GROUPS = auto()
     INFINITE = auto()
-    LIGHTS = auto()
+    LIST = auto()
     LOCATIONS = auto()
     WHILE = auto()
     WITH = auto()
 
-    def is_iter(self):
-        # Some sort of iteration over lights.
-        return self in (
-            LoopType.ALL, LoopType.LIGHTS, LoopType.GROUPS, LoopType.LOCATIONS)
-
     def is_unbounded(self):
         # Number of iterations is indefinite.
-        return self in (LoopType.INFINITE, LoopType.WHILE)
+        return self in (_LoopType.INFINITE, _LoopType.WHILE)
+
+    def is_iter(self):
+        # Iteration that pushes names onto the stack.
+        return self in (_LoopType.ALL, _LoopType.GROUPS, _LoopType.LIST,
+            _LoopType.LOCATIONS)
 
 
 class LoopParser:
@@ -40,11 +40,6 @@ class LoopParser:
         self._counter = None
 
     def repeat(self, code_gen, call_context) -> bool:
-        # repeat
-        # repeat numeric rvalue
-        # repeat in
-        # repeat all
-        # repeat group, repeat location
         self._next_token()
         code_gen.add_instruction(OpCode.LOOP)
         if not self._detect_loop_type(code_gen):
@@ -67,21 +62,21 @@ class LoopParser:
 
     def _detect_loop_type(self, code_gen) -> bool:
         self._loop_type = {
-            TokenTypes.WHILE: LoopType.WHILE,
-            TokenTypes.WITH: LoopType.WITH,
-            TokenTypes.IN: LoopType.LIGHTS,
-            TokenTypes.ALL: LoopType.ALL,
-            TokenTypes.GROUP: LoopType.GROUPS,
-            TokenTypes.LOCATION: LoopType.LOCATIONS
+            TokenTypes.WHILE: _LoopType.WHILE,
+            TokenTypes.WITH: _LoopType.WITH,
+            TokenTypes.IN: _LoopType.LIST,
+            TokenTypes.ALL: _LoopType.ALL,
+            TokenTypes.GROUP: _LoopType.GROUPS,
+            TokenTypes.LOCATION: _LoopType.LOCATIONS
         }.get(self._current_token_type, None)
         if self._loop_type is None:
             if self._parser.at_rvalue():
-                self._loop_type = LoopType.COUNTED
+                self._loop_type = _LoopType.COUNTED
                 if not self._parser.at_rvalue():
                     return False
             else:
-                self._loop_type = LoopType.INFINITE
-        elif self._loop_type not in (LoopType.ALL, LoopType.WITH):
+                self._loop_type = _LoopType.INFINITE
+        elif self._loop_type not in (_LoopType.ALL, _LoopType.WITH):
             self._next_token()
         return True
 
@@ -89,23 +84,83 @@ class LoopParser:
         if self._loop_type.is_unbounded():
             return True
 
-        if self._loop_type in (LoopType.ALL, LoopType.LIGHTS):
-            code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.COUNTER)
-            if not (self._pre_loop_lights(code_gen, call_context) and
-                    self._pre_loop_as(code_gen, call_context)):
-                return False
-        elif self._loop_type in (LoopType.GROUPS, LoopType.LOCATIONS):
-            code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.COUNTER)
-            if not (self._pre_loop_sets(code_gen) and
-                    self._pre_loop_as(code_gen, call_context)):
-                return False
-        elif (self._loop_type == LoopType.COUNTED
+        if (self._loop_type == _LoopType.COUNTED
                 and not self._parser.rvalue(LoopVar.COUNTER)):
             return False
+        elif self._loop_type in (_LoopType.ALL, _LoopType.LIST):
+            code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.COUNTER)
+            if not (self._pre_loop_list(code_gen, call_context) and
+                    self._pre_loop_as(code_gen, call_context)):
+                return False
+        elif self._loop_type in (_LoopType.GROUPS, _LoopType.LOCATIONS):
+            code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.COUNTER)
+            if not (self._push_set_names(code_gen) and
+                    self._pre_loop_as(code_gen, call_context)):
+                return False
 
-        if self._current_token_type != TokenTypes.WITH:
+        if self._current_token_type == TokenTypes.WITH:
+            self._next_token()
+            return self._pre_loop_with(code_gen, call_context)
+        return True
+
+    def _pre_loop_list(self, code_gen, call_context) -> bool:
+        """ Push everything from the "in" clause onto the stack. """
+        if self._current_token_type == TokenTypes.AS:
             return True
-        self._next_token()
+        inner_coder = CodeGen()
+        operand = {
+            TokenTypes.ALL: Operand.LIGHT,
+            TokenTypes.GROUP: Operand.GROUP,
+            TokenTypes.LOCATION: Operand.LOCATION
+        }.get(self._current_token_type, None)
+        if operand is not None:
+            # Push and count all lights, or all members of a group/location.
+            self._next_token()
+            if not self._push_light_names(inner_coder, operand):
+                return False
+        else:
+            # Push and count one light.
+            if not self._parser.rvalue(Register.RESULT, inner_coder):
+               return False
+            inner_coder.push(Register.RESULT)
+            inner_coder.plus_equals(LoopVar.COUNTER)
+
+        if self._current_token_type == TokenTypes.AND:
+            if operand == Operand.ALL:
+                return self._trigger_error('"and" is not allowed with "all"')
+            if not (self._pre_loop_and() and
+                    self._pre_loop_list(code_gen, call_context)):
+                return False
+
+        code_gen.add_instructions(inner_coder.program)
+        return True
+
+    def _push_light_names(self, code_gen, operand) -> bool:
+        inner_code = CodeGen()
+        inner_code.plus_equals(LoopVar.COUNTER)
+        inner_code.push(LoopVar.CURRENT)
+        if self._loop_type == _LoopType.LIST:
+            if not self._parser.rvalue(LoopVar.FIRST, code_gen):
+                return self._parser.token_error(
+                    'Needed name of a group or location, got "{}"')
+            code_gen.iter_members(operand, inner_code.program)
+        else:
+            code_gen.iter_lights(operand, inner_code.program)
+        return True
+
+    def _push_set_names(self, code_gen) -> bool:
+        """Generate code to push all group or location names onto the stack. """
+        inner_code = CodeGen()
+        inner_code.plus_equals(LoopVar.COUNTER)
+        inner_code.push(LoopVar.CURRENT)
+        if self._loop_type == _LoopType.GROUPS:
+            operand = Operand.GROUP
+        else:
+            operand = Operand.LOCATION
+        code_gen.iter_sets(operand, inner_code.program)
+        return True
+
+    def _pre_loop_with(self, code_gen, call_context) -> bool:
         if not self._init_index_var(call_context):
             return False
         if self._current_token_type == TokenTypes.FROM:
@@ -119,63 +174,15 @@ class LoopParser:
         else:
             return self._parser.token_error(
                 'Needed "from" or "cycle", got "{}"')
-
         return True
 
-    def _pre_loop_lights(self, code_gen, call_context) -> bool:
-        """
-        Process "all" or the list that follows "in" keyword.
-
-        In that list, a light can be either a literal or an rvalue that
-        evaluates to a string containing the light's name.
-
-        Push each operand on the stack, last to first. Increment
-        LoopVar.COUNTER so that it has the number of elements
-        on the stack and can be used to control the loop.
-        """
-        if self._current_token_type == TokenTypes.AS:
-            return True
-
-        inner_coder = CodeGen()
-        operand = {
-            TokenTypes.ALL: Operand.ALL,
-            TokenTypes.GROUP: Operand.GROUP,
-            TokenTypes.LOCATION: Operand.LOCATION
-        }.get(self._current_token_type, None)
-        if operand is not None:
-            self._next_token()
-            self._push_set_contents(inner_coder, operand)
-        else:
-            # Name of a light
-            if not self._parser.rvalue(Register.RESULT, inner_coder):
-               return False
-            inner_coder.push(Register.RESULT)
-            inner_coder.plus_equals(LoopVar.COUNTER)
-
-        if operand != Operand.ALL:
-            if self._current_token_type == TokenTypes.AND:
-                self._next_token()
-                if (self._current_token_type not in
-                            (TokenTypes.GROUP, TokenTypes.LOCATION)
-                        and not self._parser.at_rvalue()):
-                    return self._parser.token_error(
-                        'Needed lights after "and", got "{}".')
-                if not self._pre_loop_lights(code_gen, call_context):
-                    return False
-
-        code_gen.add_instructions(inner_coder.program)
-        return True
-
-    def _pre_loop_sets(self, code_gen) -> bool:
-        """Generate code to push all group or location names onto the stack. """
-        inner_code = CodeGen()
-        inner_code.plus_equals(LoopVar.COUNTER)
-        inner_code.push(LoopVar.CURRENT)
-        if self._loop_type == LoopType.GROUPS:
-            operand = Operand.GROUP
-        else:
-            operand = Operand.LOCATION
-        code_gen.iter_sets_reverse(operand, inner_code.program)
+    def _pre_loop_and(self) -> bool:
+        self._next_token()
+        if (self._current_token_type not in
+                    (TokenTypes.GROUP, TokenTypes.LOCATION)
+                and not self._parser.at_rvalue()):
+            return self._parser.token_error(
+                'Needed lights after "and", got "{}".')
         return True
 
     def _pre_loop_as(self, code_gen, call_context) -> bool:
@@ -188,21 +195,6 @@ class LoopParser:
         self._light_var = self._current_token
         call_context.add_variable(self._light_var)
         return self._next_token()
-
-    def _push_set_contents(self, code_gen, operand) -> bool:
-        """
-        Generate code to push all light names, or the contents of a group
-        or location onto the stack.
-        """
-        if (operand != Operand.ALL
-                and not self._parser.rvalue(LoopVar.FIRST, code_gen)):
-            return self._parser.token_error(
-                'Needed name of a group or location, got "{}"')
-        inner_code = CodeGen()
-        inner_code.plus_equals(LoopVar.COUNTER)
-        inner_code.push(LoopVar.CURRENT)
-        code_gen.iter_lights_reverse(operand, inner_code.program)
-        return True
 
     def _init_index_var(self, call_context) -> bool:
         if self._current_token_type != TokenTypes.NAME:
@@ -220,7 +212,7 @@ class LoopParser:
         if not self._parser.rvalue(LoopVar.LAST):
             return False
         code_gen.add_instruction(OpCode.MOVE, LoopVar.FIRST, self._index_var)
-        if self._loop_type == LoopType.WITH:
+        if self._loop_type == _LoopType.WITH:
             if not self._calc_counter(code_gen):
                 return False
         else:
@@ -282,10 +274,10 @@ class LoopParser:
         """Generate code to leave True or False in the result register,
         depending on whether the loop should continue.
         """
-        if self._loop_type == LoopType.INFINITE:
+        if self._loop_type == _LoopType.INFINITE:
             code_gen.add_instruction(OpCode.MOVEQ, True, Register.RESULT)
             return True
-        if self._loop_type == LoopType.WHILE:
+        if self._loop_type == _LoopType.WHILE:
             exp = ExprParser(self._current_token)
             if not exp.generate_code(code_gen):
                 return False
@@ -301,7 +293,7 @@ class LoopParser:
         return self._parser.command_seq()
 
     def _loop_post(self, code_gen) -> bool:
-        if self._loop_type in (LoopType.INFINITE, LoopType.WHILE):
+        if self._loop_type in (_LoopType.INFINITE, _LoopType.WHILE):
             return True
         code_gen.minus_equals(LoopVar.COUNTER, 1)
         if self._index_var is not None:
