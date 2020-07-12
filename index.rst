@@ -21,4 +21,10 @@ Bardolph Project
    docs/python_interface
    docs/controller
 
+.. toctree::
+    :maxdepth: 2
+    :caption: Article
+
+    docs/iter
+
 * :ref:`genindex`

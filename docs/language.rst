@@ -772,6 +772,16 @@ Thoretically, this loop will run forever. However, the job control for the VM
 is designed to support graceful cutoff of a script's execution. For ambient
 interior lighting, this is expected to be a common use case.
 
+Use `repeat while` for a loop based on a logical condition:
+
+.. code-block:: lightbulb
+
+  repeat while {brightness < 50}
+    begin
+        brightness {brightness + 0.1}
+        set all
+    end
+
 To repeat a loop a given number of times:
 
 .. code-block:: lightbulb
@@ -782,8 +792,8 @@ To repeat a loop a given number of times:
       off all
     end
 
-The interpolated values in a loop allow you to choose the starting and
-ending points for the lights and the number of steps to take in
+Interpolation of values in a loop allows you to choose the starting and
+ending points for a setting and the number of steps to take in
 between. For example, to give a light a hue of 120, and then gradually
 transition it to 180 in 5 steps:
 
@@ -797,21 +807,10 @@ transition it to 180 in 5 steps:
 
 In this example, `the_hue` will have values of 120, 135, 150, 165, and 180.
 
-You an use `repeat while` for a loop based on a logical condition:
-
-.. code-block:: lightbulb
-
-  repeat while {brightness < 50}
-    begin
-        brightness {brightness + 0.1}
-        set all
-    end
-
 A special use case is to cycle the hue 360° over multiple iterations,
 perhaps in an infinite loop. The `cycle` keyword causes a value to loop
 around with modulo 360 logic, stopping one step short of a complete cycle.
-This keeps the delta between sequential repetitions equal to the increment
-used by the loop as it updates the index variable. For example:
+By starting at zero again, the iteration continues smoothly.
 
 .. code-block:: lightbulb
 
@@ -837,6 +836,99 @@ You can also specify the starting point:
 In this case, `the_hue` will have values of 45, 135, 225, and 315.
 
 .. index::
+   single: iteration by light
+
+By Light
+--------
+To iterate individually over all the lights:
+
+.. code-block:: lightbulb
+
+    # Turn on all the lights, one-by-one
+    repeat all as the_light
+        on the_light
+
+In this example, `the_light` is a variable that is initialized to the name
+of the next light before the body of the loop is executed.
+
+A range of values can be applied to the lights. For example:
+
+.. code-block:: lightbulb
+
+    repeat all as bulb with brt from 10 to 100
+    begin
+        brightness brt
+        set bulb
+    end
+
+In this case, the number of lights involved determines what increment should
+be added to the index variable, `brt`, with each iteration. This allows you to
+spread a set of values between some lights without knowing how many there are.
+
+All groups or locations can be enumerated:
+
+.. code-block:: lightbulb
+
+    repeat group as the_group with the_hue from 120 to 180 begin
+        hue the_hue
+        set group the_group
+    end
+
+To iterate over all the lights in a location or group:
+
+.. code-block:: lightbulb
+
+    repeat in location "Inside" as the_light
+        on the_light
+
+    repeat in group "Background" as the_light with sat from 70 to 100
+    begin
+        saturation sat
+        set the_light
+    end
+
+Individual lights can be part of a list:
+
+.. code-block:: lightbulb
+
+    repeat
+        in "Top" and "Middle" and "Table" as the_light
+        with sat from 80 to 100
+    begin
+        get the_light
+        saturation sat
+        set the_light
+    end
+
+They can also be mixed with the members of groups and locations:
+
+.. code-block:: lightbulb
+
+    repeat
+        in "Table" and location "Living Room"
+        as the_light
+        with brt from 10 to 80
+    begin
+        brightness brt
+        set the_light
+    end
+
+Here's an example of a nested loop executed for every known group:
+
+.. code-block:: lightbulb
+
+    repeat group as grp with brt from 40 to 80 begin
+        repeat in group grp as light with c_hue cycle begin
+            hue c_hue
+            set light
+        end
+    end
+
+This loop assigns a different brightness to each group, ranging between 40%
+and 80%. Within each group, every light gets the same brightness, but their
+hues are distributed evenly across a 360° range.
+
+.. index::
    single: get
    single: retrieving colors
 
@@ -846,52 +938,50 @@ The `get` command retrieves the current settings from a single light:
 
 .. code-block:: lightbulb
 
-  get "Table"
-  hue 20
-  set all
+    get "Table"
+    set all
 
 This script retrieves the values of `hue`, `saturation`, `brightness`,
-and `kelvin` from the bulb named "Table Lamp". It then
-overrides only `hue`. The `set` command then sets all the
-other lights to the resulting color.
+and `kelvin` from the bulb named "Table Lamp". It then sets all the
+other lights to the retrieved color. This has the effect of setting the
+color of all the lights to match "Table".
+
+A useful pattern for this command is to get a light's current values, modify
+one of them, and then update the light. This allows you to effectively change
+only one setting:
+
+.. code-block:: lightbulb
+
+    get light
+    brightness brt
+    set light
+
+In this example, the light gets a new brightness, but appears to keep the same
+color tone.
 
 From a multi-zone light, you can retrieve the color of a single zone or
 the entire device:
 
 .. code-block:: lightbulb
 
-  get "Strip" zone 5
-  get "Strip"
-
-Here's an example of a routine that changes a light's brightness, but keeps
-the other settings the same:
-
-.. code-block:: lightbulb
-
-  define set_brt with light brt
-  begin
-    get light
-    brightness brt
-    set light
-  end
-
-  set_brt "Chair Side" 25
+    get "Strip" zone 5
+    get "Strip"
 
 Note that you cannot get values for locations, groups, multiple zones,
 or multiple lights:
 
 .. code-block:: lightbulb
 
-  # Errors
-  get "Table Lamp" and "Chair Side"
-  get all
+    # Errors
+    get "Table Lamp" and "Chair Side"
+    get all
 
-  # Errors
-  get location "Living Room"
-  get group "Reading Lights"
+    # Errors
+    get location "Living Room"
+    get group "Reading Lights"
 
-  # Error
-  get "Strip" zone 5 6
+    # Error
+    get "Strip" zone 5 6
 
 .. index::
    single: raw units
@@ -904,24 +994,24 @@ convenient to humans. However, during communication with the lights,
 those numbers are mapped to unsigned, 16-bit integer values as specified
 by the `LIFX API <https://lan.developer.lifx.com>`_.
 
-If you prefer to send unmodified numbers to the bulbs as specified by that
+If you prefer to send unmodified numbers to the lights as specified by that
 API, you can use `raw` values (and switch back to `logical` units as desired).
 "Raw" refers to an integer between 0 and 65535 that gets transmitted unmodified
-to the bulbs. These two actions are equivalent:
+to the lights. These two actions are equivalent:
 
 .. code-block:: lightbulb
 
-  units raw
-  time 10000 duration 2500
-  hue 30000 saturation 65535 brightness 32767 kelvin 2700 set all
+    units raw
+    time 10000 duration 2500
+    hue 30000 saturation 65535 brightness 32767 kelvin 2700 set all
 
-  units logical
-  time 10 duration 2.5
-  hue 165 saturation 100 brightness 50 kelvin 2700 set all
+    units logical
+    time 10 duration 2.5
+    hue 165 saturation 100 brightness 50 kelvin 2700 set all
 
-Note that with raw units, `time` and `duration` are expressed as an integer
-number of milliseconds. With logical units, `time` and `duration` are given
-as a floating-point quantity of seconds.
+Note that with raw units, `time` and `duration` are rounded to an integer
+number of milliseconds. With logical units, `time` and
+`duration` are treated as a floating-point quantity of seconds.
 
 There's no limit to the precision of the floating-point value, but because it
 will be converted to milliseconds, any digits more than 3 places to the right
@@ -938,9 +1028,12 @@ units:
 
 .. code-block:: lightbulb
 
-  units logical
-  brightness 50
-  assign x brightness   # x contains 50.
+    units logical
+    brightness 50
+    assign x brightness     # x contains 50.
 
-  units raw             # x still contains 50.
-  assign x brightness   # x now contains 32767.
+    units raw               # x still contains 50.
+    assign x brightness     # x now contains 32767.
+
+    units logical           # x still contains 32767.
+    assign x brightness     # Now it's 50 again.

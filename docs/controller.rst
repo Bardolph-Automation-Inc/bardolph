@@ -198,8 +198,8 @@ normal execution of the script.
     single: disc, discn, discl, discp instruction
     single: lights; discover
 
-Discover Lights - `disc`, `discm`, `discl`, and `disclm`
--------------------------------------------------------
+Discover Lights - `disc`, `discm`
+---------------------------------
 Discover the lights on the network. The `operand` register determines what to
 look for: lights, groups, or locations. Each mnemonic has a different purpose:
 

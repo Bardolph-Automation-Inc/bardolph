@@ -4,15 +4,13 @@
    http://www.bardolph.org
 
 .. index::
-   single: installation; web server
+   single: web server; installation
 
 .. _web_install:
 
+***********************
 Web Server Installation
-#######################
-.. index::
-   single: web server; installation
-
+***********************
 This page contains instructions for installation of the web server.
 If you just want to run scripts from the command
 lline, please refer to the simpler instructions in :ref:`installation`.
@@ -46,11 +44,11 @@ O.S. Setup
 This overview assumes you have already done the following, which are outside
 the scope of this document:
 
-#. Install Raspbian on your device. For more information, please refer to the
-   `Raspbian installation instructions
-   <https://www.raspberrypi.org/documentation/installation>`_. For this
-   application, I recommend the "Lite" installation, which is appropriate
-   for a headless server.
+#. Install Raspberry Pi OS on your device. For more information, please refer
+   to the software installation instructions at
+   https://www.raspberrypi.org/documentation/installation. If you're going to
+   run a headless server, any installation down to the "Lite" one is
+   sufficient.
 #. Enable WiFi and `ssh` on your device. The server will run without a monitor
    or keyboard attached. For more information, see the
    `Raspberry Pi remote access documentation
@@ -58,9 +56,9 @@ the scope of this document:
 
 If your device has a physical ethernet port, you can use a wired
 connection instead of WiFi, but it needs to be on the same network
-that the bulbs are on.
+that the lights are on.
 
-By default, Raspbian already has a Python interpreter, so you won't need to
+By default, RPi OS already has a Python interpreter, so you won't need to
 install it. However, if you desire more information on running Python code,
 please refer to the
 `Raspberry Pi Python documentation
@@ -78,7 +76,7 @@ Therefore, the next step is to create a user called `lights`.
    sudo adduser lights
 
 Note that this user doesn't have any special privileges. This ensures that
-the Python code itself is run without any special access, thus improving
+the Python code itself runs under a standard account, thus improving
 security.
 
 I also change the name of the server. In this example, my server will be
@@ -107,7 +105,7 @@ Still logged in as the `lights` user:
 .. note:: Python 3.5 or higher is required in all cases. If your system
    defaults to Python 2.x, you probably need to use
    `pip3` instead of `pip` throughout these instructions. Notable
-   culprits here are Raspbian and Debian. You may even have to install
+   culprits here are Raspbery Pi OS and Debian. You may even have to install
    `pip3` itself with `sudo apt-get install python3-pip`.
 
 After this intallation, the `lsc`, `lsrun`, and `lscap` commands will be
@@ -233,7 +231,7 @@ contained in a Python module.
 
 That web app runs within
 `Flask <https://palletsprojects.com/p/flask>`_. It also uses
-`flup <https://www.saddi.com/software/flup>`_ for its
+`flup <https://www.saddi.com/software/flup/>`_ for its
 `WSGI <https://wsgi.readthedocs.io>`_ implementation. The core Bardolph
 code relies on
 `lifxlan <https://pypi.org/project/lifxlan>`_. You  can install all these with:
