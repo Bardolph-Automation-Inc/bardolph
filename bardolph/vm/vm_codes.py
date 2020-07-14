@@ -40,6 +40,8 @@ class OpCode(Enum):
     MOVEQ = auto()
     NOP = auto()
     OP = auto()
+    OUT = auto()
+    OUTQ = auto()
     PARAM = auto()
     PAUSE = auto()
     POP = auto()

@@ -19,6 +19,7 @@ from tests.log_config_test import LogConfigTest
 from tests.loop_test import LoopTest
 from tests.machine_test import MachineTest
 from tests.parser_test import ParserTest
+from tests.print_test import PrintTest
 from tests.settings_test import SettingsTest
 from tests.sorted_list_test import SortedListTest
 from tests.time_pattern_test import TimePatternTest

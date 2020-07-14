@@ -9,10 +9,11 @@
 
 .. _iteration:
 
-*************************************
-Iterations with the Bardolph Language
-*************************************
-* In Progress *
+***************************************************
+Iterations with the Bardolph Language (in progress)
+***************************************************
+This article is incomplete and being worked on. Please see the secion on
+"Repeat Loops" in :ref:`language` for more information.
 
 Introduction
 ============

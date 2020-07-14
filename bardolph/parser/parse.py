@@ -38,6 +38,8 @@ class Parser:
             TokenTypes.OFF: self._power_off,
             TokenTypes.ON: self._power_on,
             TokenTypes.PAUSE: self._pause,
+            TokenTypes.PRINT: self._print,
+            TokenTypes.PRINTLN: self._print,
             TokenTypes.REGISTER: self._set_reg,
             TokenTypes.REPEAT: self._repeat,
             TokenTypes.SET: self._set,
@@ -257,6 +259,17 @@ class Parser:
     def _pause(self):
         self._add_instruction(OpCode.PAUSE)
         self.next_token()
+        return True
+
+    def _print(self):
+        add_newline = self._current_token_type == TokenTypes.PRINTLN
+        self.next_token()
+        while self._current_token_type.is_printable():
+            if not self.rvalue():
+                return self.token_error('Expected something to print, got {}')
+            self._code_gen.add_instruction(OpCode.OUT, Register.RESULT)
+        if add_newline:
+            self._code_gen.add_instruction(OpCode.OUTQ, Operand.NULL)
         return True
 
     def _time(self):

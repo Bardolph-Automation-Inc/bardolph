@@ -25,7 +25,7 @@ class LexTest(unittest.TestCase):
     def test_all_tokens(self):
         input_string = 'all and as at brightness \
             define # comment \n duration hue if in \
-            off on or kelvin print range saturation \
+            off on or kelvin print saturation \
             set time wait zone 12:*4 {x * y} \
             -1.0 01.234\n"Hello There" x _abc @'
         expected_tokens = [
@@ -44,7 +44,6 @@ class LexTest(unittest.TestCase):
             TokenTypes.OR,
             TokenTypes.REGISTER,
             TokenTypes.PRINT,
-            TokenTypes.RANGE,
             TokenTypes.REGISTER,
             TokenTypes.SET,
             TokenTypes.REGISTER,
@@ -75,7 +74,6 @@ class LexTest(unittest.TestCase):
             'or',
             'kelvin',
             'print',
-            'range',
             'saturation',
             'set',
             'time',

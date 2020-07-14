@@ -19,13 +19,11 @@ class TokenTypes(Enum):
     FROM = auto()
     GET = auto()
     GROUP = auto()
-    GROUPS = auto()
     IF = auto()
     IN = auto()
     LIGHTS = auto()
     LITERAL_STRING = auto()
     LOCATION = auto()
-    LOCATIONS = auto()
     LOGICAL = auto()
     NAME = auto()
     NUMBER = auto()
@@ -34,8 +32,8 @@ class TokenTypes(Enum):
     OR = auto()
     POWER = auto()
     PRINT = auto()
+    PRINTLN = auto()
     PAUSE = auto()
-    RANGE = auto()
     RAW = auto()
     REGISTER = auto()
     REPEAT = auto()
@@ -62,3 +60,13 @@ class TokenTypes(Enum):
                 TokenTypes.SET,
                 TokenTypes.UNITS,
                 TokenTypes.WAIT)
+
+    def is_command(self):
+        return self in TokenTypes.commands()
+
+    def is_printable(self):
+        return self in (
+            TokenTypes.EXPRESSION, TokenTypes.LITERAL_STRING, TokenTypes.NAME,
+            TokenTypes.NUMBER, TokenTypes.REGISTER, TokenTypes.TIME_PATTERN,
+            TokenTypes.UNKNOWN
+        )

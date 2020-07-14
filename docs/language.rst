@@ -792,8 +792,10 @@ To repeat a loop a given number of times:
       off all
     end
 
-Interpolation of values in a loop allows you to choose the starting and
-ending points for a setting and the number of steps to take in
+Interpolation in Loops
+----------------------
+Interpolation of values in a loop allows you to choose the start and
+end points for a setting and the number of steps to take in
 between. For example, to give a light a hue of 120, and then gradually
 transition it to 180 in 5 steps:
 
@@ -834,6 +836,20 @@ You can also specify the starting point:
   # etc.
 
 In this case, `the_hue` will have values of 45, 135, 225, and 315.
+
+An arithmetic expression can take the place of any numeric value
+in a `repeat` loop. You designate such an expression by enclosing it in
+curly braces. For example:
+
+.. code-block:: lightbulb
+
+    assign x 7
+    repeat {5 + x} with sat from {x * 4} to {x * 6}
+    ...
+
+    # Equivalent to:
+    repeat 12 with sat from 28 to 42
+    ...
 
 .. index::
    single: iteration by light
@@ -1037,3 +1053,39 @@ units:
 
     units logical           # x still contains 32767.
     assign x brightness     # Now it's 50 again.
+
+.. index::
+   single: print command
+
+Outputting Text
+===============
+Two commands, `print` and `println`, send output to the terminal. They both
+call Python's own `print` function, which under most conditions sends text
+to `stdout`, typically the user's terminal.
+
+This is a fairly rudimentary, first implementation. The `print` command just
+puts out text, while `println` adds a line feed. The output is buffered, and
+text from `print` won't appear until `println` is called.
+
+You can print all of the settings, such as hue and brightness:
+
+.. code-block:: lightbulb
+
+    println hue brightness
+
+The output can also contain light names and variables. Here's an example that
+iterates over all of the lights, and outputs the settings for each one:
+
+.. code-block:: lightbulb
+
+    assign label "For light:"
+    define print_light with the_light begin
+        println label the_light
+        get the_light
+        print "hue:" hue "saturation:" saturation
+        print "brightness:" brightness
+        println "kelvin:" kelvin
+    end
+
+    repeat all as light
+        print_light light

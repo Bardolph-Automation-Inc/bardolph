@@ -49,6 +49,8 @@ class Registers:
 
 
 class Machine:
+    _MAX_PRINTBUF = 2048
+
     def __init__(self):
         self._pc = 0
         self._cue_time = 0
@@ -57,6 +59,7 @@ class Machine:
         self._program = []
         self._reg = Registers()
         self._call_stack = CallStack()
+        self._print_buffer = ''
         self._vm_math = VmMath(self._call_stack, self._reg)
         self._vm_discover = VmDiscover(self._call_stack, self._reg)
         self._enable_pause = True
@@ -79,6 +82,8 @@ class Machine:
                        OpCode.MOVEQ,
                        OpCode.NOP,
                        OpCode.OP,
+                       OpCode.OUT,
+                       OpCode.OUTQ,
                        OpCode.PARAM,
                        OpCode.PAUSE,
                        OpCode.PUSH,
@@ -116,6 +121,8 @@ class Machine:
             if inst.op_code not in (OpCode.END, OpCode.JSR, OpCode.JUMP):
                 self._pc += 1
         self._clock.stop()
+        if len(self._print_buffer) > 0:
+            print(self._print_buffer.rstrip())
 
     def stop(self) -> None:
         self._keep_running = False
@@ -337,6 +344,29 @@ class Machine:
     def _dnextm(self) -> None:
         self._vm_discover.dnextm(
             self.current_inst.param0, self.current_inst.param1)
+
+    def _out(self) -> bool:
+        srce = self.current_inst.param0
+        if isinstance(srce, Register):
+            value = self._reg.get_by_enum(srce)
+        elif isinstance(srce, (str, LoopVar)):
+            value = self._call_stack.get_variable(srce)
+        self._print_buffer += str(value) + ' '
+        self._check_pbuf()
+
+    def _outq(self) -> bool:
+        value = self.current_inst.param0
+        if value == Operand.NULL:
+            print(self._print_buffer.rstrip())
+            self._print_buffer = ''
+        else:
+            self._print_buffer += str(value) + ' '
+            self._check_pbuf()
+
+    def _check_pbuf(self):
+        if len(self._print_buffer) > self._MAX_PRINTBUF:
+            print(self._print_buffer, end='')
+            self._print_buffer = ''
 
     def _pause(self) -> None:
         if self._enable_pause:
