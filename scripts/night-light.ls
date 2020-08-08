@@ -1,8 +1,10 @@
-hue 120 saturation 80 brightness 0.1 kelvin 2700
-time 600 duration 600
+time 0 duration 300 saturation 90 brightness 5 kelvin 2700
 
-repeat
-    repeat 10 with the_hue cycle 120 begin
-        hue the_hue
-        set all
+repeat begin
+    time 0
+    repeat all as light with _hue cycle 30 begin
+        hue _hue set light
     end
+    time 10
+    wait
+end

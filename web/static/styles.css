@@ -1,12 +1,12 @@
 .bright {
-  background: MediumSeaGreen;
+    background: MediumSeaGreen;
 }
 
 .commandRow {
-  display: flex;
-  height: 64pt;
-  justify-content: center;
-  width: 100%;
+    display: flex;
+    height: 64pt;
+    justify-content: center;
+    width: 100%;
 }
 
 .darkBackground {
@@ -14,8 +14,8 @@
 }
 
 .desktop {
-  background-color: rgb(175, 175, 175);
-  height: 100%;
+    background-color: rgb(175, 175, 175);
+    /* height: 100%; */
 }
 
 .launched .main {
@@ -27,51 +27,50 @@
 }
 
 .homeButton {
-  background-color: rgb(80, 80, 90);
-  color: white;
-  font-style: italic;
+    background-color: rgb(80, 80, 90);
+    color: white;
+    font-style: italic;
 }
 
 .launched {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .lightCommand {
-  align-items: center;
-  cursor: pointer;
-  display: flex;
-  flex: 1;
-  justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    flex: 1;
+    justify-content: center;
 }
 
 .main {
-	align-items: center;
-  background: #eee;
-  display: flex;
-  flex-direction: column;
-  font-family: "Arial", Helvetica, sans-serif;
-  height: 98%;
-  justify-content: center;
+    align-items: center;
+    background: #eee;
+    display: flex;
+    flex-direction: column;
+    font-family: "Arial", Helvetica, sans-serif;
+    height: 100%;
+    justify-content: center;
 }
 
 .mobile {
-	background-color: rgb(64, 32, 32);
-	font-size: 3em;
-	height: 100%;
+    background-color: rgb(64, 32, 32);
+    font-size: 3em;
 }
 
 .mobile .launched {
-  background: rgb(32, 16, 16);
-  font-size: 4em;
+    background: rgb(32, 16, 16);
+    font-size: 4em;
 }
 
 .mobile .commandRow {
-  height: 160pt;
+    height: 120pt;
 }
 
 .mobile .statusColumn {
-	height: 160px;
+	height: 120px;
 }
 
 .mobile .title {
@@ -79,27 +78,27 @@
 }
 
 .statusColumn {
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .statusRow  {
-	cursor: pointer;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin: 32px;
-  padding: 16px;
-  width: 100%;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin: 32px;
+    padding: 16px;
+    width: 100%;
 }
 
 .title {
-  display: flex;
-  font-style: italic;
-  height: 36pt;
+    display: flex;
+    font-style: italic;
+    height: 36pt;
 }
 
 .tv {
@@ -107,5 +106,5 @@
 }
 
 .tv .launched {
-  background: rgb(32, 16, 16);
+    background: rgb(32, 16, 16);
 }
