@@ -1,65 +1,78 @@
-[{
-  "file_name": "off-all.ls",
-  "path": "off",
-  "icon": "darkBulb",
-  "background": "#222",
-  "color": "Linen"
-}, {
-  "file_name": "on-all.ls",
-  "path": "on",
-  "icon": "litBulb",
-  "background": "Linen",
-  "color": "#222"
-}, {
-  "file_name": "incandescent.ls",
-  "title": "Incandescent",
-  "background": "LightYellow",
-  "color": "#222"
-}, {
-  "file_name": "incandescent-dark.ls",
-  "title": "Dark Incan",
-  "background": "Tan",
-  "color": "#222"
-}, {
-  "file_name": "on5.ls",
-  "title": "On 5 Min.",
-  "background": "rgb(21, 139, 168)",
-  "color": "white"
-}, {
-  "file_name": "night-light.ls",
-  "background": "rgb(16, 48, 128)",
-  "color": "white"
-}, {
-  "file_name": "cycle-color.ls",
-  "title": "Color Cycle",
-  "background": "rgb(192, 132, 144)",
-  "color": "#222"
-}, {
-  "file_name": "cycle-color-slow.ls",
-  "title": "Slow Cycle",
-  "background": "rgb(32, 192, 192)",
-  "color": "#222"
-}, {
-  "file_name": "fade-to-dark.ls",
-  "path": "fade",
-  "title": "Fade to Dark",
-  "background": "#621",
-  "color": "White"
-}, {
-  "file_name": "",
-  "path": "capture",
-  "title": "Capture",
-  "background": "SlateGray",
-  "color": "White"
-}, {
-  "file_name": "",
-  "path": "stop-current",
-  "title": "Stop",
-  "background": "Maroon",
-  "color": "White"
-}, {
-  "file_name": "__snapshot__.ls",
-  "path": "retrieve",
-  "background": "rgb(64, 64, 128)",
-  "color": "rgb(128, 192, 192)"
-}]
+[
+    {
+      "file_name": "all_off.ls",
+      "path": "off",
+      "background": "#222",
+      "color": "Linen"
+    },
+    {
+      "file_name": "all_on.ls",
+      "path": "on",
+      "background": "Linen",
+      "color": "#222"
+    },
+    {
+      "file_name": "incandescent.ls",
+      "title": "Incandescent",
+      "background": "LightYellow",
+      "color": "#222"
+    },
+    {
+      "file_name": "incandescent-dark.ls",
+      "title": "Dark Incan",
+      "background": "Tan",
+      "color": "#222"
+    },
+    {
+      "file_name": "on5.ls",
+      "title": "On 5 Min.",
+      "background": "rgb(21, 139, 168)",
+      "color": "white"
+    },
+    {
+      "file_name": "flat.ls",
+      "title": "All Same Color",
+      "background": "#162",
+      "color": "white"
+    },
+    {
+      "file_name": "cycle-color.ls",
+      "title": "Color Cycle",
+      "background": "rgb(192, 132, 144)",
+      "color": "#222"
+    },
+    {
+      "file_name": "cycle-color-slow.ls",
+      "repeat": true,
+      "title": "Slow Cycle",
+      "background": "rgb(32, 192, 192)",
+      "color": "#222"
+    },
+    {
+      "file_name": "fade-to-dark.ls",
+      "path": "fade",
+      "title": "Fade to Dark",
+      "background": "#621",
+      "color": "White"
+    },
+    {
+      "file_name": "",
+      "path": "capture",
+      "title": "Capture",
+      "background": "SlateGray",
+      "color": "White"
+    },
+    {
+      "file_name": "",
+      "path": "stop",
+      "title": "Stop",
+      "background": "Maroon",
+      "color": "White"
+    },
+    {
+      "file_name": "__snapshot__.ls",
+      "path": "retrieve",
+      "background": "rgb(64, 64, 128)",
+      "color": "rgb(128, 192, 192)"
+    }
+    ]
