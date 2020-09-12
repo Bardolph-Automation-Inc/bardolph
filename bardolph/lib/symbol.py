@@ -6,6 +6,7 @@ from ..lib.auto_repl import auto
 class SymbolType(Enum):
     EXTERN = auto()
     MACRO = auto()
+    NO_TYPE = auto()
     PARAM = auto()
     ROUTINE = auto()
     UNKNOWN = auto()

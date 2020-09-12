@@ -5,7 +5,6 @@ from bardolph.lib.auto_repl import auto
 from bardolph.vm.vm_codes import LoopVar, OpCode, Operand
 from bardolph.vm.vm_codes import Operator
 from bardolph.vm.vm_codes import Register
-from bardolph.vm.instruction import Instruction
 
 from .code_gen import CodeGen
 from .expr_parser import ExprParser
@@ -42,6 +41,7 @@ class LoopParser:
     def repeat(self, code_gen, call_context) -> bool:
         self._next_token()
         code_gen.add_instruction(OpCode.LOOP)
+        code_gen.add_instruction(OpCode.MOVEQ, False, LoopVar.BREAK)
         if not self._detect_loop_type(code_gen):
             return False
         if not self._pre_loop(code_gen, call_context):

@@ -24,8 +24,8 @@ class Parser:
         self._lexer = None
         self._error_output = ''
         self._call_context = CallContext()
-        self._current_token_type = None
-        self._current_token = None
+        self._current_token_type = TokenTypes.NO_TOKEN
+        self._current_token = ''
         self._op_code = OpCode.NOP
         self._code_gen = CodeGen()
         self._command_map = {
@@ -35,6 +35,7 @@ class Parser:
             TokenTypes.GET: self._get,
             TokenTypes.IF: self._if,
             TokenTypes.NAME: self._call_routine,
+            TokenTypes.NO_TOKEN: self._syntax_error,
             TokenTypes.OFF: self._power_off,
             TokenTypes.ON: self._power_on,
             TokenTypes.PAUSE: self._pause,
@@ -44,7 +45,8 @@ class Parser:
             TokenTypes.REPEAT: self._repeat,
             TokenTypes.SET: self._set,
             TokenTypes.UNITS: self._set_units,
-            TokenTypes.WAIT: self._wait
+            TokenTypes.WAIT: self._wait,
+            None: self._syntax_error
         }
         self._token_trace = False
 
@@ -74,12 +76,12 @@ class Parser:
         return self._error_output
 
     @property
-    def current_token(self) -> str:
-        return self._current_token
+    def current_token(self):
+        return self._current_token or ''
 
     @property
-    def current_token_type(self) -> TokenTypes:
-        return self._current_token_type
+    def current_token_type(self):
+        return self._current_token_type or TokenTypes.NO_TOKEN
 
     def _script(self) -> bool:
         return self._body() and self._eof()
@@ -95,7 +97,7 @@ class Parser:
             return self._trigger_error("Didn't get to end of file.")
         return True
 
-    def _command(self) -> bool:
+    def _command(self):
         return self._command_map.get(
             self._current_token_type, self._syntax_error)()
 
@@ -144,8 +146,10 @@ class Parser:
         return self.next_token()
 
     def _operand_list(self) -> bool:
-        """ For every operand in the list, issue the instruction in
-        self._op_code. """
+        """
+        For every operand in the list, issue the instruction in
+        self._op_code.
+        """
         if not self._operand():
             return False
         self._add_instruction(self._op_code)

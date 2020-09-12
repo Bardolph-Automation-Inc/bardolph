@@ -26,6 +26,7 @@ class TokenTypes(Enum):
     LOCATION = auto()
     LOGICAL = auto()
     NAME = auto()
+    NO_TOKEN = auto()
     NUMBER = auto()
     OFF = auto()
     ON = auto()

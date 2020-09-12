@@ -59,8 +59,10 @@ class JumpCondition(Enum):
     IF_TRUE = auto()
 
 class LoopVar(Enum):
+    BREAK = auto()
     COUNTER = auto()
     CURRENT = auto()
+    EXIT_JMP = auto()
     FIRST = auto()
     INCR = auto()
     LAST = auto()

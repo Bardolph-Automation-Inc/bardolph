@@ -13,27 +13,19 @@ class SymbolTable:
     def add_symbol(self, name, symbol_type=SymbolType.UNKNOWN, value=None):
         self._dict[name] = Symbol(name, symbol_type, value)
 
-    def get_symbol(self, name) -> Symbol:
-        # Return (type, value)
+    def get_symbol(self, name):
         return self._dict.get(name, None)
 
     def get_type(self, name):
-        pair = self.get_symbol(name)
-        if pair is None:
-            return None
-        symbol_type, _ = pair
-        return symbol_type
+        symbol = self.get_symbol(name)
+        return SymbolType.NO_TYPE if symbol is None else symbol.symbol_type
 
     def get_value(self, name):
-        pair = self.get_symbol(name)
-        if pair is None:
-            return None
-        _, symbol_name = pair
-        return symbol_name
+        symbol = self.get_symbol(name)
+        return None if symbol is None else symbol.value
 
     def get_routine(self, name):
-        pair = self.get_symbol(name)
-        if pair is None:
+        type = self.get_type(name),
+        if type != SymbolType.ROUTINE:
             return None
-        symbol_type, value = self.get_symbol(name)
-        return value if symbol_type == SymbolType.ROUTINE else None
+        return self.get_value(name)

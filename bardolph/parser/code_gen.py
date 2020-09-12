@@ -53,13 +53,17 @@ class CodeGen:
         self.binop(Operator.ADD, addend0, addend1)
 
     def subtraction(self, minuend, subtrahend) -> None:
-        # minuend - subtrahend
-        # Leaves the difference on top of the stack.
+        """
+        minuend - subtrahend
+        Leaves the difference on top of the stack.
+        """
         self.binop(Operator.SUB, minuend, subtrahend)
 
     def test_op(self, operator, op0, op1) -> None:
-        """Generate code to perform a binary operation and put the results into
-        the result register."""
+        """
+        Generate code to perform a binary operation and put the results into
+        the result register.
+        """
         self.binop(operator, op0, op1)
         self.add_instruction(OpCode.POP, Register.RESULT)
 

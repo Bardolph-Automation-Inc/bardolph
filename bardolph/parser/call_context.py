@@ -61,18 +61,17 @@ class CallContext:
     def add_global(self, name, symbol_type, value) -> None:
         self._globals.add_symbol(name, symbol_type, value)
 
-    def get_data(self, name) -> Symbol:
+    def get_data(self, name):
         return self.get_symbol_typed(name, (SymbolType.MACRO, SymbolType.VAR))
 
-    def get_symbol(self, name) -> Symbol:
-        """ Get a parameter from the top of the stack. If it's not there, check
-        the globals. """
-        symbol = self.peek().get_symbol(name)
-        if symbol is not None:
-            return symbol
-        return self._globals.get_symbol(name)
+    def get_symbol(self, name):
+        """
+        Get a parameter from the top of the stack. If it's not there, check
+        the globals.
+        """
+        return self.peek().get_symbol(name) or self._globals.get_symbol(name)
 
-    def get_symbol_typed(self, name, symbol_types) -> Symbol:
+    def get_symbol_typed(self, name, symbol_types):
         symbol = self.get_symbol(name)
         if symbol is None or symbol.symbol_type not in symbol_types:
             return None
@@ -86,11 +85,8 @@ class CallContext:
         return symbol is not None and symbol.symbol_type in symbol_types
 
     def get_routine(self, name):
-        routine = None
         symbol = self._global_of_type(name, SymbolType.ROUTINE)
-        if symbol is not None:
-            routine = symbol.value
-        return routine
+        return None if symbol is None else symbol.value
 
     def has_routine(self, name):
         return self._global_of_type(name, SymbolType.ROUTINE) is not None

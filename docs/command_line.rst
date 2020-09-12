@@ -11,17 +11,19 @@
 Command-Line Tools
 ##################
 This section contains information about the command-line
-tools. Of these commands, `lsrun` is probably the one you'll use
-most often.
+tools. Of these commands, `lsrun`, which runs a script, is probably the one
+you'll use most often. The `lsc` command generates a Python program around
+a script, which you can run directly. To get the status of the lights on your
+network, run `lscap`.
 
 .. index::
    single: discovery delay
 
-.. note:: During initialization, the process of discovering bulbs can take a
+.. note:: During initialization, the process of discovering lights can take a
   while. Basically, a "report" message gets broadcast over the WiFi network,
-  and each bulb announces its presence. If the number
-  of bulbs is unknown, the discover process has no choice but to wait a
-  specific amount of time  for them to stop answering. To minimize that delay,
+  and each light announces its presence. If the number
+  of lights is unknown, the discover process has no choice but to wait a
+  specific amount of time for them to stop answering. To minimize that delay,
   use the optional `-n` or `--num-lights` flag to specify the actual number
   of lights. For example:
 
@@ -31,8 +33,10 @@ most often.
     lscap -n 5
     lsrun --num-lights 5 scripts/on-all.ls
 
-  With this option, discovery stops as soon as the expected
-  number has been found, which is usually much faster.
+  With this option, discovery stops as soon as the expected number has been
+  found, which is usually much faster. However, if you specify a count that is
+  lower than the number of lights you really do have, one or more of them may
+  not get discovered.
 
 .. index::
    single: lsrun
@@ -63,8 +67,8 @@ This would run `light.ls`, and upon completion, execute `dark.ls`.
 
 Command Line Options
 --------------------
-Command-line flags modify how a script is run. Each option has a long and a short
-syntax. For example:
+Command-line flags modify how a script is run. Each option has a long and a
+short syntax. For example:
 
 .. code-block:: bash
 
@@ -167,17 +171,20 @@ indicating what the program would do.
 lscap - Capture Light State
 ===========================
 This program captures the current state of the lights and generates the
-requested type of output. The default output is a human-readable listing
-of the lights. With the -s option, it can give you a convenient
-starting point for creating a new script. This command is also helpful for
-taking a quick look at the state of your bulbs.
+requested type of output. This command does not do anything with scripts; it's
+really just a utility.
+
+The default output is a human-readable listing of the lights, along with their
+current settings, and what groups and locations they belong to. This can be
+handy when you want to check on your lights from the command line. With the -s
+option, it can generate a convenient starting point for creating a new script.
 
 The `lscap` command is equivalent to `python -m bardoolph.controller.snapshot`.
 
 Command Line Options
 --------------------
 Command-line options control the operation of the command and the type of
-output it produces, notably:
+output it produces. If no option is provided, it defaults to `-t`.
 
 * `-s` or `--script`: outputs a lightbulb script to `stdout`. If you redirect
   that output to a file and run it as a script, it will restore the lights to
@@ -190,4 +197,3 @@ output it produces, notably:
 * `-n` or `--num-lights`: Specify the number of lights that are on the network.
   If you know how many lights are connected, using this option can make a
   noticable reduction in initialization time.
-

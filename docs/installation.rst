@@ -40,42 +40,6 @@ source tree.
 
   git clone https://github.com/al-fontes-jr/bardolph
 
-.. index::
-   single: local build
-
-Alternative: Build and Install
-==============================
-You can use this process if you want to build from source and install the
-local package. In this case, you should still use `pip` as your package
-manager, so that you can use it later to remove your build and clean
-out unwanted files.
-
-To do this, you need to have
-`setuptools <https://pypi.org/project/setuptools>`_ installed.
-
-With `setuptools` on your system:
-
-.. code-block:: bash
-
-  pip install lifxlan
-  git clone https://github.com/al-fontes-jr/bardolph
-  cd bardolph
-  python setup.py sdist bdist_wheel
-  pip install --no-index --find-links ./dist bardolph
-
-Note that the invocation of `setup.py` creates the `dist` directory. Within
-that directory, it creates a `.whl` file containing the new package. When
-you run `pip`, it finds that file and installs it. You need to install
-`lifxlan` manually because the installation of bardolph is limited to
-local files.
-
-When you get a newer release of the code, you can upgrade it with:
-
-.. code-block:: bash
-
-  python setup.py bdist
-  pip install --upgrade --no-index --find-links ./dist bardolph
-
 Testing the Installation
 ========================
 .. note:: The `lsrun`, `lscap`, and `lsc` commands are small Python
@@ -97,31 +61,85 @@ To do a quick sanity check:
 
 .. code-block:: bash
 
-  lsrun -h
+    lsrun -h
 
-This should display a help screen. To make sure Bardolph is able to access
-your actual bulbs:
+This should display a help screen. To verify access to your actual lights:
 
 .. code-block:: bash
 
-  lscap
+    lscap
 
 This will discover the lights on the network and output a plain-text report
-with the state of each light it finds.
+with the state of each light it finds. If you don't have any lights, but
+still want to test the installaton, use fakes, which are software simulations
+of real lights:
+
+.. code-block:: bash
+
+    lscap -f
+
+As another quick test, you can try turning all the lights off and on again from
+the command line:
+
+.. code-block:: bash
+
+    lsrun -s "off all"
+    lsrun -s "on all"
 
 The source distribution includes some examples in a directory
 named `scripts`. For example:
 
 .. code-block:: bash
 
-  lsrun scripts/on-all.ls
+    lsrun scripts/on-all.ls
 
-To run a script without attempting to access any lights (for example, if you
-don't have any), use the "fakes" option:
+The `-f` flag works here as well, which allows you to try out scripts
+without accessing any actual lights.
+
+Note that the above commands are documented in :ref:`command_line`.
+
+.. index::
+   single: local build
+
+Alternative: Build and Install
+==============================
+You can use this process if you want to build from source and install the
+local package. In this case, you should still use `pip` as your package
+manager, so that you can use it later to remove your build and clean
+out unwanted files.
+
+To do this, you need to have
+`setuptools <https://pypi.org/project/setuptools>`_ installed.
+
+With `setuptools` on your system:
 
 .. code-block:: bash
 
-  lsrun -f scripts/on-all.ls
+    pip install lifxlan
+    git clone https://github.com/al-fontes-jr/bardolph
+    cd bardolph
+    python setup.py sdist bdist_wheel
+    pip install --no-index --find-links ./dist bardolph
+
+Note that the invocation of `setup.py` creates the `dist` directory. Within
+that directory, it creates a `.whl` file containing the new package. When
+you run `pip`, it finds that file and installs it. You need to install
+`lifxlan` manually because the installation of bardolph is limited to
+local files.
+
+Although it isn't necessary, you may want to try running the Python unit tests
+to validate your copy of the source code and Python environment:
+
+.. code-block:: bash
+
+    python -m tests.all_tests
+
+When you get a newer release of the code, you can upgrade it with:
+
+.. code-block:: bash
+
+    python setup.py bdist
+    pip install --upgrade --no-index --find-links ./dist bardolph
 
 .. index::
    single: uninstall
@@ -132,7 +150,7 @@ Uninstall with:
 
 .. code-block:: bash
 
-  pip uninstall bardolph
+    pip uninstall bardolph
 
 This will work whether you installed a downloaded package, or built and
 installed a package locally.
@@ -154,7 +172,7 @@ all accept the `-c` or `--config-file` option. For example:
 
 .. code-block:: bash
 
-  lsrun -c config.ini scripts/on-all.ls
+    lsrun -c config.ini scripts/on-all.ls
 
 In this case, `lsrun` will first initialize all of its internal settings. It
 will then read the file `config.ini` and replace whatever settings are overridden
@@ -162,9 +180,9 @@ by that file. For example, by default, all logging output is sent to the screen.
 To override that setting and send output to a file, you could put the
 following content into `config.ini`::
 
-  [logger]
-  log_file: /var/log/lights.log
-  log_to_console: False
+    [logger]
+    log_file: /var/log/lights.log
+    log_to_console: False
 
 An example file with some candidates for customization are in the source
 distribution, in the file `docs/bardolph.ini`. Note that this file is

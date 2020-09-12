@@ -21,41 +21,6 @@ source file and compiles it into a sequence of encoded instructions. Next, a
 simple virtual machine executes those instructions. A job-control facility
 maintains a queue, allowing execution of a sequence of compiled scripts.
 
-A script sets the color and brightness of the lights by specifying
-5 numbers: `hue`, `saturation`, `brightness`, `kelvin`, and `duration`.
-During execution, the Bardolph virtual machine sends these settings
-to the lights.
-
-One easy way to understand the meaning of these numbers is to use
-the LIFX mobile app and observe the displayed numbers as you change
-the lighting.
-
-The value you supply for `hue` is an angle expressed in
-in degrees, normally between 0 and 360. The values for `saturation`
-and `brightness` are treated as percentages, while `kelvin` is a
-temperature modification applied by the bulbs to the resulting color.
-
-All of these number must be positive, and may be floating-point
-values. Percentages above 100 are considered invalid. Angles
-greater than or equal to 360 are normalized to a number less
-than 360 by modulo arithmetic.
-
-.. index::
-    pair: color setting; definition
-    pair: color; definition
-
-.. note:: The term *color* is somewhat ambiguous. Intuitively, you may
-  consider brightness (intensity) to be separate from a bulb's color.
-  However, for simplicity here, "color" always refers
-  to the tone of the light and its intensity. Therefore,
-  in this documentation, "setting the color" of a light means that
-  you are specifying both the frequency and the brightness of the
-  light that the device produces.
-
-  Throughout this documentation, *color setting* is defined as any of
-  the parameters that control this so-called color. The available
-  color settings are `hue`, `saturation`, `brightness`, and `kelvin`.
-
 Syntax
 ======
 A script is a plain-text file in which all whitespace is equivalent. You can
@@ -80,6 +45,45 @@ This script sets the colors of all known lights to a bright shade of red.
 Note that the `set` command is what actually causes the lights to adopt the
 new settings and change their colors. The `all` parameter causes the given
 settings to be applied to all of the lights found on the network.
+
+A script sets the color and brightness of the lights by specifying
+5 numbers: `hue`, `saturation`, `brightness`, `kelvin`, and `duration`.
+During execution, the Bardolph virtual machine sends these settings
+to the lights.
+
+The value you supply for `hue` is an angle expressed in
+in degrees, normally between 0 and 360. The values for `saturation`
+and `brightness` are treated as percentages, while `kelvin` is considered
+a temperature in degrees Kelvin. The value for `duration` is expressed in
+seconds, and tells the light how long to take to transition from its current
+state to the one you are now specifying. If you never supply a value for
+`duration`, it defaults to zero, and transitions occur instantaneously.
+
+All of these numbers except `hue` must be positive, and may be floating-point
+values. Percentages above 100 are considered invalid. Angles for `hue`
+greater than or equal to 360 are normalized to a number less
+than 360 by modulo arithmetic.
+
+One easy way to see what colors correspond to these numbers is to use
+the color wheel in the LIFX mobile app. In that app, you can see values for hue,
+saturation, and brightness in real time. If you wanted to reproduce a color, you
+could put the values displayed by the app into a script.
+
+.. index::
+    pair: color setting; definition
+    pair: color; definition
+
+.. note:: The term *color* is somewhat ambiguous. Intuitively, you may
+  consider brightness (intensity) to be separate from a bulb's color.
+  However, for simplicity here, "color" always refers
+  to the tone of the light and its intensity. Therefore,
+  in this documentation, "setting the color" of a light means that
+  you are specifying both the frequency and the brightness of the
+  light that the device produces.
+
+  Throughout this documentation, *color setting* is defined as any of
+  the parameters that control this so-called color. The available
+  color settings are `hue`, `saturation`, `brightness`, and `kelvin`.
 
 When a setting isn't specified a second time, the VM uses the existing value.
 For example, the following reuses numbers for `saturation`, `brightness`,
@@ -337,7 +341,7 @@ instructions as fast as it can.
 Wait for Time of Day
 =====================
 Instead of waiting for a delay to elapse, you can specify the specific time
-thatan action occurs, using the `at` modifier with the `time` command. For
+that an action occurs, using the `at` modifier with the `time` command. For
 example, to turn on all the lights at 8:00 a.m.:
 
 .. code-block:: lightbulb
@@ -380,8 +384,7 @@ at 8:00 a.m.:
   time at 9:00 off all
 
 This will turn on all the lights at 10:00 a.m., wait 23 hours, and turn them
-off again the next day. If you have a regular set of actions you'd like to
-take, you can launch a script in repeat mode and let it run indefinitely.
+off again the next day.
 
 You can combine patterns to create more complicated behavior. For example, this
 will turn on the lights the next time it's either 15 or 45 minutes past the
@@ -390,8 +393,6 @@ hour:
 .. code-block:: lightbulb
 
   time at *:15 or *:45 on all
-
-This type of script would typically be run in repeat mode.
 
 After a scheduled wait, the delay timer is essentially reset. For example:
 
