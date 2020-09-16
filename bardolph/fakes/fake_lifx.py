@@ -123,16 +123,13 @@ class Light(ActivityMonitor):
 
 
 class Lifx(i_controller.Lifx, ActivityMonitor):
-    _inits = None
+    _inits = []
 
     def __init__(self):
         ActivityMonitor.__init__(self)
         self._lights = []
-        if self._inits is not None:
-            for init in self._inits:
-                self._lights.append(
-                    Light(init[0], init[1], init[2], init[3],
-                            None if len(init) < 5 else init[4]))
+        for init in self._inits:
+            self._lights.append(Light(*init))
 
     def get_lights(self):
         return self._lights

@@ -23,8 +23,8 @@ class Registers:
         self.kelvin = 0.0
         self.disc_forward = False
         self.duration = 0.0
-        self.first_zone = None
-        self.last_zone = None
+        self.first_zone = 0
+        self.last_zone = 0
         self.power = False
         self.result = None
         self.name = None
@@ -32,8 +32,11 @@ class Registers:
         self.time = 0.0  # ms.
         self.unit_mode = UnitMode.LOGICAL
 
-    def get_color(self) -> [int]:
+    def get_color(self):
         return [self.hue, self.saturation, self.brightness, self.kelvin]
+
+    def store_color(self, color):
+        self.hue, self.saturation, self.brightness, self.kelvin = color
 
     def get_by_enum(self, reg):
         return getattr(self, reg.name.lower())
@@ -132,7 +135,7 @@ class Machine:
         reg = self._reg
         reg.hue, reg.saturation, reg.brightness, reg.kelvin = color
 
-    def color_from_reg(self) -> [int]:
+    def color_from_reg(self):
         return self._reg.get_color()
 
     def get_variable(self, name):
@@ -153,7 +156,7 @@ class Machine:
     @inject(LightSet)
     def _color_all(self, light_set=injected) -> None:
         color = self._assure_raw_color(self._reg.get_color())
-        duration = self._assure_raw(Register.DURATION, self._reg.duration)
+        duration = self._assure_raw_time(self._reg.duration)
         light_set.set_color(color, duration)
 
     @inject(LightSet)
@@ -164,7 +167,7 @@ class Machine:
         else:
             light.set_color(
                 self._assure_raw_color(self._reg.get_color()),
-                self._assure_raw(Register.DURATION, self._reg.duration))
+                self._assure_raw_time(self._reg.duration))
 
     @inject(LightSet)
     def _color_mz_light(self, light_set=injected) -> None:
@@ -179,7 +182,7 @@ class Machine:
             light.set_zone_color(
                 start_index, end_index + 1,
                 self._assure_raw_color(self._reg.get_color()),
-                self._assure_raw(Register.DURATION, self._reg.duration))
+                self._assure_raw_time(self._reg.duration))
 
     @inject(LightSet)
     def _color_group(self, light_set=injected) -> None:
@@ -201,20 +204,20 @@ class Machine:
 
     def _color_multiple(self, lights) -> None:
         color = self._assure_raw_color(self._reg.get_color())
-        duration = self._assure_raw(Register.DURATION, self._reg.duration)
+        duration = self._assure_raw_time(self._reg.duration)
         for light in lights:
             light.set_color(color, duration)
 
     def _power(self) -> None: {
-        Operand.ALL: self._power_all,
-        Operand.LIGHT: self._power_light,
-        Operand.GROUP: self._power_group,
-        Operand.LOCATION: self._power_location
-    }[self._reg.operand]()
+            Operand.ALL: self._power_all,
+            Operand.LIGHT: self._power_light,
+            Operand.GROUP: self._power_group,
+            Operand.LOCATION: self._power_location
+        }[self._reg.operand]()
 
     @inject(LightSet)
     def _power_all(self, light_set=injected) -> None:
-        duration = self._assure_raw(Register.DURATION, self._reg.duration)
+        duration = self._assure_raw_time(self._reg.duration)
         light_set.set_power(self._reg.get_power(), duration)
 
     @inject(LightSet)
@@ -223,7 +226,7 @@ class Machine:
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            duration = self._assure_raw(Register.DURATION, self._reg.duration)
+            duration = self._assure_raw_time(self._reg.duration)
             light.set_power(self._reg.get_power(), duration)
 
     @inject(LightSet)
@@ -261,9 +264,9 @@ class Machine:
                 if self._zone_check(light):
                     zone = self._reg.first_zone
                     color = light.get_color_zones(zone, zone + 1)[0]
-                    self.color_to_reg(self._maybe_logical_color(color))
+                    self.color_to_reg(self._maybe_converted_color(color))
             else:
-                self.color_to_reg(self._maybe_logical_color(light.get_color()))
+                self.color_to_reg(self._maybe_converted_color(light.get_color()))
 
     def _param(self) -> None:
         """
@@ -346,13 +349,13 @@ class Machine:
             self.current_inst.param0, self.current_inst.param1)
 
     def _out(self) -> bool:
-        srce = self.current_inst.param0
-        if isinstance(srce, Register):
-            value = self._reg.get_by_enum(srce)
-        elif isinstance(srce, (str, LoopVar)):
-            value = self._call_stack.get_variable(srce)
+        value = self.current_inst.param0
+        if isinstance(value, Register):
+            value = self._reg.get_by_enum(value)
+        elif isinstance(value, (str, LoopVar)):
+            value = self._call_stack.get_variable(value)
         self._print_buffer += str(value) + ' '
-        self._check_pbuf()
+        return self._check_pbuf()
 
     def _outq(self) -> bool:
         value = self.current_inst.param0
@@ -362,11 +365,13 @@ class Machine:
         else:
             self._print_buffer += str(value) + ' '
             self._check_pbuf()
+        return True
 
-    def _check_pbuf(self):
+    def _check_pbuf(self) -> bool:
         if len(self._print_buffer) > self._MAX_PRINTBUF:
             print(self._print_buffer, end='')
             self._print_buffer = ''
+        return True
 
     def _pause(self) -> None:
         if self._enable_pause:
@@ -394,65 +399,37 @@ class Machine:
                 time /= 1000.0
             self._clock.pause_for(time)
 
-    def _assure_raw(self, reg, value) -> int:
-        """
-        If in logical mode, convert incoming value to raw units. If not in
-        logical mode, no conversion is necessary.
-        """
-        if (self._reg.unit_mode == UnitMode.LOGICAL
-                and units.requires_conversion(reg)):
-            return units.as_raw(reg, value)
-        if (self._reg.unit_mode == UnitMode.RAW and reg == Register.HUE
-                and value > 65535):
-            value %= 65536
+    def _assure_raw_time(self, value) -> int:
+        if self._reg.unit_mode == UnitMode.LOGICAL:
+            return units.time_raw(value)
         return value
 
-    def _assure_raw_color(self, color) -> [int]:
+    def _assure_raw_color(self, color):
         if self._reg.unit_mode == UnitMode.RAW:
             return color
-        result = 4 * [0]
-        result[0] = units.as_raw(Register.HUE, color[0])
-        result[1] = units.as_raw(Register.SATURATION, color[1])
-        result[2] = units.as_raw(Register.BRIGHTNESS, color[2])
-        result[3] = round(color[3])
-        return result
+        return units.logical_to_raw(color)
 
-    def _maybe_logical(self, reg, value) -> int:
+    def _maybe_converted_color(self, color):
         """
-        If in logical mode, convert incoming value to logical units. If not
-        in logical mode, or for some registers, no conversion is necessary.
-
-        Typically, the incoming value comes from a register, which always
-        contains a raw value.
+        The incoming color always consists of raw values.
         """
-        if (self._reg.unit_mode == UnitMode.LOGICAL
-                and units.requires_conversion(reg)):
-            return units.as_logical(reg, value)
-        if reg == Register.HUE and value > 360:
-            value %= 360
-        return value
-
-    def _maybe_logical_color(self, color) -> [int]:
         if self._reg.unit_mode == UnitMode.RAW:
             return color
-        result = 4 * [0]
-        result[0] = units.as_logical(Register.HUE, color[0])
-        result[1] = units.as_logical(Register.SATURATION, color[1])
-        result[2] = units.as_logical(Register.BRIGHTNESS, color[2])
-        result[3] = color[3]
-        return result
+        elif self._reg.unit_mode == UnitMode.LOGICAL:
+            return units.raw_to_logical(color)
+        return units.raw_to_rgb(color)
 
     def _move(self) -> bool:
         """
         Move from variable/register to variable/register.
         """
         inst = self.current_inst
-        srce = inst.param0
+        value = inst.param0
         dest = inst.param1
-        if isinstance(srce, Register):
-            value = self._reg.get_by_enum(srce)
-        elif isinstance(srce, (str, LoopVar)):
-            value = self._call_stack.get_variable(srce)
+        if isinstance(value, Register):
+            value = self._reg.get_by_enum(value)
+        elif isinstance(value, (str, LoopVar)):
+            value = self._call_stack.get_variable(value)
         return self._do_put_value(dest, value)
 
     def _moveq(self) -> bool:
@@ -462,22 +439,39 @@ class Machine:
         value = self.current_inst.param0
         dest = self.current_inst.param1
         if dest == Register.UNIT_MODE:
-            if self._reg.unit_mode != value:
-                fn = (units.as_logical if value == UnitMode.LOGICAL
-                      else units.as_raw)
-                self._reg.hue = fn(Register.HUE, self._reg.hue)
-                self._reg.saturation = fn(
-                    Register.SATURATION, self._reg.saturation)
-                self._reg.brightness = fn(
-                    Register.BRIGHTNESS, self._reg.brightness)
-        return self._do_put_value(dest, value)
+            self._switch_unit_mode(value)
+        self._do_put_value(dest, value)
+        return True
 
-    def _do_put_value(self, dest, value) -> bool:
+    def _switch_unit_mode(self, to_mode) -> None:
+        from_mode = self._reg.unit_mode
+        if from_mode == to_mode:
+            return
+
+        key = lambda mode0, mode1: str(mode0) + str(mode1)
+        converters = (
+            (UnitMode.LOGICAL, UnitMode.RAW, units.logical_to_raw),
+            (UnitMode.LOGICAL, UnitMode.RGB, units.logical_to_rgb),
+            (UnitMode.RGB, UnitMode.RAW, units.rgb_to_raw),
+            (UnitMode.RGB, UnitMode.LOGICAL, units.rgb_to_logical),
+            (UnitMode.RAW, UnitMode.RGB, units.raw_to_rgb),
+            (UnitMode.RAW, UnitMode.LOGICAL, units.raw_to_logical))
+        convert = {key(from_mode, to_mode): fn
+              for from_mode, to_mode, fn in converters}[key(from_mode, to_mode)]
+
+        self._reg.store_color(convert(self._reg.get_color()))
+        if to_mode == UnitMode.RAW:
+            self._reg.duration, self._reg.time = (units.time_raw(t)
+                for t in (self._reg.duration, self._reg.time))
+        elif from_mode == UnitMode.RAW:
+            self._reg.duration , self._reg.time = (units.time_logical(t)
+                for t in (self._reg.duration, self._reg.time))
+
+    def _do_put_value(self, dest, value) -> None:
         if isinstance(dest, Register):
             self._reg.set_by_enum(dest, value)
         else:
             self._call_stack.put_variable(dest, value)
-        return True
 
     def _time_pattern(self) -> None:
         inst = self.current_inst

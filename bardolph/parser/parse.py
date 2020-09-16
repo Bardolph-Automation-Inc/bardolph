@@ -203,7 +203,7 @@ class Parser:
     def _zone_range(self) -> bool:
         if self._op_code != OpCode.COLOR:
             return self._trigger_error('Zones not supported for {}'.format(
-                self._op_code.name.tolower()))
+                self._op_code.name.lower()))
         self.next_token()
         return self._set_zones()
 

@@ -1,105 +1,64 @@
+import colorsys
 from enum import Enum
 
 from bardolph.lib.auto_repl import auto
 from bardolph.vm.vm_codes import Register
 
-
-_RAW_RANGE = (0, 65535)
-
+_EPSILON = 1.0 / 65536.0 / 2.0
 
 class UnitMode(Enum):
     LOGICAL = auto()
     RAW = auto()
+    RGB = auto()
 
-def has_range(reg):
-    return reg in (
-        Register.BRIGHTNESS, Register.HUE, Register.KELVIN, Register.SATURATION)
+def time_raw(logical_time):
+    return logical_time * 1000.0
 
-def requires_conversion(reg):
-    return reg in (
-        Register.BRIGHTNESS, Register.DURATION, Register.HUE,
-        Register.SATURATION, Register.TIME)
+def time_logical(raw_time):
+    raw_time = float(raw_time)
+    return 0.0 if -_EPSILON < raw_time < _EPSILON else raw_time / 1000.0
 
-def get_range(reg):
-    """
-    Return the allowable range, in raw units, for a parameter.
+def _pct_to_raw(pct):
+    return 0.0 if -_EPSILON < pct < _EPSILON else pct / 100.0 * 65535.0
 
-    reg:
-        token_type.TokenType designating the register to be set. May also
-        be a string containing the name of the Enum.
+def logical_to_raw(logical_color):
+    logical_value = logical_color[0]
+    if (-_EPSILON < logical_value < _EPSILON or
+            360 - _EPSILON < logical_value < 360 + _EPSILON):
+        h = 0.0
+    else:
+        h = (logical_value % 360.0) / 360.0 * 65535.0
+    s = _pct_to_raw(logical_color[1])
+    b = _pct_to_raw(logical_color[2])
+    return [h, s, b, logical_color[3]]
 
-    Returns:
-        A tuple containing (minimum, maximum), or None if the parameter
-        does not have a limited range of values.
-    """
-    reg = _string_check(reg)
-    return (None, None) if reg in (
-        Register.DURATION, Register.TIME) else _RAW_RANGE
+def raw_to_logical(raw_color):
+    raw_value = raw_color[0]
+    h = float(raw_value) / 65535.0 * 360.0
+    raw_value = raw_color[1]
+    s = 100.0 if raw_value >= 65535.0 else float(raw_value) / 65535.0 * 100.0
+    raw_value = raw_color[2]
+    b = 100.0 if raw_value >= 65535.0 else float(raw_value) / 65535.0 * 100.0
+    return [h, s, b, raw_color[3]]
 
-def as_raw(reg, logical_value, use_float=False):
-    """
-    If necessary, converts to integer value that can be passed into the
-    light API.
+def rgb_to_raw(rgb_color):
+    r, g, b = [rgb_color[i] / 100.0 for i in range(0, 3)]
+    h, s, v = colorsys.rgb_to_hsv(r, g, b)
+    return [h * 65535.0, s * 65535.0, v * 65535.0, rgb_color[3]]
 
-    Args:
-        reg: TokenType corresponding to the register being set.
-        logical_value: the number to be converted. May also
-        be a string containing the name of the Enum.
+def rgb_to_logical(rgb_color):
+    r, g, b = [rgb_color[i] / 100.0 for i in range(0, 3)]
+    h, s, v = colorsys.rgb_to_hsv(r, g, b)
+    return [h * 360.0, s * 100.0, v * 100.0, rgb_color[3]]
 
-    Returns:
-        If no conversion is done, returns the incoming value untouched.
-        Otherwise, an integer that corresponds to the logical value.
-    """
-    reg = _string_check(reg)
-    if not requires_conversion(reg):
-        return logical_value
+def raw_to_rgb(raw_color):
+    h, s, v = [raw_color[i] / 65535.0 for i in range(0, 3)]
+    r, g, b = colorsys.hsv_to_rgb(h, s, v)
+    return [r * 100.0, g * 100.0, b * 100.0, raw_color[3]]
 
-    value = logical_value
-    if reg == Register.HUE:
-        if logical_value in (0.0, 360.0):
-            value = 0.0
-        else:
-            value = (logical_value % 360.0) / 360.0 * 65535.0
-    elif reg in (Register.BRIGHTNESS, Register.SATURATION):
-        if logical_value >= 100.0:
-            value = 65535.0
-        else:
-            value = logical_value / 100.0 * 65535.0
-    elif reg in (Register.DURATION, Register.TIME):
-        value = logical_value * 1000.0
-
-    if reg == Register.HUE and value > 65535.0:
-        value %= 65536.0
-    return value if use_float else round(value)
-
-def as_logical(reg, raw_value):
-    """If necessary, converts to floating-point logical value that
-    typically apears in a script.
-
-    Args:
-        reg: TokenType corresponding to the register being set.
-        raw_value: the number to be converted. May also
-        be a string containing the name of the Enum.
-
-    Returns:
-        If no conversion is done, returns the incoming value untouched.
-        Otherwise, a float that corresponds to the raw value.
-    """
-    reg = _string_check(reg)
-    if not requires_conversion(reg):
-        return raw_value
-
-    value = raw_value
-    if reg == Register.HUE:
-        value = float(raw_value) / 65535.0 * 360.0
-    elif reg in (Register.BRIGHTNESS, Register.SATURATION):
-        if raw_value == 65535:
-            value = 100.0
-        else:
-            value = float(raw_value) / 65535.0 * 100.0
-    elif reg in (Register.DURATION, Register.TIME):
-        value = raw_value / 1000.0
-    return value
-
-def _string_check(reg):
-    return Register[reg.upper()] if isinstance(reg, str) else reg
+def logical_to_rgb(logical_color):
+    h = logical_color[0] / 360.0
+    s = logical_color[1] / 100.0
+    v = logical_color[2] / 100.0
+    r, g, b = colorsys.hsv_to_rgb(h, s, v)
+    return [r * 100.0, g * 100.0, b * 100.0, logical_color[3]]
