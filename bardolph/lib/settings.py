@@ -1,4 +1,5 @@
 import configparser
+import os
 
 from . import i_lib
 from . import injection
@@ -37,6 +38,12 @@ class Builder:
                     'True': True,
                     'False': False
                 }.get(value, value)
+        return self
+
+    def apply_env(self, env_name = 'BARDOLPH_INI'):
+        ini = os.getenv(env_name)
+        if ini:
+            self.apply_file(ini)
         return self
 
     def configure(self):

@@ -19,14 +19,34 @@ _assembly = [
 
 ]
 
-_param_counts = {
-    OpCode.BREAKPOINT : 0, OpCode.COLOR : 0, OpCode.CONSTANT: 2,
-    OpCode.DISC : 0, OpCode.DISCM : 1, OpCode.DNEXT : 1, OpCode.DNEXTM : 2,
-    OpCode.END : 1, OpCode.END_LOOP : 0, OpCode.GET_COLOR : 0, OpCode.JSR : 1,
-    OpCode.JUMP: 2, OpCode.LOOP : 0, OpCode.MOVE: 2, OpCode.MOVEQ: 2,
-    OpCode.NOP : 0, OpCode.OP : 1, OpCode.PARAM: 2, OpCode.PAUSE : 0,
-    OpCode.POP : 1, OpCode.POWER : 0, OpCode.PUSH : 1, OpCode.PUSHQ : 1,
-    OpCode.ROUTINE : 1, OpCode.STOP : 0, OpCode.TIME_PATTERN: 2, OpCode.WAIT: 0
+_param_counts = { op_code: param_count for op_code, param_count in (
+    (OpCode.BREAKPOINT, 0),
+    (OpCode.COLOR, 0),
+    (OpCode.CONSTANT, 2),
+    (OpCode.DISC, 0),
+    (OpCode.DISCM, 1),
+    (OpCode.DNEXT, 1),
+    (OpCode.DNEXTM, 2),
+    (OpCode.END, 1),
+    (OpCode.END_LOOP, 0),
+    (OpCode.GET_COLOR, 0),
+    (OpCode.JSR, 1),
+    (OpCode.JUMP, 2),
+    (OpCode.LOOP, 0),
+    (OpCode.MOVE: 2),
+    (OpCode.MOVEQ: 2),
+    (OpCode.NOP, 0),
+    (OpCode.OP, 1),
+    (OpCode.PARAM: 2),
+    (OpCode.PAUSE, 0),
+    (OpCode.POP, 1),
+    (OpCode.POWER, 0),
+    (OpCode.PUSH, 1),
+    (OpCode.PUSHQ, 1),
+    (OpCode.ROUTINE, 1),
+    (OpCode.STOP, 0),
+    (OpCode.TIME_PATTERN: 2),
+    (OpCode.WAIT: 0)
 }
 
 def get_assembly():

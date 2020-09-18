@@ -9,7 +9,7 @@ class Routine:
         return self._name
 
     @property
-    def params(self) -> [str]:
+    def params(self):
         return self._params
 
     def add_param(self, name):

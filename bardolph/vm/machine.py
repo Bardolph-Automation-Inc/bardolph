@@ -458,7 +458,6 @@ class Machine:
             (UnitMode.RAW, UnitMode.LOGICAL, units.raw_to_logical))
         convert = {key(from_mode, to_mode): fn
               for from_mode, to_mode, fn in converters}[key(from_mode, to_mode)]
-
         self._reg.store_color(convert(self._reg.get_color()))
         if to_mode == UnitMode.RAW:
             self._reg.duration, self._reg.time = (units.time_raw(t)

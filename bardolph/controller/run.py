@@ -54,12 +54,7 @@ def init_settings(args):
     overrides = arg_helper.get_overrides(args)
     if overrides is not None:
         settings_init.add_overrides(overrides)
-
-    ini = os.getenv('BARDOLPH_INI')
-    if ini:
-        settings_init.apply_file(ini)
-
-    settings_init.configure()
+    settings_init.apply_env().configure()
 
 
 def main():

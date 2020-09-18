@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import os
 
 from bardolph.lib import injection
 from bardolph.lib import settings
@@ -72,16 +73,16 @@ class ScriptSnapshot(Snapshot):
     def record_setting(self, reg, value):
         self._script += '{} {} '.format(reg, value)
 
-    def handle_color(self, color):
+    def handle_color(self, raw_color):
+        # Output is always logical units.
+        logical_color = units.raw_to_logical(raw_color)
         params = zip([
             Register.HUE, Register.SATURATION, Register.BRIGHTNESS,
-            Register.KELVIN
-            ], color)
+            Register.KELVIN], logical_color)
         for param in params:
-            reg, value = param
-            fmt = '{} {:.0f} ' if units.requires_conversion(reg) else '{} {} '
-            self._script += fmt.format(
-                reg.name.lower(), units.as_logical(reg, value))
+            reg, value = param[0], param[1]
+            fmt = '{} {:.0f} ' if isinstance(value, (int, float)) else '{} {} '
+            self._script += fmt.format(reg.name.lower(), value)
 
     def handle_power(self, power):
         self._power = power
@@ -180,7 +181,7 @@ class TextSnapshot(Snapshot):
     def start_multizone(self, light):
         self.start_light(light)
         self._text += '{:>45}'.format(light.get_power())
-        self._text += '\nZone #\n'
+        self._text += '\n   Zone\n'
 
     def handle_zone(self, _, number, color):
         self._add_field('{:>5d}'.format(number))
@@ -190,14 +191,10 @@ class TextSnapshot(Snapshot):
     def end_zones(self, _):
         self._text += '\n'
 
-    def handle_color(self, color):
-        params = zip([
-            Register.HUE, Register.SATURATION, Register.BRIGHTNESS,
-            Register.KELVIN
-            ], color)
-        for param in params:
-            self._add_field(
-                '{:>4.0f}'.format(units.as_logical(param[0], param[1])))
+    def handle_color(self, raw_color):
+        logical_color = units.raw_to_logical(raw_color)
+        for value in logical_color:
+            self._add_field('{:>4.0f}'.format(value))
 
     def handle_power(self, power):
         self._add_field('{:d}'.format(power))
@@ -233,6 +230,10 @@ class DictSnapshot(Snapshot):
     def snapshot(self):
         return self._snapshot
 
+    @property
+    def text(self):
+        return str(self._current_dict)
+
 
 def _do_gen(ctor):
     print(ctor().generate().text + '\n')
@@ -263,6 +264,8 @@ def main():
     injection.configure()
     settings_init = settings.using(
         config_values.functional).add_overrides({'single_light_discover': True})
+    settings_init.apply_env()
+
     if args.use_fakes:
         settings_init.add_overrides({'use_fakes': True})
     n_arg = arg_helper.get_overrides(args)

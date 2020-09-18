@@ -132,15 +132,15 @@ class LightSet(i_controller.LightSet):
 
     def get_light(self, name):
         """ returns an instance of i_lib.Light, or None if it's not there """
-        return self._light_dict.get(name, None)
+        return self._light_dict.get(name)
 
-    def get_group(self, name) -> SortedList:
+    def get_group(self, name):
         """ list of light names """
-        return self._group_dict.get(name, None)
+        return self._group_dict.get(name)
 
-    def get_location(self, name) -> SortedList:
+    def get_location(self, name):
         """ list of light names. """
-        return self._location_dict.get(name, None)
+        return self._location_dict.get(name)
 
     @inject(Lifx)
     def set_color(self, color, duration, lifx):

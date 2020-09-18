@@ -49,7 +49,7 @@ def main():
     args = parser.parse_args()
 
     injection.configure()
-    settings.using(config_values.functional).configure()
+    settings.using(config_values.functional).apply_env().configure()
 
     input_file = args.file
     program = instruction_text(input_file)
