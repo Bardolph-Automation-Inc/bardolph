@@ -41,8 +41,7 @@ class LoopParser:
     def repeat(self, code_gen, call_context) -> bool:
         self._next_token()
         code_gen.add_instruction(OpCode.LOOP)
-        code_gen.add_instruction(OpCode.MOVEQ, False, LoopVar.BREAK)
-        if not self._detect_loop_type(code_gen):
+        if not self._detect_loop_type():
             return False
         if not self._pre_loop(code_gen, call_context):
             return False
@@ -60,7 +59,7 @@ class LoopParser:
     def _next_token(self):
         return self._parser.next_token()
 
-    def _detect_loop_type(self, code_gen) -> bool:
+    def _detect_loop_type(self) -> bool:
         self._loop_type = {
             TokenTypes.WHILE: _LoopType.WHILE,
             TokenTypes.WITH: _LoopType.WITH,
@@ -127,7 +126,8 @@ class LoopParser:
 
         if self._current_token_type == TokenTypes.AND:
             if operand == Operand.ALL:
-                return self._trigger_error('"and" is not allowed with "all"')
+                return self._parser.trigger_error(
+                    '"and" is not allowed with "all"')
             if not (self._pre_loop_and() and
                     self._pre_loop_list(code_gen, call_context)):
                 return False
@@ -163,6 +163,11 @@ class LoopParser:
     def _pre_loop_with(self, code_gen, call_context) -> bool:
         if not self._init_index_var(call_context):
             return False
+        if self._current_token_type == TokenTypes.IN:
+            code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.COUNTER)
+            self._loop_type = _LoopType.LIST
+            self._next_token()
+            return self._pre_loop_list(code_gen, call_context)
         if self._current_token_type == TokenTypes.FROM:
             self._next_token()
             if not self._index_var_range(code_gen):
@@ -251,6 +256,9 @@ class LoopParser:
         return True
 
     def _cycle_var_range(self, code_gen):
+        if self._loop_type == (_LoopType.WITH):
+            return self._parser.trigger_error(
+                "repeat with cycle missing number of iterations")
         if not self._parser.at_rvalue():
             code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.FIRST)
         elif not self._parser.rvalue(LoopVar.FIRST):

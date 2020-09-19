@@ -317,23 +317,23 @@ class Machine:
 
     def _nop(self) -> None: pass
 
-    def _push(self):
-        return self._vm_math.push(self.current_inst.param0)
+    def _push(self) -> None:
+        self._vm_math.push(self.current_inst.param0)
 
-    def _pushq(self):
-        return self._vm_math.pushq(self.current_inst.param0)
+    def _pushq(self) -> None:
+        self._vm_math.pushq(self.current_inst.param0)
 
-    def _pop(self):
-        return self._vm_math.pop(self.current_inst.param0)
+    def _pop(self) -> None:
+        self._vm_math.pop(self.current_inst.param0)
 
-    def _op(self):
-        return self._vm_math.op(self.current_inst.param0)
+    def _op(self) -> None:
+        self._vm_math.op(self.current_inst.param0)
 
-    def _bin_op(self, operator):
-        return self._vm_math.bin_op(operator)
+    def _bin_op(self, operator) -> None:
+        self._vm_math.bin_op(operator)
 
-    def _unary_op(self, operator):
-        return self._vm_math.unary_op(operator)
+    def _unary_op(self, operator) -> None:
+        self._vm_math.unary_op(operator)
 
     def _disc(self) -> None:
         self._vm_discover.disc()
@@ -348,16 +348,16 @@ class Machine:
         self._vm_discover.dnextm(
             self.current_inst.param0, self.current_inst.param1)
 
-    def _out(self) -> bool:
+    def _out(self) -> None:
         value = self.current_inst.param0
         if isinstance(value, Register):
             value = self._reg.get_by_enum(value)
         elif isinstance(value, (str, LoopVar)):
             value = self._call_stack.get_variable(value)
         self._print_buffer += str(value) + ' '
-        return self._check_pbuf()
+        self._check_pbuf()
 
-    def _outq(self) -> bool:
+    def _outq(self) -> None:
         value = self.current_inst.param0
         if value == Operand.NULL:
             print(self._print_buffer.rstrip())
@@ -365,13 +365,11 @@ class Machine:
         else:
             self._print_buffer += str(value) + ' '
             self._check_pbuf()
-        return True
 
-    def _check_pbuf(self) -> bool:
+    def _check_pbuf(self) -> None:
         if len(self._print_buffer) > self._MAX_PRINTBUF:
             print(self._print_buffer, end='')
             self._print_buffer = ''
-        return True
 
     def _pause(self) -> None:
         if self._enable_pause:
@@ -385,7 +383,7 @@ class Machine:
                 if char == '!':
                     self._enable_pause = False
 
-    def _constant(self):
+    def _constant(self) -> None:
         name = self.current_inst.param0
         value = self.current_inst.param1
         self._call_stack.put_constant(name, value)
@@ -419,7 +417,7 @@ class Machine:
             return units.raw_to_logical(color)
         return units.raw_to_rgb(color)
 
-    def _move(self) -> bool:
+    def _move(self) -> None:
         """
         Move from variable/register to variable/register.
         """
@@ -430,9 +428,9 @@ class Machine:
             value = self._reg.get_by_enum(value)
         elif isinstance(value, (str, LoopVar)):
             value = self._call_stack.get_variable(value)
-        return self._do_put_value(dest, value)
+        self._do_put_value(dest, value)
 
-    def _moveq(self) -> bool:
+    def _moveq(self) -> None:
         """
         Move a value from the instruction itself into a register or variable.
         """
@@ -441,7 +439,6 @@ class Machine:
         if dest == Register.UNIT_MODE:
             self._switch_unit_mode(value)
         self._do_put_value(dest, value)
-        return True
 
     def _switch_unit_mode(self, to_mode) -> None:
         from_mode = self._reg.unit_mode

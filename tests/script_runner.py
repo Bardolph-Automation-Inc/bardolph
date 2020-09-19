@@ -31,6 +31,12 @@ class ScriptRunner:
         for light in lifx.get_lights():
             self._test.assertListEqual(light.get_call_list(), expected)
 
+    @classmethod
+    def print_all_call_lists(cls):
+        lifx = provide(i_controller.Lifx)
+        for light in lifx.get_lights():
+            print(light.get_label(), light.get_call_list())
+
     def check_global_call_list(self, expected):
         # Calls made to LightSet as opposed to individual lights.
         lifx = provide(i_controller.Lifx)

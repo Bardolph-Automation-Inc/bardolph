@@ -29,11 +29,11 @@ class Builder:
     def apply_file(self, file_name):
         if self._config is None:
             self._config = {}
-        config = configparser.ConfigParser()
-        config.read(file_name)
-        for section in config.sections():
-            for key in config[section]:
-                value = config[section][key]
+        file_config = configparser.ConfigParser()
+        file_config.read(file_name)
+        for section in file_config.sections():
+            for key in file_config[section]:
+                value = file_config[section][key]
                 self._config[key] = {
                     'True': True,
                     'False': False

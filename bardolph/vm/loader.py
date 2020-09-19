@@ -74,7 +74,7 @@ def main():
         format='%(filename)s(%(lineno)d) %(funcName)s(): %(message)s')
 
     parser = Parser()
-    parser_code = parser.load(args.file, True)
+    parser_code = parser.load(args.file)
 
     loader = Loader()
     routines = {}

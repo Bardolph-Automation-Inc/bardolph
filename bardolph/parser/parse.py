@@ -94,7 +94,7 @@ class Parser:
 
     def _eof(self) -> bool:
         if self._current_token_type != TokenTypes.EOF:
-            return self._trigger_error("Didn't get to end of file.")
+            return self.trigger_error("Didn't get to end of file.")
         return True
 
     def _command(self):
@@ -115,7 +115,7 @@ class Parser:
 
     def _string_to_reg(self, reg) -> bool:
         if reg != Register.NAME:
-            return self._trigger_error('Quoted value not allowed here.')
+            return self.trigger_error('Quoted value not allowed here.')
         self._add_instruction(OpCode.MOVEQ, self._current_token, reg)
         return self.next_token()
 
@@ -202,7 +202,7 @@ class Parser:
 
     def _zone_range(self) -> bool:
         if self._op_code != OpCode.COLOR:
-            return self._trigger_error('Zones not supported for {}'.format(
+            return self.trigger_error('Zones not supported for {}'.format(
                 self._op_code.name.lower()))
         self.next_token()
         return self._set_zones()
@@ -231,7 +231,7 @@ class Parser:
         }.get(self._current_token_type, None)
 
         if mode is None:
-            return self._trigger_error(
+            return self.trigger_error(
                 'Invalid parameter "{}" for units.'.format(self._current_token))
 
         self._add_instruction(OpCode.MOVEQ, mode, Register.UNIT_MODE)
@@ -409,7 +409,7 @@ class Parser:
 
     def _routine_definition(self, name):
         if self._call_context.in_routine():
-            return self._trigger_error('Nested definition not allowed.')
+            return self.trigger_error('Nested definition not allowed.')
 
         self._call_context.enter_routine()
         self._call_context.push()
@@ -457,7 +457,7 @@ class Parser:
         self.next_token()
         while self._current_token_type != TokenTypes.END:
             if self._current_token_type == TokenTypes.EOF:
-                return self._trigger_error('End of file before "end".')
+                return self.trigger_error('End of file before "end".')
             if not self._command():
                 return False
         return self.next_token()
@@ -505,7 +505,7 @@ class Parser:
     def _add_message(self, message):
         self._error_output += '{}\n'.format(message)
 
-    def _trigger_error(self, message):
+    def trigger_error(self, message):
         full_message = 'Line {}: {}'.format(
             self._lexer.get_line_number(), message)
         self._add_message(full_message)
@@ -595,7 +595,7 @@ class Parser:
         self._code_gen.add_instruction(OpCode.BREAKPOINT)
 
     def token_error(self, message_format):
-        return self._trigger_error(message_format.format(self._current_token))
+        return self.trigger_error(message_format.format(self._current_token))
 
     def _unimplementd(self):
         return self.token_error('Unimplemented at token "{}"')

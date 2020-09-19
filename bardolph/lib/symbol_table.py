@@ -14,7 +14,7 @@ class SymbolTable:
         self._dict[name] = Symbol(name, symbol_type, value)
 
     def get_symbol(self, name):
-        return self._dict.get(name, None)
+        return self._dict.get(name)
 
     def get_type(self, name):
         symbol = self.get_symbol(name)
@@ -25,7 +25,5 @@ class SymbolTable:
         return None if symbol is None else symbol.value
 
     def get_routine(self, name):
-        type = self.get_type(name),
-        if type != SymbolType.ROUTINE:
-            return None
-        return self.get_value(name)
+        type = self.get_type(name)
+        return self.get_value(name) if type == SymbolType.ROUTINE else None

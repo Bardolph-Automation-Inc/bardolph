@@ -1,26 +1,27 @@
+import operator
+
 from bardolph.controller.units import UnitMode
 
 from .eval_stack import EvalStack
 from .vm_codes import LoopVar, Operand, Operator, Register
 
 class VmMath:
-    # a was the top of the stack, and b was the element below it.
-    _fn_table = {
-        Operator.ADD: lambda a, b: a + b,
-        Operator.AND: lambda a, b: a and b,
-        Operator.DIV: lambda a, b: a / b,
-        Operator.EQ: lambda a, b: a == b,
-        Operator.GT: lambda a, b: a > b,
-        Operator.GTE: lambda a, b: a >= b,
-        Operator.LT: lambda a, b: a < b,
-        Operator.LTE: lambda a, b: a <= b,
-        Operator.NOTEQ: lambda a, b: a != b,
-        Operator.OR: lambda a, b: a or b,
-        Operator.MOD: lambda a, b: a % b,
-        Operator.MUL: lambda a, b: a * b,
-        Operator.POW: lambda a, b: a ** b,
-        Operator.SUB: lambda a, b: a - b
-    }
+    _fn_table = { op_code: op_fn for op_code, op_fn in (
+        (Operator.ADD, operator.add),
+        (Operator.AND, operator.and_),
+        (Operator.DIV, operator.truediv),
+        (Operator.EQ, operator.__eq__),
+        (Operator.GT, operator.gt),
+        (Operator.GTE, operator.ge),
+        (Operator.LT, operator.lt),
+        (Operator.LTE, operator.le),
+        (Operator.NOTEQ, operator.ne),
+        (Operator.OR, operator.or_),
+        (Operator.MOD, operator.mod),
+        (Operator.MUL, operator.mul),
+        (Operator.POW, operator.pow),
+        (Operator.SUB, operator.sub)
+    )}
 
     def __init__(self, call_stack, reg):
         self._call_stack = call_stack
