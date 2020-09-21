@@ -12,7 +12,7 @@ class PrintTest(unittest.TestCase):
         self._runner = ScriptRunner(self)
 
     @patch('builtins.print')
-    def test_script(self, print):
+    def test_script(self, print_fn):
         script = """
             units raw
             hue 1 saturation 2 brightness 3 kelvin 4
@@ -31,7 +31,7 @@ class PrintTest(unittest.TestCase):
             print_light "Table"
         """
         self._runner.run_script(script)
-        print.assert_called_with(
+        print_fn.assert_called_with(
             'Light Table 5.0 hue: 1 saturation: 2 brightness: 3 kelvin: 4')
 
 if __name__ == '__main__':

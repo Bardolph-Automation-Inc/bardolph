@@ -1,5 +1,4 @@
 import bisect
-from collections.abc import Iterable
 
 class SortedList(list):
     """

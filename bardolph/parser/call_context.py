@@ -1,7 +1,7 @@
 from collections import deque
 
-from ..lib.symbol import Symbol, SymbolType
-from ..lib.symbol_table import SymbolTable
+from bardolph.lib.symbol import Symbol, SymbolType
+from bardolph.lib.symbol_table import Symbol, SymbolTable
 
 class CallContext:
     _empty_table = SymbolTable()
@@ -16,12 +16,7 @@ class CallContext:
         """
         Return True if the name exists as any type in the current context.
         """
-        symbol_table = self.peek()
-        if name in symbol_table:
-            return True
-        if symbol_table is not self._globals:
-            return name in self._globals
-        return False
+        return name in self.peek() or name in self._globals
 
     def clear(self) -> None:
         self._in_routine = False
@@ -39,14 +34,11 @@ class CallContext:
         self._in_routine = False
 
     def push(self, symbol_table=None) -> None:
-        if symbol_table is None:
-            symbol_table = SymbolTable()
-        self._stack.append(symbol_table)
+        self._stack.append(symbol_table or SymbolTable())
 
     def pop(self) -> SymbolTable:
         assert len(self._stack) > 1
-        self._stack.pop()
-        return self.peek()
+        return self._stack.pop()
 
     def peek(self) -> SymbolTable:
         assert len(self._stack) > 0
@@ -64,39 +56,40 @@ class CallContext:
     def get_data(self, name):
         return self.get_symbol_typed(name, (SymbolType.MACRO, SymbolType.VAR))
 
-    def get_symbol(self, name):
+    def get_symbol(self, name) -> Symbol:
         """
         Get a parameter from the top of the stack. If it's not there, check
         the globals.
         """
-        return self.peek().get_symbol(name) or self._globals.get_symbol(name)
+        symbol = self.peek().get_symbol(name)
+        if symbol.undefined:
+            symbol = self._globals.get_symbol(name)
+        return symbol
 
     def get_symbol_typed(self, name, symbol_types):
         symbol = self.get_symbol(name)
-        if symbol is None or symbol.symbol_type not in symbol_types:
-            return None
-        return symbol
+        if symbol.undefined or symbol.symbol_type in symbol_types:
+            return symbol
+        return Symbol()
 
     def has_symbol(self, name) -> bool:
-        return self.get_symbol(name) is not None
+        return not self.get_symbol(name).undefined
 
     def has_symbol_typed(self, name, * symbol_types) -> bool:
         symbol = self.get_symbol(name)
-        return symbol is not None and symbol.symbol_type in symbol_types
+        return not symbol.undefined and symbol.symbol_type in symbol_types
 
     def get_routine(self, name):
-        symbol = self._global_of_type(name, SymbolType.ROUTINE)
-        return None if symbol is None else symbol.value
+        return self._global_of_type(name, SymbolType.ROUTINE)
 
     def has_routine(self, name):
-        return self._global_of_type(name, SymbolType.ROUTINE) is not None
+        return not self._global_of_type(name, SymbolType.ROUTINE).undefined
 
     def get_macro(self, name):
-        macro = self._global_of_type(name, SymbolType.MACRO)
-        return None if macro is None else macro.value
+        return self._global_of_type(name, SymbolType.MACRO)
 
     def _global_of_type(self, name, symbol_type):
         symbol = self._globals.get_symbol(name)
-        if symbol is None or symbol.symbol_type != symbol_type:
-            return None
-        return symbol
+        if symbol.undefined or symbol.symbol_type == symbol_type:
+            return symbol
+        return Symbol()

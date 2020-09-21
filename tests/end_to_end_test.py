@@ -8,6 +8,7 @@ from bardolph.lib.injection import provide
 from tests.script_runner import ScriptRunner
 from tests import test_module
 
+
 class EndToEndTest(unittest.TestCase):
     def setUp(self):
         test_module.configure()
@@ -63,15 +64,16 @@ class EndToEndTest(unittest.TestCase):
             duration 50 set "Table" and group "Pole"
         """
         self._runner.test_code(script, ('Top', 'Middle', 'Bottom', 'Table'),
-                            [(Action.SET_COLOR, ([10, 20, 30, 40], 50))])
+                               [(Action.SET_COLOR, ([10, 20, 30, 40], 50))])
 
     def test_routine_get_zone(self):
         script = """
-            units raw define get_z with x z get x zone z
+            units raw
+            define get_z with x z get x zone z
             get_z "Strip" 5
         """
         self._runner.test_code(script, 'Strip',
-            [(Action.GET_ZONE_COLOR, (5, 6))])
+                               [(Action.GET_ZONE_COLOR, (5, 6))])
 
     def test_group(self):
         script = """
@@ -96,7 +98,6 @@ class EndToEndTest(unittest.TestCase):
         self._runner.test_code_all(script, [
             (Action.SET_COLOR, ([100, 10, 1, 1000], 0)),
             (Action.SET_POWER, (65535, 0))])
-
 
     def test_expression(self):
         script = """
@@ -134,11 +135,11 @@ class EndToEndTest(unittest.TestCase):
             if {five > two} begin hue 5000 end else hue 0 set "Top"
         """
         self._runner.test_code(script, 'Top', [
-                (Action.SET_COLOR, ([1000, 2, 3, 4], 0.0)),
-                (Action.SET_COLOR, ([2000, 2, 3, 4], 0.0)),
-                (Action.SET_COLOR, ([3000, 2, 3, 4], 0.0)),
-                (Action.SET_COLOR, ([4000, 2, 3, 4], 0.0)),
-                (Action.SET_COLOR, ([5000, 2, 3, 4], 0.0))])
+            (Action.SET_COLOR, ([1000, 2, 3, 4], 0.0)),
+            (Action.SET_COLOR, ([2000, 2, 3, 4], 0.0)),
+            (Action.SET_COLOR, ([3000, 2, 3, 4], 0.0)),
+            (Action.SET_COLOR, ([4000, 2, 3, 4], 0.0)),
+            (Action.SET_COLOR, ([5000, 2, 3, 4], 0.0))])
 
     def test_multiple_get_logical(self):
         script = """
@@ -190,6 +191,7 @@ class EndToEndTest(unittest.TestCase):
             (Action.SET_COLOR, ([4000, 2000, 5000, 0], 1)),
             (Action.SET_COLOR, ([6000, 2000, 32768, 0], 1))
         ])
+
 
 if __name__ == '__main__':
     unittest.main()

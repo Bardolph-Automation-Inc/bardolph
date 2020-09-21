@@ -14,16 +14,15 @@ class SymbolTable:
         self._dict[name] = Symbol(name, symbol_type, value)
 
     def get_symbol(self, name):
-        return self._dict.get(name)
+        return self._dict.get(name, Symbol())
 
     def get_type(self, name):
-        symbol = self.get_symbol(name)
-        return SymbolType.NO_TYPE if symbol is None else symbol.symbol_type
+        return self.get_symbol(name).symbol_type
 
     def get_value(self, name):
         symbol = self.get_symbol(name)
         return None if symbol is None else symbol.value
 
     def get_routine(self, name):
-        type = self.get_type(name)
-        return self.get_value(name) if type == SymbolType.ROUTINE else None
+        s_type = self.get_type(name)
+        return self.get_value(name) if s_type == SymbolType.ROUTINE else None

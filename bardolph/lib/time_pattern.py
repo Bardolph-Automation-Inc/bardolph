@@ -7,17 +7,17 @@ class TimePattern(i_lib.TimePattern):
     HOURS_24 = set(range(0, 24))
     MINUTES_60 = set(range(0, 60))
     REGEX = re.compile(r'^(\*|\*\d|\d\*|\d\d?):(\d\d|\d\*|\*\d|\*)$')
-    
+
     def __init__(self, hours, minutes):
         self._repr = 'TimePattern("{}", "{}")'.format(hours, minutes)
-        self._hour_set = set()
-        self._minute_set = set()
-        self._init_hour_set(hours) 
-        self._init_minute_set(minutes)
-    
+        self._hour_set, self._minute_set = set(), set()
+        if hours and minutes:
+            self._init_hour_set(hours)
+            self._init_minute_set(minutes)
+
     def __repr__(self):
         return self._repr
-    
+
     @classmethod
     def from_string(cls, pattern):
         the_match = TimePattern.REGEX.match(pattern)
@@ -25,13 +25,13 @@ class TimePattern(i_lib.TimePattern):
             hours, minutes = the_match.groups()
             if TimePattern.patterns_valid(hours, minutes):
                 return TimePattern(hours, minutes)
-        return None
+        return TimePattern(None, None)
 
     @classmethod
     def patterns_valid(cls, hours, minutes):
         return (TimePattern.hours_valid(hours)
                 and TimePattern.minutes_valid(minutes))
-     
+
     @classmethod
     def hours_valid(cls, hours):
         if hours == '*':
@@ -45,8 +45,8 @@ class TimePattern(i_lib.TimePattern):
         if not hours.isdecimal():
             return False
         int_hours = int(hours)
-        return int_hours >= 0 and int_hours < 25
-    
+        return 0 <= int_hours < 25
+
     @classmethod
     def minutes_valid(cls, minutes):
         if minutes == '*':
@@ -60,24 +60,24 @@ class TimePattern(i_lib.TimePattern):
         if not minutes.isdecimal():
             return False
         int_minutes = int(minutes)
-        return int_minutes >= 0 and int_minutes < 60
-    
+        return 0 <= int_minutes < 60
+
     def union(self, other):
         self._hour_set.update(other._hour_set)
         self._minute_set.update(other._minute_set)
 
     def match(self, hours, minutes):
-        return hours in self._hour_set and minutes in self._minute_set    
+        return hours in self._hour_set and minutes in self._minute_set
 
     def _init_hour_set(self, pattern):
         if pattern == '*':
-            self._hour_set=TimePattern.HOURS_24.copy()
+            self._hour_set = TimePattern.HOURS_24.copy()
         elif len(pattern) == 1:
             self._hour_set = set([int(pattern)])
         else:
             self._hour_set = set()
             for hour in range(0, 24):
-                if TimePattern._number_match(hour, pattern):
+                if self._number_match(hour, pattern):
                     self._hour_set.add(hour)
 
     def _init_minute_set(self, pattern):
@@ -93,6 +93,5 @@ class TimePattern(i_lib.TimePattern):
     def _number_match(cls, number, pattern):
         formatted = "{:02d}".format(number)
         return (formatted == pattern
-            or (pattern[0] in ('*', formatted[0]) 
-              and pattern[1] in ('*', formatted[1])))
-                    
+                or (pattern[0] in ('*', formatted[0])
+                    and pattern[1] in ('*', formatted[1])))

@@ -40,7 +40,7 @@ class Builder:
                 }.get(value, value)
         return self
 
-    def apply_env(self, env_name = 'BARDOLPH_INI'):
+    def apply_env(self, env_name='BARDOLPH_INI'):
         ini = os.getenv(env_name)
         if ini:
             self.apply_file(ini)

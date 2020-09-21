@@ -20,7 +20,7 @@ class LogConfig():
         if isinstance(level, str):
             level = getattr(logging, level.strip(), logging.ERROR)
         return level
-    
+
     @inject(Settings)
     def get_value(self, name, settings):
         return settings.get_value(name, logging_defaults.get(name, None))

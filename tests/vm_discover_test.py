@@ -2,12 +2,11 @@
 
 import unittest
 
-from bardolph.controller import i_controller, light_set
+from bardolph.controller import light_set
 from bardolph.fakes import fake_lifx
-from bardolph.lib import injection, settings
 from bardolph.vm.call_stack import CallStack
 from bardolph.vm.machine import Registers
-from bardolph.vm.vm_codes import LoopVar, Operand, Operator, Register
+from bardolph.vm.vm_codes import Operand
 from bardolph.vm.vm_discover import VmDiscover
 from tests import test_module
 
@@ -81,7 +80,7 @@ class VmDiscoverTest(unittest.TestCase):
     def test_location_membership(self):
         self._reg.operand = Operand.LOCATION
         self._discover.discm('loc')
-        self._assert_and_nextm('loc','light_02')
+        self._assert_and_nextm('loc', 'light_02')
         self._assert_and_nextm('loc', 'light_00')
         self.assertEqual(self._reg.result, Operand.NULL)
 
@@ -107,9 +106,9 @@ class VmDiscoverTest(unittest.TestCase):
         self.assertEqual(self._reg.result, name)
         self._discover.dnext(name)
 
-    def _assert_and_nextm(self, set, name):
+    def _assert_and_nextm(self, lights, name):
         self.assertEqual(self._reg.result, name)
-        self._discover.dnextm(set, name)
+        self._discover.dnextm(lights, name)
 
 if __name__ == '__main__':
     unittest.main()

@@ -6,6 +6,7 @@ from bardolph.controller import i_controller, light_set
 from bardolph.fakes import fake_lifx
 from bardolph.lib import injection, settings
 
+
 class LightSetTest(unittest.TestCase):
     def setUp(self):
         injection.configure()
@@ -41,7 +42,7 @@ class LightSetTest(unittest.TestCase):
         self.assertEqual(len(name_list), len(names), "List lengths unequal.")
         for name in names:
             self.assertTrue(name in name_list,
-                '"{}" not found in group/location'.format(name))
+                            '"{}" not found in group/location'.format(name))
 
     def test_discover(self):
         tested_set = light_set.LightSet()
@@ -115,6 +116,7 @@ class LightSetTest(unittest.TestCase):
         self._assert_names_match(location, self._light2)
         location = tested_set.get_location(self._location1)
         self._assert_names_match(location, self._light1, self._light3)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -3,7 +3,6 @@
 import unittest
 
 from bardolph.controller import units
-from bardolph.vm.vm_codes import Register
 
 class UnitsTest(unittest.TestCase):
     def _assert_colors_equal(self, color0, color1):

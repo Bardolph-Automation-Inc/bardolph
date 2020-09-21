@@ -86,7 +86,7 @@ class LoopParser:
         if (self._loop_type == _LoopType.COUNTED
                 and not self._parser.rvalue(LoopVar.COUNTER)):
             return False
-        elif self._loop_type in (_LoopType.ALL, _LoopType.LIST):
+        if self._loop_type in (_LoopType.ALL, _LoopType.LIST):
             code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.COUNTER)
             if not (self._pre_loop_list(code_gen, call_context) and
                     self._pre_loop_as(code_gen, call_context)):

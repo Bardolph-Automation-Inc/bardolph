@@ -55,8 +55,8 @@ class Lex:
         return TokenTypes.UNKNOWN
 
     def next_token(self):
-        token_type, token = None, None
-        while token_type is None:
+        token_type, token = TokenTypes.NO_TOKEN, ''
+        while token_type == TokenTypes.NO_TOKEN:
             match = None if self._tokens is None else next(self._tokens, None)
             while match is None:
                 self._next_line()

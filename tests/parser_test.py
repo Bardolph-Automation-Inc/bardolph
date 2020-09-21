@@ -3,7 +3,6 @@
 import logging
 import unittest
 
-from bardolph.controller.units import UnitMode
 from bardolph.parser.parse import Parser
 from bardolph.vm.instruction import Instruction
 from bardolph.vm.vm_codes import OpCode, Operand, Register

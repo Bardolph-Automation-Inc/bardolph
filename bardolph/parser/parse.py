@@ -195,8 +195,8 @@ class Parser:
 
     def _var_operand(self) -> bool:
         if not self._call_context.has_symbol_typed(
-                self._current_token, SymbolType.VAR):
-            return self.token_error('Not a variable: "{}"')
+                self._current_token, SymbolType.MACRO, SymbolType.VAR):
+            return self.token_error('Neither variable nor macro: "{}"')
         self._add_instruction(OpCode.MOVE, self._current_token, Register.NAME)
         return self.next_token()
 
@@ -373,7 +373,7 @@ class Parser:
 
         self.next_token()
         if self._detect_routine_start():
-            if self._call_context.get_routine(name) is not None:
+            if not self._call_context.get_routine(name).undefined:
                 return self.token_error('Already defined: "{}"')
             return self._routine_definition(name)
 
@@ -385,7 +385,7 @@ class Parser:
         to a command, or the name of an existing routine, it's defining a new
         routine and not a variable.
         """
-        if self._call_context.get_routine(self._current_token) is not None:
+        if self._call_context.has_routine(self._current_token):
             return True
         return self._current_token_type in (
             TokenTypes.BEGIN, TokenTypes.WITH,
@@ -400,9 +400,10 @@ class Parser:
         """
         value = self._current_literal()
         if value is None:
-            value = self._call_context.get_macro(self._current_token)
-        if value is None:
-            return self.token_error('Macro needs constant, got "{}"')
+            inner_macro = self._call_context.get_macro(self._current_token)
+            if inner_macro is None:
+                return self.token_error('Macro needs constant, got "{}"')
+            value = inner_macro.value
         self._call_context.add_global(name, SymbolType.MACRO, value)
         self._add_instruction(OpCode.CONSTANT, name, value)
         return self.next_token()
@@ -464,11 +465,11 @@ class Parser:
 
     def _call_routine(self):
         routine = self._call_context.get_routine(self._current_token)
-        if routine is None:
+        if routine.undefined:
             return self.token_error('Unknown name: "{}"')
 
         self.next_token()
-        for param_name in routine.params:
+        for param_name in routine.value.params:
             if not self.rvalue():
                 return False
             self._add_instruction(OpCode.PARAM, param_name, Register.RESULT)
@@ -541,7 +542,8 @@ class Parser:
             return value
         if self._current_token_type != TokenTypes.NAME:
             return None
-        return self._call_context.get_macro(self._current_token)
+        macro = self._call_context.get_macro(self._current_token)
+        return None if macro.undefined else macro.value
 
     def _current_int(self):
         value = self._current_constant()
@@ -565,17 +567,13 @@ class Parser:
 
     def _current_time_pattern(self) -> TimePattern:
         """
-        Returns the current token as a time pattern. If the current token
-        isn't a time pattern or Symbol, returns None.
-
-        Only literals or macros. Can't yet pass a time pattern as a
-        parameter to a routine.
+        Returns the current token as a time pattern. Only literals or macros.
         """
         if self._current_token_type == TokenTypes.TIME_PATTERN:
             return TimePattern.from_string(self._current_token)
         if self._current_token_type == TokenTypes.NAME:
-            return self._call_context.get_macro(self._current_token)
-        return None
+            return self._call_context.get_macro(self._current_token).value
+        return TimePattern(None, None)
 
     def _current_reg(self):
         if self._current_token_type != TokenTypes.REGISTER:
@@ -583,8 +581,7 @@ class Parser:
         return Register.from_string(self._current_token)
 
     def next_token(self):
-        (self._current_token_type,
-         self._current_token) = self._lexer.next_token()
+        self._current_token_type, self._current_token = self._lexer.next_token()
         if self._token_trace:
             logging.info(
                 'Next token: "{}" ({})'.format(

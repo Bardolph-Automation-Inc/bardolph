@@ -2,11 +2,10 @@
 
 import unittest
 
-from bardolph.controller import i_controller
 from bardolph.fakes.fake_lifx import Action
-from bardolph.lib.injection import provide
 from tests.script_runner import ScriptRunner
 from tests import test_module
+
 
 class DefineTest(unittest.TestCase):
     def setUp(self):
@@ -64,7 +63,7 @@ class DefineTest(unittest.TestCase):
             get_z "Strip" 5
         """
         self._runner.test_code(script, 'Strip',
-            [(Action.GET_ZONE_COLOR, (5, 6))])
+                               [(Action.GET_ZONE_COLOR, (5, 6))])
 
     def test_define_zones(self):
         script = """
@@ -86,7 +85,7 @@ class DefineTest(unittest.TestCase):
             do_set "Table"
         """
         self._runner.test_code(script, 'Table',
-                        [(Action.SET_COLOR, ([100, 10, 1, 1000], 0))])
+                               [(Action.SET_COLOR, ([100, 10, 1, 1000], 0))])
 
     def test_compound_routine(self):
         script = """
@@ -100,7 +99,7 @@ class DefineTest(unittest.TestCase):
             units logical
         """
         self._runner.test_code(script, ('Table', 'Bottom'),
-                        [(Action.SET_COLOR, ([600, 50, 5, 5000], 0))])
+                               [(Action.SET_COLOR, ([600, 50, 5, 5000], 0))])
 
     def test_nested_param(self):
         script = """
@@ -114,8 +113,8 @@ class DefineTest(unittest.TestCase):
             set "Table"
         """
         self._runner.test_code(script, 'Table', [
-                        (Action.SET_COLOR, ([600, 60, 6, 6000], 0)),
-                        (Action.SET_COLOR, ([700, 60, 6, 6000], 0))])
+            (Action.SET_COLOR, ([600, 60, 6, 6000], 0)),
+            (Action.SET_COLOR, ([700, 60, 6, 6000], 0))])
 
     def test_variables(self):
         script = """
@@ -262,6 +261,7 @@ class DefineTest(unittest.TestCase):
         self._runner.check_call_list(('Top', 'Middle'), [
             (Action.SET_COLOR, ([16384, 49151, 21843, 85], 100000))
         ])
+
 
 if __name__ == '__main__':
     unittest.main()

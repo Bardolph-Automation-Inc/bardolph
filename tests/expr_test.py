@@ -4,7 +4,6 @@ import unittest
 
 from bardolph.parser.code_gen import CodeGen
 from bardolph.parser.expr_parser import ExprParser
-from tests.script_runner import ScriptRunner
 
 class ExprTest(unittest.TestCase):
     def setUp(self):
