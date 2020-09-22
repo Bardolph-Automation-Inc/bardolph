@@ -10,6 +10,17 @@ from tests.script_runner import ScriptRunner
 from tests import test_module
 
 class LoopTest(unittest.TestCase):
+    """
+        repeat-loop syntax:
+            repeat
+            [(all | in <light_list>) as <light_name>]
+            [with <numeric_var> (from <start> to <end> | cycle [<start>)]
+
+        light list syntax:
+            <light_name> | group <group_name> | location <location_name>
+            [and <light_list>]
+    """
+
     def setUp(self):
         test_module.configure()
         fake_lifx.using_small_set().configure()
@@ -19,7 +30,58 @@ class LoopTest(unittest.TestCase):
     def test_all(self):
         script = """
             hue 180 saturation 50 brightness 50 kelvin 1000
-            repeat all as the_light with brt from 0 to 100
+
+            repeat all as the_light set the_light
+
+            repeat all as the_light with brt from 0 to 100 begin
+                brightness brt
+                set the_light
+            end
+
+            repeat all as a_light with the_hue cycle begin
+                hue the_hue
+                set a_light
+            end
+        """
+        self._runner.run_script(script)
+        self._runner.check_call_list('light_0', [
+            (Action.SET_COLOR, ([32768, 32768, 32768, 1000], 0)),
+            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0)),
+            (Action.SET_COLOR, ([0, 32768, 65535, 1000], 0))
+        ])
+        self._runner.check_call_list('light_1', [
+            (Action.SET_COLOR, ([32768, 32768, 32768, 1000], 0)),
+            (Action.SET_COLOR, ([32768, 32768, 32768, 1000], 0)),
+            (Action.SET_COLOR, ([21845, 32768, 65535, 1000], 0))
+        ])
+        self._runner.check_call_list('light_2', [
+            (Action.SET_COLOR, ([32768, 32768, 32768, 1000], 0)),
+            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0)),
+            (Action.SET_COLOR, ([43690, 32768, 65535, 1000], 0))
+        ])
+
+    def test_bare_list(self):
+        script = """
+            hue 45 saturation 25 brightness 75 kelvin 2000 duration 9
+            define light_0 "light_0" assign light_1 "light_1"
+            repeat in light_0 and light_1 and "light_2" as the_light
+                set the_light
+        """
+        self._runner.run_script(script)
+        self._runner.check_call_list(('light_0', 'light_1', 'light_2'), [
+            (Action.SET_COLOR, ([8192, 16384, 49151, 2000], 9000))
+        ])
+
+    def test_list_range(self):
+        script = """
+            hue 180 saturation 50 brightness 50 kelvin 1000
+
+            define l0 "light_0" assign l1 "light_1"
+            repeat
+                in l0 and l1 and "light_2"
+                as the_light
+                with brt from {saturation - brightness}
+                to {hue - brightness - 30}
             begin
                 brightness brt
                 set the_light
@@ -34,6 +96,29 @@ class LoopTest(unittest.TestCase):
         ])
         self._runner.check_call_list('light_2', [
             (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0))
+        ])
+
+    def test_list_cycle(self):
+        script = """
+            hue 180 saturation 50 brightness 50 kelvin 1000
+
+            repeat
+                in "light_0" and "light_1" and "light_2" as the_light
+                with the_hue cycle
+            begin
+                hue the_hue
+                set the_light
+            end
+        """
+        self._runner.run_script(script)
+        self._runner.check_call_list('light_0', [
+            (Action.SET_COLOR, ([0, 32768, 32768, 1000], 0))
+        ])
+        self._runner.check_call_list('light_1', [
+            (Action.SET_COLOR, ([21845, 32768, 32768, 1000], 0))
+        ])
+        self._runner.check_call_list('light_2', [
+            (Action.SET_COLOR, ([43690, 32768, 32768, 1000], 0))
         ])
 
     def test_const_count(self):
@@ -140,55 +225,6 @@ class LoopTest(unittest.TestCase):
             (Action.SET_COLOR, ([1, 0, 0, 0], 0)),
             (Action.SET_COLOR, ([2, 0, 0, 0], 0)),
             (Action.SET_COLOR, ([3, 0, 0, 0], 0))
-        ])
-
-    def test_basic_list(self):
-        script = """
-            hue 180 saturation 50 brightness 50 kelvin 1000
-
-            define l0 "light_0" assign l1 "light_1"
-            repeat
-                in l0 and l1 and "light_2"
-                as the_light
-                with brt from {saturation - brightness}
-                to {hue - brightness - 30}
-            begin
-                brightness brt
-                set the_light
-            end
-        """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light_0', [
-            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0))
-        ])
-        self._runner.check_call_list('light_1', [
-            (Action.SET_COLOR, ([32768, 32768, 32768, 1000], 0))
-        ])
-        self._runner.check_call_list('light_2', [
-            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0))
-        ])
-
-    def test_list_cycle(self):
-        script = """
-            hue 180 saturation 50 brightness 50 kelvin 1000
-
-            repeat
-                in "light_0" and "light_1" and "light_2" as the_light
-                with the_hue cycle
-            begin
-                hue the_hue
-                set the_light
-            end
-        """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light_0', [
-            (Action.SET_COLOR, ([0, 32768, 32768, 1000], 0))
-        ])
-        self._runner.check_call_list('light_1', [
-            (Action.SET_COLOR, ([21845, 32768, 32768, 1000], 0))
-        ])
-        self._runner.check_call_list('light_2', [
-            (Action.SET_COLOR, ([43690, 32768, 32768, 1000], 0))
         ])
 
     def test_group(self):
