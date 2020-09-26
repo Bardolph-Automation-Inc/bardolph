@@ -55,15 +55,15 @@ class DefineTest(unittest.TestCase):
             set "Top"
         """
         self._runner.test_code(
-            script, 'Top', [(Action.SET_COLOR, ([1, 2, 3, 4], 500))])
+            script, 'Top', (Action.SET_COLOR, ([1, 2, 3, 4], 500)))
 
     def test_routine_get_zone(self):
         script = """
             units raw define get_z with x z get x zone z
             get_z "Strip" 5
         """
-        self._runner.test_code(script, 'Strip',
-                               [(Action.GET_ZONE_COLOR, (5, 6))])
+        self._runner.test_code(
+            script, 'Strip', (Action.GET_ZONE_COLOR, (5, 6)))
 
     def test_define_zones(self):
         script = """
@@ -84,8 +84,8 @@ class DefineTest(unittest.TestCase):
             define do_set with light_name set light_name
             do_set "Table"
         """
-        self._runner.test_code(script, 'Table',
-                               [(Action.SET_COLOR, ([100, 10, 1, 1000], 0))])
+        self._runner.test_code(
+            script, 'Table', (Action.SET_COLOR, ([100, 10, 1, 1000], 0)))
 
     def test_compound_routine(self):
         script = """
@@ -99,7 +99,7 @@ class DefineTest(unittest.TestCase):
             units logical
         """
         self._runner.test_code(script, ('Table', 'Bottom'),
-                               [(Action.SET_COLOR, ([600, 50, 5, 5000], 0))])
+                               (Action.SET_COLOR, ([600, 50, 5, 5000], 0)))
 
     def test_nested_param(self):
         script = """
@@ -135,7 +135,7 @@ class DefineTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_call_list(
-            'Table', [(Action.SET_COLOR, ([5, 1, 2, 3], 0))])
+            'Table', (Action.SET_COLOR, ([5, 1, 2, 3], 0)))
         self._runner.check_call_list('Chair', [
             (Action.SET_COLOR, ([5, 1, 2, 3], 0)),
             (Action.SET_COLOR, ([5, 1, 2, 3], 0)),
@@ -155,8 +155,8 @@ class DefineTest(unittest.TestCase):
             outer1 7500
         """
         self._runner.run_script(script)
-        self._runner.check_call_list('Chair', [
-            (Action.SET_COLOR, ([1, 7500, 3, 50], 0))])
+        self._runner.check_call_list(
+            'Chair', (Action.SET_COLOR, ([1, 7500, 3, 50], 0)))
 
     def test_nested_assignment(self):
         script = """
@@ -200,9 +200,8 @@ class DefineTest(unittest.TestCase):
             (Action.SET_COLOR, ([32768, 32768, 32768, 50], 100000)),
             (Action.SET_COLOR, ([32768, 32768, 32768, 1000], 100000))
         ])
-        self._runner.check_call_list(('Top', 'Middle', 'Bottom'), [
-            (Action.SET_COLOR, ([0, 16384, 49151, 100], 100000))
-        ])
+        self._runner.check_call_list(('Top', 'Middle', 'Bottom'),
+            (Action.SET_COLOR, ([0, 16384, 49151, 100], 100000)))
 
     def test_complex_routines(self):
         script = """
@@ -234,9 +233,8 @@ class DefineTest(unittest.TestCase):
             (Action.SET_COLOR, ([32768, 32768, 65535, 75], 100000)),
             (Action.SET_COLOR, ([32768, 32768, 65535, 85], 100000))
         ])
-        self._runner.check_call_list(('Top', 'Middle', 'Bottom'), [
-            (Action.SET_COLOR, ([16384, 49151, 21843, 85], 100000))
-        ])
+        self._runner.check_call_list(('Top', 'Middle', 'Bottom'),
+            (Action.SET_COLOR, ([16384, 49151, 21843, 85], 100000)))
 
     def test_routine_namespace(self):
         script = """
@@ -255,12 +253,10 @@ class DefineTest(unittest.TestCase):
             use_2_params
         """
         self._runner.run_script(script)
-        self._runner.check_global_call_list([
-            (Action.SET_COLOR, ([32768, 32768, 49151, 90], 100000))
-        ])
-        self._runner.check_call_list(('Top', 'Middle'), [
-            (Action.SET_COLOR, ([16384, 49151, 21843, 85], 100000))
-        ])
+        self._runner.check_global_call_list(
+            (Action.SET_COLOR, ([32768, 32768, 49151, 90], 100000)))
+        self._runner.check_call_list(('Top', 'Middle'),
+            (Action.SET_COLOR, ([16384, 49151, 21843, 85], 100000)))
 
 
 if __name__ == '__main__':

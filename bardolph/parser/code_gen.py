@@ -14,7 +14,7 @@ class CodeGen:
         self._code = []
 
     @property
-    def program(self) -> []:
+    def program(self):
         return self._code
 
     @property
@@ -174,8 +174,8 @@ class CodeGen:
         self.jump_back(loop_marker)
         self.if_end(if_marker)
 
-    @classmethod
-    def _push_op(cls, oper) -> OpCode:
+    @staticmethod
+    def _push_op(oper) -> OpCode:
         if isinstance(oper, (int, float, UnitMode)):
             return OpCode.PUSHQ
         return OpCode.PUSH

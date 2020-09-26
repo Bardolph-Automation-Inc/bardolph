@@ -1,24 +1,26 @@
-from enum import Enum
+from enum import Enum, auto
 
-from bardolph.lib.auto_repl import auto
 
 class Register(Enum):
+    BLUE = auto()
     BRIGHTNESS = auto()
     DURATION = auto()
     FIRST_ZONE = auto()
+    GREEN = auto()
     HUE = auto()
     LAST_ZONE = auto()
     KELVIN = auto()
     NAME = auto()
     OPERAND = auto()
     POWER = auto()
+    RED = auto()
     RESULT = auto()
     SATURATION = auto()
     TIME = auto()
     UNIT_MODE = auto()
 
-    @classmethod
-    def from_string(cls, name):
+    @staticmethod
+    def from_string(name):
         upper = name.upper()
         return getattr(Register, upper) if hasattr(Register, upper) else None
 

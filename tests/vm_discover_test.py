@@ -92,8 +92,8 @@ class VmDiscoverTest(unittest.TestCase):
         self._assert_and_nextm('loc', 'light_02')
         self.assertEqual(self._reg.result, Operand.NULL)
 
-    @classmethod
-    def _make_light_set(cls):
+    @staticmethod
+    def _make_light_set():
         color = [1, 2, 3, 4]
         fake_lifx.using([
             ('light_01', 'x', 'y', color, False),

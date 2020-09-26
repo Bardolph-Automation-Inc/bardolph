@@ -35,7 +35,7 @@ class VmMath:
         value = None
         if isinstance(srce, Register):
             value = self._reg.get_by_enum(srce)
-        elif isinstance(srce, (int, float, UnitMode)) or srce == Operand.NULL:
+        elif isinstance(srce, (int, float, UnitMode)) or srce is Operand.NULL:
             value = srce
         elif isinstance(srce, (str, LoopVar)):
             value = self._call_stack.get_variable(srce)
@@ -59,9 +59,9 @@ class VmMath:
             self.bin_op(operator)
 
     def unary_op(self, operator) -> None:
-        if operator == Operator.USUB:
+        if operator is Operator.USUB:
             self._eval_stack.replace_top(-self._eval_stack.top)
-        elif operator == Operator.NOT:
+        elif operator is Operator.NOT:
             self._eval_stack.replace_top(not self._eval_stack.top)
 
     def bin_op(self, operator) -> None:

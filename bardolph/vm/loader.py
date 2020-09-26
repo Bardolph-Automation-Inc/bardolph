@@ -34,7 +34,7 @@ class Loader:
             self._iter = iter(instructions)
             inst = self._next_inst()
             while inst is not None:
-                if inst.op_code == OpCode.ROUTINE:
+                if inst.op_code is OpCode.ROUTINE:
                     rtn = self._load_routine(inst)
                     routines[rtn.name] = rtn
                 else:
@@ -47,7 +47,7 @@ class Loader:
         rtn.set_address(len(self._routine_segment) + 1)
 
         inst = self._next_inst()
-        while inst is not None and inst.op_code != OpCode.END:
+        while inst is not None and inst.op_code is not OpCode.END:
             self._routine_segment.append(inst)
             inst = self._next_inst()
         if inst is not None:

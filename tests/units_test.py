@@ -3,6 +3,11 @@
 import unittest
 
 from bardolph.controller import units
+from bardolph.fakes.fake_lifx import Action
+
+from . import test_module
+from .script_runner import ScriptRunner
+
 
 class UnitsTest(unittest.TestCase):
     def _assert_colors_equal(self, color0, color1):
@@ -32,6 +37,43 @@ class UnitsTest(unittest.TestCase):
 
         rgb_color = units.raw_to_rgb([21845, 21627, 43908, 4000])
         self._assert_colors_equal(rgb_color, [44.889, 67.0, 44.889, 4000])
+
+    def test_mode_switch(self):
+        script = """
+            units raw saturation 2000 kelvin 4000
+            units logical hue 120 brightness 50
+            units raw
+            hue {hue + 10}
+            brightness {brightness + 20}
+            set "Top"
+            units rgb
+            red 100 green 0 blue 0 kelvin 0
+            set "Middle"
+            red 100 green 100 blue 0 kelvin 0
+            set "Middle"
+            red 50 green 50 blue 50 kelvin 1000
+            set "Middle"
+            red 25 green 50 blue 75 kelvin 2000
+            units raw
+            hue {hue + 100}
+            saturation {saturation + 200}
+            brightness {brightness + 300}
+            kelvin {kelvin + 400}
+            set "Bottom"
+        """
+        test_module.configure()
+        runner = ScriptRunner(self)
+        runner.run_script(script)
+        runner.check_call_list(
+            'Top', (Action.SET_COLOR, ([21855, 2000, 32788, 4000], 0)))
+        runner.check_call_list(
+            'Middle', [
+                (Action.SET_COLOR, ([0, 65535, 65535, 0], 0)),
+                (Action.SET_COLOR, ([10922, 65535, 65535, 0], 0)),
+                (Action.SET_COLOR, ([0, 0, 32768, 1000], 0))
+            ])
+        runner.check_call_list(
+            'Bottom', (Action.SET_COLOR, ([38329, 43890, 49451, 2400], 0)))
 
 if __name__ == '__main__':
     unittest.main()

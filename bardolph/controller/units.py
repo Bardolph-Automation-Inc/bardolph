@@ -1,7 +1,6 @@
 import colorsys
-from enum import Enum
+from enum import Enum, auto
 
-from bardolph.lib.auto_repl import auto
 from bardolph.vm.vm_codes import Register
 
 _EPSILON = 1.0 / 65536.0 / 2.0

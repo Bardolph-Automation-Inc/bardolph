@@ -31,12 +31,12 @@ class LightSet(i_controller.LightSet):
         self._num_successful_discovers = 0
         self._num_failed_discovers = 0
 
-    @classmethod
-    def configure(cls):
+    @staticmethod
+    def configure():
         LightSet.the_instance = LightSet()
 
-    @classmethod
-    def get_instance(cls):
+    @staticmethod
+    def get_instance():
         return LightSet.the_instance
 
     @inject(Lifx)
@@ -65,16 +65,16 @@ class LightSet(i_controller.LightSet):
         self.discover()
         self._garbage_collect()
 
-    @classmethod
-    def _update_memberships(cls, light, current_set_name, set_dict):
+    @staticmethod
+    def _update_memberships(light, current_set_name, set_dict):
         LightSet._remove_memberships(light, set_dict)
         if current_set_name not in set_dict:
             set_dict[current_set_name] = SortedList(light.name)
         else:
             set_dict[current_set_name].add(light.name)
 
-    @classmethod
-    def _remove_memberships(cls, light, set_dict):
+    @staticmethod
+    def _remove_memberships(light, set_dict):
         # Remove the light from every set in set_dict that it belongs to.
         target_set_names = []
         for list_name in set_dict.keys():

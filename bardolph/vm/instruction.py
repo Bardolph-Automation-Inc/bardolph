@@ -8,7 +8,7 @@ class Instruction:
         self.param1 = param1
 
     def __repr__(self):
-        if self.op_code == OpCode.TIME_PATTERN:
+        if self.op_code is OpCode.TIME_PATTERN:
             return 'Instruction({}, {}, {})'.format(
                 OpCode.TIME_PATTERN, self.param0, repr(self.param1))
         if self.param1 is None:
@@ -44,12 +44,12 @@ class Instruction:
             Instruction.quote_if_string(self.param0),
             Instruction.quote_if_string(self.param1))
 
-    @classmethod
-    def quote_if_string(cls, obj):
+    @staticmethod
+    def quote_if_string(obj):
         return ('"{}"' if isinstance(obj, str) else '{}').format(obj)
 
-    @classmethod
-    def do_listing(cls, program):
+    @staticmethod
+    def do_listing(program):
         result = ''
         inst_num = 0
         for inst in program:

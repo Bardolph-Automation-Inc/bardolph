@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="bardolph",
-    version="0.0.44",
+    version="0.0.46",
     author="Al Fontes",
     author_email="bardolph@fontes.org",
     description="Simple scripting language for LIFX lights",
@@ -31,7 +31,6 @@ setup(
         ]
     },
     classifiers=[
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: Apache Software License",

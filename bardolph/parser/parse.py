@@ -5,17 +5,17 @@ import logging
 
 from bardolph.controller.routine import Routine
 from bardolph.controller.units import UnitMode
+from bardolph.lib.coll_util import cvt_enum
 from bardolph.lib.symbol_table import SymbolType
 from bardolph.lib.time_pattern import TimePattern
-from bardolph.vm.vm_codes import OpCode, Operand
-from bardolph.vm.vm_codes import Register, SetOp
+from bardolph.vm.vm_codes import OpCode, Operand, Register, SetOp
 
 from . import lex
 from .call_context import CallContext
 from .code_gen import CodeGen
+from .expr_parser import ExprParser
 from .lex import Lex
 from .loop_parser import LoopParser
-from .expr_parser import ExprParser
 from .token_types import TokenTypes
 
 
@@ -24,7 +24,7 @@ class Parser:
         self._lexer = None
         self._error_output = ''
         self._call_context = CallContext()
-        self._current_token_type = TokenTypes.NO_TOKEN
+        self._current_token_type = TokenTypes.NULL
         self._current_token = ''
         self._op_code = OpCode.NOP
         self._code_gen = CodeGen()
@@ -35,7 +35,7 @@ class Parser:
             TokenTypes.GET: self._get,
             TokenTypes.IF: self._if,
             TokenTypes.NAME: self._call_routine,
-            TokenTypes.NO_TOKEN: self._syntax_error,
+            TokenTypes.NULL: self._syntax_error,
             TokenTypes.OFF: self._power_off,
             TokenTypes.ON: self._power_on,
             TokenTypes.PAUSE: self._pause,
@@ -81,7 +81,7 @@ class Parser:
 
     @property
     def current_token_type(self):
-        return self._current_token_type or TokenTypes.NO_TOKEN
+        return self._current_token_type or TokenTypes.NULL
 
     def _script(self) -> bool:
         return self._body() and self._eof()
@@ -105,11 +105,11 @@ class Parser:
         reg = Register.from_string(self._current_token)
         if reg is None:
             return self.token_error('Expected register, got "{}"')
-        if reg == Register.TIME:
+        if reg is Register.TIME:
             return self._time()
 
         self.next_token()
-        if self._current_token_type == TokenTypes.LITERAL_STRING:
+        if self._current_token_type is TokenTypes.LITERAL_STRING:
             return self._string_to_reg(reg)
         return self.rvalue(reg)
 
@@ -135,7 +135,7 @@ class Parser:
         self._op_code = op_code
         self._add_instruction(OpCode.WAIT)
         self.next_token()
-        if self._current_token_type == TokenTypes.ALL:
+        if self._current_token_type is TokenTypes.ALL:
             return self._all_operand()
         return self._operand_list()
 
@@ -154,7 +154,7 @@ class Parser:
             return False
         self._add_instruction(self._op_code)
 
-        while self._current_token_type == TokenTypes.AND:
+        while self._current_token_type is TokenTypes.AND:
             self.next_token()
             if not self._operand():
                 return False
@@ -166,10 +166,10 @@ class Parser:
         Process a group, location, or light with an optional set of
         zones. Do this by populating the NAME and OPERAND registers.
         """
-        if self._current_token_type == TokenTypes.GROUP:
+        if self._current_token_type is TokenTypes.GROUP:
             operand = Operand.GROUP
             self.next_token()
-        elif self._current_token_type == TokenTypes.LOCATION:
+        elif self._current_token_type is TokenTypes.LOCATION:
             operand = Operand.LOCATION
             self.next_token()
         else:
@@ -179,13 +179,13 @@ class Parser:
         if const_str is not None:
             self._add_instruction(OpCode.MOVEQ, const_str, Register.NAME)
             self.next_token()
-        elif self._current_token_type == TokenTypes.NAME:
+        elif self._current_token_type is TokenTypes.NAME:
             if not self._var_operand():
                 return False
         else:
             return self.token_error('Needed a light, got "{}".')
 
-        if self._current_token_type == TokenTypes.ZONE:
+        if self._current_token_type is TokenTypes.ZONE:
             if not self._zone_range():
                 return False
             operand = Operand.MZ_LIGHT
@@ -201,7 +201,7 @@ class Parser:
         return self.next_token()
 
     def _zone_range(self) -> bool:
-        if self._op_code != OpCode.COLOR:
+        if self._op_code is not OpCode.COLOR:
             return self.trigger_error('Zones not supported for {}'.format(
                 self._op_code.name.lower()))
         self.next_token()
@@ -225,15 +225,11 @@ class Parser:
 
     def _set_units(self) -> bool:
         self.next_token()
-        mode = {
-            TokenTypes.RAW: UnitMode.RAW,
-            TokenTypes.LOGICAL: UnitMode.LOGICAL
-        }.get(self._current_token_type, None)
-
-        if mode is None:
+        if self._current_token_type not in (
+            TokenTypes.RAW, TokenTypes.RGB, TokenTypes.LOGICAL):
             return self.trigger_error(
                 'Invalid parameter "{}" for units.'.format(self._current_token))
-
+        mode = cvt_enum(self._current_token_type, UnitMode)
         self._add_instruction(OpCode.MOVEQ, mode, Register.UNIT_MODE)
         return self.next_token()
 
@@ -248,7 +244,7 @@ class Parser:
         if not self.rvalue(Register.NAME):
             return False
 
-        if self._current_token_type == TokenTypes.ZONE:
+        if self._current_token_type is TokenTypes.ZONE:
             self.next_token()
             if not self._set_zones(True):
                 return False
@@ -266,7 +262,7 @@ class Parser:
         return True
 
     def _print(self):
-        add_newline = self._current_token_type == TokenTypes.PRINTLN
+        add_newline = self._current_token_type is TokenTypes.PRINTLN
         self.next_token()
         while self._current_token_type.is_printable():
             if not self.rvalue():
@@ -278,7 +274,7 @@ class Parser:
 
     def _time(self):
         self.next_token()
-        if self._current_token_type == TokenTypes.AT:
+        if self._current_token_type is TokenTypes.AT:
             self.next_token()
             return self._process_time_patterns()
         return self.rvalue(Register.TIME)
@@ -291,7 +287,7 @@ class Parser:
             OpCode.TIME_PATTERN, SetOp.INIT, time_pattern)
         self.next_token()
 
-        while self._current_token_type == TokenTypes.OR:
+        while self._current_token_type is TokenTypes.OR:
             self.next_token()
             time_pattern = self._current_time_pattern()
             if time_pattern is None:
@@ -324,19 +320,19 @@ class Parser:
         value = self._current_constant()
         if value is not None:
             move_inst = OpCode.MOVEQ
-        elif self._current_token_type == TokenTypes.NAME:
+        elif self._current_token_type is TokenTypes.NAME:
             name = self._current_token
             if self._call_context.has_symbol_typed(name, SymbolType.VAR):
                 value = name
             else:
                 return self.token_error('Unknown: "{}"')
-        elif self._current_token_type == TokenTypes.EXPRESSION:
+        elif self._current_token_type is TokenTypes.EXPRESSION:
             parser = ExprParser(self._current_token)
             if not parser.generate_code(self._code_gen):
                 return self.token_error('Error parsing expression "{}"')
             code_gen.add_instruction(OpCode.POP, Register.RESULT)
             value = Register.RESULT
-        elif self._current_token_type == TokenTypes.REGISTER:
+        elif self._current_token_type is TokenTypes.REGISTER:
             value = self._current_reg()
         else:
             return self.token_error('Cannot use {} as a value.')
@@ -356,10 +352,10 @@ class Parser:
         return not self._call_context.has_routine(self.current_token)
 
     def at_light(self) -> bool:
-        if self._current_token_type == TokenTypes.LITERAL_STRING:
+        if self._current_token_type is TokenTypes.LITERAL_STRING:
             return True
 
-        if self._current_token_type == TokenTypes.NAME:
+        if self._current_token_type is TokenTypes.NAME:
             return self._call_context.has_symbol_typed(
                 SymbolType.MACRO, SymbolType.PARAM, SymbolType.VAR)
 
@@ -418,7 +414,7 @@ class Parser:
 
         routine = Routine(name)
         self._call_context.add_routine(routine)
-        if self._current_token_type == TokenTypes.WITH:
+        if self._current_token_type is TokenTypes.WITH:
             self.next_token()
             if not self._param_decl(routine):
                 return False
@@ -438,7 +434,7 @@ class Parser:
         routine.add_param(name)
         self._call_context.add_variable(name)
         self.next_token()
-        while (self._current_token_type == TokenTypes.NAME and not
+        while (self._current_token_type is TokenTypes.NAME and not
                 self._call_context.has_routine(self._current_token)):
             name = self._current_token
             if routine.has_param(name):
@@ -457,7 +453,7 @@ class Parser:
     def compound_command(self):
         self.next_token()
         while self._current_token_type != TokenTypes.END:
-            if self._current_token_type == TokenTypes.EOF:
+            if self._current_token_type is TokenTypes.EOF:
                 return self.trigger_error('End of file before "end".')
             if not self._command():
                 return False
@@ -489,7 +485,7 @@ class Parser:
         self.next_token()
         if not self.command_seq():
             return False
-        if self.current_token_type == TokenTypes.ELSE:
+        if self.current_token_type is TokenTypes.ELSE:
             self._code_gen.if_else(marker)
             self.next_token()
             if not self.command_seq():
@@ -518,14 +514,14 @@ class Parser:
         If the current token doesn't contain a literal, return None.
         """
         value = None
-        if self._current_token_type == TokenTypes.NUMBER:
+        if self._current_token_type is TokenTypes.NUMBER:
             if Lex.INT_REGEX.match(self._current_token):
                 value = int(self._current_token)
             else:
                 value = float(self._current_token)
-        elif self._current_token_type == TokenTypes.LITERAL_STRING:
+        elif self._current_token_type is TokenTypes.LITERAL_STRING:
             value = self._current_token
-        elif self._current_token_type == TokenTypes.TIME_PATTERN:
+        elif self._current_token_type is TokenTypes.TIME_PATTERN:
             value = TimePattern.from_string(self._current_token)
             if value is None:
                 self._time_spec_error()
@@ -569,9 +565,9 @@ class Parser:
         """
         Returns the current token as a time pattern. Only literals or macros.
         """
-        if self._current_token_type == TokenTypes.TIME_PATTERN:
+        if self._current_token_type is TokenTypes.TIME_PATTERN:
             return TimePattern.from_string(self._current_token)
-        if self._current_token_type == TokenTypes.NAME:
+        if self._current_token_type is TokenTypes.NAME:
             return self._call_context.get_macro(self._current_token).value
         return TimePattern(None, None)
 

@@ -68,7 +68,7 @@ class Clock(i_lib.Clock):
             hour, minute = Clock._hour_minute()
         self.reset()
 
-    @classmethod
-    def _hour_minute(cls):
+    @staticmethod
+    def _hour_minute():
         now = datetime.now()
         return (now.hour, now.minute)

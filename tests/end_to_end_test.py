@@ -5,8 +5,8 @@ import unittest
 from bardolph.controller import i_controller
 from bardolph.fakes.fake_lifx import Action
 from bardolph.lib.injection import provide
-from tests.script_runner import ScriptRunner
-from tests import test_module
+from .script_runner import ScriptRunner
+from . import test_module
 
 
 class EndToEndTest(unittest.TestCase):
@@ -22,41 +22,26 @@ class EndToEndTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         lifx = provide(i_controller.Lifx)
-        for light in lifx.get_lights():
-            if light.get_label() == 'Top':
-                expected = [(Action.SET_COLOR, ([11, 22, 33, 2500], 0))]
-            elif light.get_label() == 'Bottom':
-                expected = [(Action.SET_COLOR, ([44, 55, 66, 2500], 0))]
-            else:
-                expected = []
-            self.assertListEqual(light.get_call_list(), expected)
+        self._runner.check_call_list(
+            'Top', (Action.SET_COLOR, ([11, 22, 33, 2500], 0)))
+        self._runner.check_call_list(
+            'Bottom', (Action.SET_COLOR, ([44, 55, 66, 2500], 0)))
 
     def test_power(self):
         script = 'on "Top" off "Bottom"'
         self._runner.run_script(script)
-        lifx = provide(i_controller.Lifx)
-        for light in lifx.get_lights():
-            if light.get_label() == "Top":
-                expected = [(Action.SET_POWER, (65535, 0))]
-            elif light.get_label() == "Bottom":
-                expected = [(Action.SET_POWER, (0, 0))]
-            else:
-                expected = []
-            self.assertListEqual(light.get_call_list(), expected)
+        self._runner.check_call_list("Top", (Action.SET_POWER, (65535, 0)))
+        self._runner.check_call_list("Bottom", (Action.SET_POWER, (0, 0)))
 
     def test_and(self):
         script = """
-            units raw hue 1 saturation 2 brightness 3 kelvin 4
-            duration 5 set "Bottom" and "Top" and "Middle"
+            units raw hue 1 saturation 2 brightness 3 kelvin 4 duration 5
+            set "Bottom" and "Top" and "Middle"
         """
         self._runner.run_script(script)
         lifx = provide(i_controller.Lifx)
-        for light in lifx.get_lights():
-            if light.get_label() in ('Bottom', 'Middle', 'Top'):
-                expected = [(Action.SET_COLOR, ([1, 2, 3, 4], 5))]
-            else:
-                expected = []
-            self.assertListEqual(light.get_call_list(), expected)
+        self._runner.check_call_list(
+            ('Bottom', 'Top', 'Middle'),(Action.SET_COLOR, ([1, 2, 3, 4], 5)))
 
     def test_mixed_and(self):
         script = """
@@ -64,7 +49,7 @@ class EndToEndTest(unittest.TestCase):
             duration 50 set "Table" and group "Pole"
         """
         self._runner.test_code(script, ('Top', 'Middle', 'Bottom', 'Table'),
-                               [(Action.SET_COLOR, ([10, 20, 30, 40], 50))])
+                               (Action.SET_COLOR, ([10, 20, 30, 40], 50)))
 
     def test_routine_get_zone(self):
         script = """
@@ -72,8 +57,7 @@ class EndToEndTest(unittest.TestCase):
             define get_z with x z get x zone z
             get_z "Strip" 5
         """
-        self._runner.test_code(script, 'Strip',
-                               [(Action.GET_ZONE_COLOR, (5, 6))])
+        self._runner.test_code(script, 'Strip', (Action.GET_ZONE_COLOR, (5, 6)))
 
     def test_group(self):
         script = """
@@ -83,10 +67,10 @@ class EndToEndTest(unittest.TestCase):
             on group "Furniture"
         """
         self._runner.run_script(script)
-        self._runner.check_call_list(('Top', 'Middle', 'Bottom'), [
-            (Action.SET_COLOR, ([100, 10, 1, 1000], 0))])
-        self._runner.check_call_list(('Table', 'Chair', 'Strip'), [
-            (Action.SET_POWER, (65535, 0))])
+        self._runner.check_call_list(('Top', 'Middle', 'Bottom'),
+            (Action.SET_COLOR, ([100, 10, 1, 1000], 0)))
+        self._runner.check_call_list(('Table', 'Chair', 'Strip'),
+            (Action.SET_POWER, (65535, 0)))
 
     def test_location(self):
         script = """
@@ -122,7 +106,7 @@ class EndToEndTest(unittest.TestCase):
             if {100 == 10 * 10} set "Top"
         """
         self._runner.test_code(
-            script, 'Top', [(Action.SET_COLOR, ([5, 55, 555, 5555], 10.0))])
+            script, 'Top', (Action.SET_COLOR, ([5, 55, 555, 5555], 10.0)))
 
     def test_if_else(self):
         script = """

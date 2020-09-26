@@ -18,8 +18,8 @@ class TimePattern(i_lib.TimePattern):
     def __repr__(self):
         return self._repr
 
-    @classmethod
-    def from_string(cls, pattern):
+    @staticmethod
+    def from_string(pattern):
         the_match = TimePattern.REGEX.match(pattern)
         if the_match is not None:
             hours, minutes = the_match.groups()
@@ -27,13 +27,13 @@ class TimePattern(i_lib.TimePattern):
                 return TimePattern(hours, minutes)
         return TimePattern(None, None)
 
-    @classmethod
-    def patterns_valid(cls, hours, minutes):
+    @staticmethod
+    def patterns_valid(hours, minutes):
         return (TimePattern.hours_valid(hours)
                 and TimePattern.minutes_valid(minutes))
 
-    @classmethod
-    def hours_valid(cls, hours):
+    @staticmethod
+    def hours_valid(hours):
         if hours == '*':
             return True
         if len(hours) not in (1, 2):
@@ -47,8 +47,8 @@ class TimePattern(i_lib.TimePattern):
         int_hours = int(hours)
         return 0 <= int_hours < 25
 
-    @classmethod
-    def minutes_valid(cls, minutes):
+    @staticmethod
+    def minutes_valid(minutes):
         if minutes == '*':
             return True
         if len(minutes) != 2:
@@ -89,8 +89,8 @@ class TimePattern(i_lib.TimePattern):
                 if TimePattern._number_match(minute, pattern):
                     self._minute_set.add(minute)
 
-    @classmethod
-    def _number_match(cls, number, pattern):
+    @staticmethod
+    def _number_match(number, pattern) -> bool:
         formatted = "{:02d}".format(number)
         return (formatted == pattern
                 or (pattern[0] in ('*', formatted[0])

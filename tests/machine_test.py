@@ -37,16 +37,16 @@ class MachineTest(unittest.TestCase):
         ]).configure()
         light_set.configure()
 
-    @classmethod
-    def code_for_get(cls, name, operand):
+    @staticmethod
+    def code_for_get(name, operand):
         return [
             Instruction(OpCode.MOVEQ, name, Register.NAME),
             Instruction(OpCode.MOVEQ, operand, Register.OPERAND),
             Instruction(OpCode.GET_COLOR)
         ]
 
-    @classmethod
-    def code_for_set(cls, name, operand, params):
+    @staticmethod
+    def code_for_set(name, operand, params):
         return [
             Instruction(OpCode.MOVEQ, UnitMode.RAW, Register.UNIT_MODE),
             Instruction(OpCode.MOVEQ, params[0], Register.HUE),

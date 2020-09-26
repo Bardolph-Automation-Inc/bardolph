@@ -1,14 +1,12 @@
-from enum import Enum
+from enum import Enum, auto
 
 from bardolph.controller.units import UnitMode
-from bardolph.lib.auto_repl import auto
-from bardolph.vm.vm_codes import LoopVar, OpCode, Operand
-from bardolph.vm.vm_codes import Operator
-from bardolph.vm.vm_codes import Register
+from bardolph.vm.vm_codes import LoopVar, OpCode, Operand, Operator, Register
 
 from .code_gen import CodeGen
 from .expr_parser import ExprParser
 from .token_types import TokenTypes
+
 
 class _LoopType(Enum):
     ALL = auto()
@@ -83,7 +81,7 @@ class LoopParser:
         if self._loop_type.is_unbounded():
             return True
 
-        if (self._loop_type == _LoopType.COUNTED
+        if (self._loop_type is _LoopType.COUNTED
                 and not self._parser.rvalue(LoopVar.COUNTER)):
             return False
         if self._loop_type in (_LoopType.ALL, _LoopType.LIST):
@@ -97,14 +95,14 @@ class LoopParser:
                     self._pre_loop_as(code_gen, call_context)):
                 return False
 
-        if self._current_token_type == TokenTypes.WITH:
+        if self._current_token_type is TokenTypes.WITH:
             self._next_token()
             return self._pre_loop_with(code_gen, call_context)
         return True
 
     def _pre_loop_list(self, code_gen, call_context) -> bool:
         """ Push everything from the "in" clause onto the stack. """
-        if self._current_token_type == TokenTypes.AS:
+        if self._current_token_type is TokenTypes.AS:
             return True
         inner_coder = CodeGen()
         operand = {
@@ -124,7 +122,7 @@ class LoopParser:
             inner_coder.push(Register.RESULT)
             inner_coder.plus_equals(LoopVar.COUNTER)
 
-        if self._current_token_type == TokenTypes.AND:
+        if self._current_token_type is TokenTypes.AND:
             if operand == Operand.ALL:
                 return self._parser.trigger_error(
                     '"and" is not allowed with "all"')
@@ -139,7 +137,7 @@ class LoopParser:
         inner_code = CodeGen()
         inner_code.plus_equals(LoopVar.COUNTER)
         inner_code.push(LoopVar.CURRENT)
-        if self._loop_type == _LoopType.LIST:
+        if self._loop_type is _LoopType.LIST:
             if not self._parser.rvalue(LoopVar.FIRST, code_gen):
                 return self._parser.token_error(
                     'Needed name of a group or location, got "{}"')
@@ -153,7 +151,7 @@ class LoopParser:
         inner_code = CodeGen()
         inner_code.plus_equals(LoopVar.COUNTER)
         inner_code.push(LoopVar.CURRENT)
-        if self._loop_type == _LoopType.GROUPS:
+        if self._loop_type is _LoopType.GROUPS:
             operand = Operand.GROUP
         else:
             operand = Operand.LOCATION
@@ -163,16 +161,16 @@ class LoopParser:
     def _pre_loop_with(self, code_gen, call_context) -> bool:
         if not self._init_index_var(call_context):
             return False
-        if self._current_token_type == TokenTypes.IN:
+        if self._current_token_type is TokenTypes.IN:
             code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.COUNTER)
             self._loop_type = _LoopType.LIST
             self._next_token()
             return self._pre_loop_list(code_gen, call_context)
-        if self._current_token_type == TokenTypes.FROM:
+        if self._current_token_type is TokenTypes.FROM:
             self._next_token()
             if not self._index_var_range(code_gen):
                 return False
-        elif self._current_token_type == TokenTypes.CYCLE:
+        elif self._current_token_type is TokenTypes.CYCLE:
             self._next_token()
             if not self._cycle_var_range(code_gen):
                 return False
@@ -217,7 +215,7 @@ class LoopParser:
         if not self._parser.rvalue(LoopVar.LAST):
             return False
         code_gen.add_instruction(OpCode.MOVE, LoopVar.FIRST, self._index_var)
-        if self._loop_type == _LoopType.WITH:
+        if self._loop_type is _LoopType.WITH:
             if not self._calc_counter(code_gen):
                 return False
         else:
@@ -282,10 +280,10 @@ class LoopParser:
         """Generate code to leave True or False in the result register,
         depending on whether the loop should continue.
         """
-        if self._loop_type == _LoopType.INFINITE:
+        if self._loop_type is _LoopType.INFINITE:
             code_gen.add_instruction(OpCode.MOVEQ, True, Register.RESULT)
             return True
-        if self._loop_type == _LoopType.WHILE:
+        if self._loop_type is _LoopType.WHILE:
             exp = ExprParser(self._current_token)
             if not exp.generate_code(code_gen):
                 return False

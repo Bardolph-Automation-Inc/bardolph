@@ -12,14 +12,14 @@ class ScriptJob(Job):
         self._parser = Parser()
         self._machine = Machine()
 
-    @classmethod
-    def from_file(cls, file_name):
+    @staticmethod
+    def from_file(file_name):
         new_instance = ScriptJob()
         new_instance.load_file(file_name)
         return new_instance
 
-    @classmethod
-    def from_string(cls, script):
+    @staticmethod
+    def from_string(script):
         new_instance = ScriptJob()
         new_instance.load_string(script)
         return new_instance

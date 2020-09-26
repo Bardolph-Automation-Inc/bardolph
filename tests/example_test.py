@@ -18,8 +18,8 @@ class ExampleTest(unittest.TestCase):
             hue 120 saturation 100 brightness 75 kelvin 2700
             set "Table"
         """
-        self._runner.test_code(script, ('Table'),
-                               [(Action.SET_COLOR, ([120, 100, 75, 2700], 0))])
+        self._runner.test_code(
+            script, ('Table'), (Action.SET_COLOR, ([120, 100, 75, 2700], 0)))
 
     def test_multizone(self):
         script = """
@@ -42,12 +42,10 @@ class ExampleTest(unittest.TestCase):
             set "Strip" zone 0 5 and "Table"
         """
         self._runner.run_script(script)
-        self._runner.check_call_list('Strip', [
-            (Action.SET_ZONE_COLOR, (0, 6, [120, 75, 75, 2700], 1.5)),
-        ])
-        self._runner.check_call_list('Table', [
-            (Action.SET_COLOR, ([120, 75, 75, 2700], 1.5))
-        ])
+        self._runner.check_call_list(
+            'Strip', (Action.SET_ZONE_COLOR, (0, 6, [120, 75, 75, 2700], 1.5)))
+        self._runner.check_call_list(
+            'Table', (Action.SET_COLOR, ([120, 75, 75, 2700], 1.5)))
 
     def test_group(self):
         script = """
@@ -72,12 +70,10 @@ class ExampleTest(unittest.TestCase):
             set "Strip" zone zone_1 zone_2
         """
         self._runner.run_script(script)
-        self._runner.check_call_list('Chair', [
-            (Action.SET_COLOR, ([120, 80, 50, 2700], 0))
-        ])
-        self._runner.check_call_list('Strip', [
-            (Action.SET_ZONE_COLOR, (5, 11, [120, 80, 50, 2700], 0)),
-        ])
+        self._runner.check_call_list(
+            'Chair', (Action.SET_COLOR, ([120, 80, 50, 2700], 0)))
+        self._runner.check_call_list(
+            'Strip', (Action.SET_ZONE_COLOR, (5, 11, [120, 80, 50, 2700], 0)))
 
 
 if __name__ == '__main__':

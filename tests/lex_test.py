@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from re import LOCALE
 import unittest
 
 from bardolph.parser.lex import Lex
@@ -23,9 +24,9 @@ class LexTest(unittest.TestCase):
         self.assertEqual(TokenTypes.TIME_PATTERN, token_type)
 
     def test_all_tokens(self):
-        input_string = 'all and as at brightness \
-            define # comment \n duration hue if in \
-            off on or kelvin print saturation \
+        input_string = 'all and as at blue brightness \
+            define # comment \n duration green hue if in \
+            off on or kelvin logical print raw red rgb saturation \
             set time wait zone 12:*4 {x * y} \
             -1.0 01.234\n"Hello There" x _abc @'
         expected_tokens = [
@@ -34,7 +35,9 @@ class LexTest(unittest.TestCase):
             TokenTypes.AS,
             TokenTypes.AT,
             TokenTypes.REGISTER,
+            TokenTypes.REGISTER,
             TokenTypes.DEFINE,
+            TokenTypes.REGISTER,
             TokenTypes.REGISTER,
             TokenTypes.REGISTER,
             TokenTypes.IF,
@@ -43,7 +46,11 @@ class LexTest(unittest.TestCase):
             TokenTypes.ON,
             TokenTypes.OR,
             TokenTypes.REGISTER,
+            TokenTypes.LOGICAL,
             TokenTypes.PRINT,
+            TokenTypes.RAW,
+            TokenTypes.REGISTER,
+            TokenTypes.RGB,
             TokenTypes.REGISTER,
             TokenTypes.SET,
             TokenTypes.REGISTER,
@@ -63,9 +70,11 @@ class LexTest(unittest.TestCase):
             'and',
             'as',
             'at',
+            'blue',
             'brightness',
             'define',
             'duration',
+            'green',
             'hue',
             'if',
             'in',
@@ -73,7 +82,11 @@ class LexTest(unittest.TestCase):
             'on',
             'or',
             'kelvin',
+            'logical',
             'print',
+            'raw',
+            'red',
+            'rgb',
             'saturation',
             'set',
             'time',
@@ -97,10 +110,14 @@ class LexTest(unittest.TestCase):
         self._lex_and_compare(input_string, expected_tokens, expected_strings)
 
     def test_embedded_keywords(self):
-        input_string = "a_hue saturation_z _brightness_ kelvinkelvin"
-        expected_tokens = [TokenTypes.NAME] * 4
+        input_string = '''
+            a_hue saturation_z _brightness_ kelvinkelvin xblue
+            y_green redred
+        '''
+        expected_tokens = [TokenTypes.NAME] * len(input_string.split())
         expected_strings = [
-            'a_hue', 'saturation_z', '_brightness_', 'kelvinkelvin'
+            'a_hue', 'saturation_z', '_brightness_', 'kelvinkelvin', 'xblue',
+            'y_green', 'redred'
         ]
         self._lex_and_compare(input_string, expected_tokens, expected_strings)
 

@@ -68,9 +68,8 @@ class LoopTest(unittest.TestCase):
                 set the_light
         """
         self._runner.run_script(script)
-        self._runner.check_call_list(('light_0', 'light_1', 'light_2'), [
-            (Action.SET_COLOR, ([8192, 16384, 49151, 2000], 9000))
-        ])
+        self._runner.check_call_list(('light_0', 'light_1', 'light_2'),
+            (Action.SET_COLOR, ([8192, 16384, 49151, 2000], 9000)))
 
     def test_list_range(self):
         script = """
@@ -88,15 +87,12 @@ class LoopTest(unittest.TestCase):
             end
         """
         self._runner.run_script(script)
-        self._runner.check_call_list('light_0', [
-            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0))
-        ])
-        self._runner.check_call_list('light_1', [
-            (Action.SET_COLOR, ([32768, 32768, 32768, 1000], 0))
-        ])
-        self._runner.check_call_list('light_2', [
-            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0))
-        ])
+        self._runner.check_call_list('light_0',
+            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0)))
+        self._runner.check_call_list('light_1',
+            (Action.SET_COLOR, ([32768, 32768, 32768, 1000], 0)))
+        self._runner.check_call_list('light_2',
+            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0)))
 
     def test_list_cycle(self):
         script = """
@@ -111,15 +107,12 @@ class LoopTest(unittest.TestCase):
             end
         """
         self._runner.run_script(script)
-        self._runner.check_call_list('light_0', [
-            (Action.SET_COLOR, ([0, 32768, 32768, 1000], 0))
-        ])
-        self._runner.check_call_list('light_1', [
-            (Action.SET_COLOR, ([21845, 32768, 32768, 1000], 0))
-        ])
-        self._runner.check_call_list('light_2', [
-            (Action.SET_COLOR, ([43690, 32768, 32768, 1000], 0))
-        ])
+        self._runner.check_call_list('light_0',
+            (Action.SET_COLOR, ([0, 32768, 32768, 1000], 0)))
+        self._runner.check_call_list('light_1',
+            (Action.SET_COLOR, ([21845, 32768, 32768, 1000], 0)))
+        self._runner.check_call_list('light_2',
+            (Action.SET_COLOR, ([43690, 32768, 32768, 1000], 0)))
 
     def test_const_count(self):
         script = """
@@ -238,12 +231,10 @@ class LoopTest(unittest.TestCase):
             end
         """
         self._runner.run_script(script)
-        self._runner.check_call_list('light_0', [
-            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0))
-        ])
-        self._runner.check_call_list('light_2', [
-            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0))
-        ])
+        self._runner.check_call_list('light_0',
+            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0)))
+        self._runner.check_call_list('light_2',
+            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0)))
 
     def test_group_cycle(self):
         script = """
@@ -256,12 +247,10 @@ class LoopTest(unittest.TestCase):
             end
         """
         self._runner.run_script(script)
-        self._runner.check_call_list('light_0', [
-            (Action.SET_COLOR, ([0, 49151, 16384, 1234], 0))
-        ])
-        self._runner.check_call_list('light_2', [
-            (Action.SET_COLOR, ([32768, 49151, 16384, 1234], 0))
-        ])
+        self._runner.check_call_list('light_0',
+            (Action.SET_COLOR, ([0, 49151, 16384, 1234], 0)))
+        self._runner.check_call_list('light_2',
+            (Action.SET_COLOR, ([32768, 49151, 16384, 1234], 0)))
 
     def test_group_no_with(self):
         script = """
@@ -269,12 +258,10 @@ class LoopTest(unittest.TestCase):
             repeat in group "group" as the_light set the_light
         """
         self._runner.run_script(script)
-        self._runner.check_call_list('light_0', [
-            (Action.SET_COLOR, ([16384, 32768, 49151, 2000], 0))
-        ])
-        self._runner.check_call_list('light_2', [
-            (Action.SET_COLOR, ([16384, 32768, 49151, 2000], 0))
-        ])
+        self._runner.check_call_list('light_0',
+            (Action.SET_COLOR, ([16384, 32768, 49151, 2000], 0)))
+        self._runner.check_call_list('light_2',
+            (Action.SET_COLOR, ([16384, 32768, 49151, 2000], 0)))
 
     def test_all_groups(self):
         script = """
@@ -289,12 +276,10 @@ class LoopTest(unittest.TestCase):
         fake_lifx.using_large_set().configure()
         light_set.configure()
         self._runner.run_script(script)
-        self._runner.check_call_list(('Chair', 'Strip', 'Table'), [
-            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0))
-        ])
-        self._runner.check_call_list(('Bottom', 'Middle', 'Top'), [
-            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0))
-        ])
+        self._runner.check_call_list(('Chair', 'Strip', 'Table'),
+            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0)))
+        self._runner.check_call_list(('Bottom', 'Middle', 'Top'),
+            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0)))
 
     def test_all_locations(self):
         script = """
@@ -307,12 +292,10 @@ class LoopTest(unittest.TestCase):
             end
         """
         self._runner.run_script(script)
-        self._runner.check_call_list(('light_0', 'light_2'), [
-            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0))
-        ])
-        self._runner.check_call_list('light_1', [
-            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0))
-        ])
+        self._runner.check_call_list(('light_0', 'light_2'),
+            (Action.SET_COLOR, ([32768, 32768, 0, 1000], 0)))
+        self._runner.check_call_list('light_1',
+            (Action.SET_COLOR, ([32768, 32768, 65535, 1000], 0)))
 
     def test_mixture(self):
         fake_lifx.using_large_set().configure()

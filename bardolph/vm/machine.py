@@ -1,13 +1,12 @@
 import logging
 
-from bardolph.lib.i_lib import Clock, TimePattern
-from bardolph.lib.injection import inject, injected, provide
-from bardolph.lib.symbol import Symbol
-
 from bardolph.controller import units
 from bardolph.controller.get_key import getch
 from bardolph.controller.i_controller import LightSet
 from bardolph.controller.units import UnitMode
+from bardolph.lib.i_lib import Clock, TimePattern
+from bardolph.lib.injection import inject, injected, provide
+from bardolph.lib.symbol import Symbol
 
 from .call_stack import CallStack
 from .loader import Loader
@@ -15,28 +14,37 @@ from .vm_codes import JumpCondition, LoopVar, OpCode, Operand, Register, SetOp
 from .vm_discover import VmDiscover
 from .vm_math import VmMath
 
+
 class Registers:
     def __init__(self):
-        self.hue = 0.0
-        self.saturation = 0.0
+        self.blue = 0.0
         self.brightness = 0.0
-        self.kelvin = 0.0
         self.disc_forward = False
         self.duration = 0.0
         self.first_zone = 0
+        self.green = 0.0
+        self.hue = 0.0
+        self.kelvin = 0.0
         self.last_zone = 0
-        self.power = False
-        self.result = None
         self.name = None
-        self.operand = None
+        self.operand = Operand.NULL
+        self.power = False
+        self.red = 0.0
+        self.result = None
+        self.saturation = 0.0
         self.time = 0.0  # ms.
         self.unit_mode = UnitMode.LOGICAL
 
     def get_color(self):
-        return [self.hue, self.saturation, self.brightness, self.kelvin]
+        if self.unit_mode is not UnitMode.RGB:
+            return [self.hue, self.saturation, self.brightness, self.kelvin]
+        return [self.red, self.green, self.blue, self.kelvin]
 
-    def store_color(self, color):
-        self.hue, self.saturation, self.brightness, self.kelvin = color
+    def store_color(self, color) -> None:
+        if self.unit_mode is not UnitMode.RGB:
+            self.hue, self.saturation, self.brightness, self.kelvin = color
+        else:
+            self.red, self.green, self.blue, self.kelvin = color
 
     def get_by_enum(self, reg):
         return getattr(self, reg.name.lower())
@@ -145,13 +153,14 @@ class Machine:
     def current_inst(self):
         return self._program[self._pc]
 
-    def _color(self) -> None: {
-        Operand.ALL: self._color_all,
-        Operand.LIGHT: self._color_light,
-        Operand.GROUP: self._color_group,
-        Operand.LOCATION: self._color_location,
-        Operand.MZ_LIGHT: self._color_mz_light
-    }[self._reg.operand]()
+    def _color(self) -> None:
+        fn_map = {operand: fn for operand, fn in (
+            (Operand.ALL, self._color_all),
+            (Operand.LIGHT, self._color_light),
+            (Operand.GROUP, self._color_group),
+            (Operand.LOCATION, self._color_location),
+            (Operand.MZ_LIGHT, self._color_mz_light))}
+        fn_map[self._reg.operand]()
 
     @inject(LightSet)
     def _color_all(self, light_set=injected) -> None:
@@ -260,13 +269,14 @@ class Machine:
         if light is None:
             Machine._report_missing(self._reg.name)
         else:
-            if self._reg.operand == Operand.MZ_LIGHT:
+            if self._reg.operand is Operand.MZ_LIGHT:
                 if self._zone_check(light):
                     zone = self._reg.first_zone
                     color = light.get_color_zones(zone, zone + 1)[0]
                     self.color_to_reg(self._maybe_converted_color(color))
             else:
-                self.color_to_reg(self._maybe_converted_color(light.get_color()))
+                self.color_to_reg(
+                    self._maybe_converted_color(light.get_color()))
 
     def _param(self) -> None:
         """
@@ -359,7 +369,7 @@ class Machine:
 
     def _outq(self) -> None:
         value = self.current_inst.param0
-        if value == Operand.NULL:
+        if value is Operand.NULL:
             print(self._print_buffer.rstrip())
             self._print_buffer = ''
         else:
@@ -393,27 +403,29 @@ class Machine:
         if isinstance(time, TimePattern):
             self._clock.wait_until(time)
         elif time > 0:
-            if self._reg.unit_mode == UnitMode.RAW:
+            if self._reg.unit_mode is UnitMode.RAW:
                 time /= 1000.0
             self._clock.pause_for(time)
 
     def _assure_raw_time(self, value) -> int:
-        if self._reg.unit_mode == UnitMode.LOGICAL:
+        if self._reg.unit_mode in (UnitMode.LOGICAL, UnitMode.RGB):
             return units.time_raw(value)
         return value
 
     def _assure_raw_color(self, color):
-        if self._reg.unit_mode == UnitMode.RAW:
+        if self._reg.unit_mode is UnitMode.RAW:
             return color
+        if self._reg.unit_mode is UnitMode.RGB:
+            return units.rgb_to_raw(color)
         return units.logical_to_raw(color)
 
     def _maybe_converted_color(self, color):
         """
         The incoming color always consists of raw values.
         """
-        if self._reg.unit_mode == UnitMode.RAW:
+        if self._reg.unit_mode is UnitMode.RAW:
             return color
-        elif self._reg.unit_mode == UnitMode.LOGICAL:
+        if self._reg.unit_mode is UnitMode.LOGICAL:
             return units.raw_to_logical(color)
         return units.raw_to_rgb(color)
 
@@ -436,16 +448,14 @@ class Machine:
         """
         value = self.current_inst.param0
         dest = self.current_inst.param1
-        if dest == Register.UNIT_MODE:
+        if dest is Register.UNIT_MODE:
             self._switch_unit_mode(value)
-        self._do_put_value(dest, value)
+        else:
+            self._do_put_value(dest, value)
 
-    def _switch_unit_mode(self, to_mode) -> None:
-        from_mode = self._reg.unit_mode
-        if from_mode == to_mode:
-            return
-
-        key = lambda mode0, mode1: str(mode0) + str(mode1)
+    @staticmethod
+    def _convert_units_fn(from_mode, to_mode):
+        def key(mode0, mode1): return str(mode0) + str(mode1)
         converters = (
             (UnitMode.LOGICAL, UnitMode.RAW, units.logical_to_raw),
             (UnitMode.LOGICAL, UnitMode.RGB, units.logical_to_rgb),
@@ -453,15 +463,26 @@ class Machine:
             (UnitMode.RGB, UnitMode.LOGICAL, units.rgb_to_logical),
             (UnitMode.RAW, UnitMode.RGB, units.raw_to_rgb),
             (UnitMode.RAW, UnitMode.LOGICAL, units.raw_to_logical))
-        convert = {key(from_mode, to_mode): fn
-              for from_mode, to_mode, fn in converters}[key(from_mode, to_mode)]
-        self._reg.store_color(convert(self._reg.get_color()))
-        if to_mode == UnitMode.RAW:
-            self._reg.duration, self._reg.time = (units.time_raw(t)
-                for t in (self._reg.duration, self._reg.time))
-        elif from_mode == UnitMode.RAW:
-            self._reg.duration , self._reg.time = (units.time_logical(t)
-                for t in (self._reg.duration, self._reg.time))
+        convert_dict = {key(from_mode, to_mode): fn
+                        for from_mode, to_mode, fn in converters}
+        return convert_dict[key(from_mode, to_mode)]
+
+    def _switch_unit_mode(self, to_mode) -> None:
+        from_mode = self._reg.unit_mode
+        if from_mode is to_mode:
+            return
+
+        original_color = self._reg.get_color()
+        self._reg.unit_mode = to_mode
+        converter = self._convert_units_fn(from_mode, to_mode)
+        self._reg.store_color(converter(original_color))
+
+        if to_mode is UnitMode.RAW:
+            self._reg.duration = units.time_raw(self._reg.duration)
+            self._reg.time = units.time_raw(self._reg.time)
+        elif from_mode is UnitMode.RAW:
+            self._reg.duration = units.time_logical(self._reg.duration)
+            self._reg.time = units.time_logical(self._reg.time)
 
     def _do_put_value(self, dest, value) -> None:
         if isinstance(dest, Register):
@@ -483,8 +504,8 @@ class Machine:
             return False
         return True
 
-    @classmethod
-    def _report_missing(cls, name) -> None:
+    @staticmethod
+    def _report_missing(name) -> None:
         logging.warning("Light \"{}\" not found.".format(name))
 
     def _power_param(self):

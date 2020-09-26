@@ -5,13 +5,15 @@ from .token_types import TokenTypes
 
 
 class Lex:
+    reg_list = 'hue saturation brightness kelvin red green blue duration time'
+    REG_REGEX = re.compile(
+        '^' + "$|^".join([reg for reg in reg_list.split()]) + '$')
     EXPR_REGEX = re.compile(r'^\{.*?\}$')
     TOKEN_REGEX = re.compile(r'#.*$|".*?"|\{.*?\}|\S+')
     NAME_REGEX = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
     NUMBER_REGEX = re.compile(r'^\-?[0-9]*\.?[0-9]+$')
     INT_REGEX = re.compile(r'^\-?[0-9]*$')
-    REG_REGEX = re.compile(
-        '^hue$|^saturation$|^brightness$|^duration$|^time$|^kelvin$')
+
 
     def __init__(self, input_string):
         self._lines = iter(input_string.split('\n'))
@@ -27,8 +29,8 @@ class Lex:
             self._line_num += 1
             self._tokens = self.TOKEN_REGEX.finditer(current_line)
 
-    @classmethod
-    def _unabbreviate(cls, token):
+    @staticmethod
+    def _unabbreviate(token):
         return {
             'h': 'hue', 's': 'saturation', 'b': 'brightness', 'k': 'kelvin'
         }.get(token, token)
@@ -55,8 +57,8 @@ class Lex:
         return TokenTypes.UNKNOWN
 
     def next_token(self):
-        token_type, token = TokenTypes.NO_TOKEN, ''
-        while token_type == TokenTypes.NO_TOKEN:
+        token_type, token = TokenTypes.NULL, ''
+        while token_type is TokenTypes.NULL:
             match = None if self._tokens is None else next(self._tokens, None)
             while match is None:
                 self._next_line()
@@ -71,7 +73,7 @@ class Lex:
                     token_type = TokenTypes.LITERAL_STRING
                 else:
                     token_type = self._token_type(token)
-                    if token_type == TokenTypes.EXPRESSION:
+                    if token_type is TokenTypes.EXPRESSION:
                         token = token[1:-1]
 
         return (token_type, token)

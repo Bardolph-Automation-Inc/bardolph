@@ -1,7 +1,4 @@
-from enum import Enum
-
-from ..lib.auto_repl import auto
-
+from enum import Enum, auto
 
 class SymbolType(Enum):
     EXTERN = auto()

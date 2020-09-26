@@ -1,10 +1,9 @@
-from enum import Enum
-
 import logging
+from enum import Enum, auto
 
-from bardolph.lib.auto_repl import auto
-from bardolph.lib.injection import bind_instance
 from bardolph.controller import i_controller
+from bardolph.lib.injection import bind_instance
+
 
 class Action(Enum):
     GET_COLOR = auto()

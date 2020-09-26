@@ -50,18 +50,18 @@ class VmDiscover:
         return self._call_stack.get_variable(param)
 
     @inject(LightSet)
-    def _set_by_oper(self, name, light_set) -> SortedList:
-        if self._reg.operand == Operand.GROUP:
+    def _set_by_oper(self, name, light_set):
+        if self._reg.operand is Operand.GROUP:
             return light_set.get_group(name)
-        elif self._reg.operand == Operand.LOCATION:
+        elif self._reg.operand is Operand.LOCATION:
             return light_set.get_location(name)
         return None
 
     @inject(LightSet)
     def _names_by_oper(self, light_set):
-        if self._reg.operand == Operand.GROUP:
+        if self._reg.operand is Operand.GROUP:
             return light_set.group_names
-        elif self._reg.operand == Operand.LOCATION:
+        elif self._reg.operand is Operand.LOCATION:
             return light_set.location_names
-        assert self._reg.operand == Operand.LIGHT
+        assert self._reg.operand is Operand.LIGHT
         return light_set.light_names

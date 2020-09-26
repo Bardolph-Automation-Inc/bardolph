@@ -1,6 +1,5 @@
-from enum import Enum
+from enum import Enum, auto
 
-from ..lib.auto_repl import auto
 
 class TokenTypes(Enum):
     ALL = auto()
@@ -26,7 +25,7 @@ class TokenTypes(Enum):
     LOCATION = auto()
     LOGICAL = auto()
     NAME = auto()
-    NO_TOKEN = auto()
+    NULL = auto()
     NUMBER = auto()
     OFF = auto()
     ON = auto()
@@ -36,6 +35,7 @@ class TokenTypes(Enum):
     PRINTLN = auto()
     PAUSE = auto()
     RAW = auto()
+    RGB = auto()
     REGISTER = auto()
     REPEAT = auto()
     SET = auto()
@@ -49,8 +49,8 @@ class TokenTypes(Enum):
     WAIT = auto()
     ZONE = auto()
 
-    @classmethod
-    def commands(cls):
+    @staticmethod
+    def commands():
         return (TokenTypes.ASSIGN,
                 TokenTypes.GET,
                 TokenTypes.OFF,

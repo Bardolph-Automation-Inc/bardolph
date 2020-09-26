@@ -75,8 +75,8 @@ class FrontEnd:
             data=web_app.get_status(),
             path_root=web_app.get_path_root())
 
-    @classmethod
-    def get_agent_class(cls):
+    @staticmethod
+    def get_agent_class():
         """ return a string containing 'tv', 'mobile', or 'desktop' """
         header = request.headers.get('User-Agent').lower()
         if header.find('android') != -1 or header.find('iphone') != -1:
