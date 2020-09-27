@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="bardolph",
-    version="0.0.46",
+    version="0.1.0",
     author="Al Fontes",
     author_email="bardolph@fontes.org",
     description="Simple scripting language for LIFX lights",
@@ -21,7 +21,7 @@ setup(
         'bardolph.vm'
     ],
     install_requires=['lifxlan'],
-    python_requires='>=3.5',
+    python_requires='>=3.7',
     entry_points={
         'console_scripts': [
             'lsc=bardolph.controller:lsc.main',
@@ -35,6 +35,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
-        "Development Status :: 3 - Alpha"
+        "Development Status :: 3 - Beta"
     ],
 )

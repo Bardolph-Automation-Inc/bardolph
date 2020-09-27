@@ -16,8 +16,7 @@ you'll use most often. The `lsc` command generates a Python program around
 a script, which you can run directly. To get the status of the lights on your
 network, run `lscap`.
 
-.. index::
-   single: discovery delay
+.. index:: discovery delay, lights; discovery delay
 
 .. note:: During initialization, the process of discovering lights can take a
   while. Basically, a "report" message gets broadcast over the WiFi network,
@@ -38,8 +37,7 @@ network, run `lscap`.
   lower than the number of lights you really do have, one or more of them may
   not get discovered.
 
-.. index::
-   single: lsrun
+.. index:: lsrun, command line; lsrun, running a script
 
 lsrun - Run a Lightbulb Script
 ==============================
@@ -65,6 +63,8 @@ command line, it will queue them in that order and execute them sequentially:
 
 This would run `light.ls`, and upon completion, execute `dark.ls`.
 
+.. index:: lights; fake, fake lights, command line options
+
 Command Line Options
 --------------------
 Command-line flags modify how a script is run. Each option has a long and a
@@ -83,6 +83,7 @@ Available options:
   just send output to stdout. This can be helpful for debugging and testing.
 * `-n` or `--num-lights`: Specify the number of lights that are on the network.
 
+
 With the -f option, there will be 5 fake lights, and their name are fixed as
 "Table", "Top", "Middle", "Bottom", and "Chair". Two fake groups are
 available: "Pole" and "Table". One location named "Home" contains all
@@ -99,10 +100,7 @@ off again, you can do the following from the command line:
 
   lsrun -s 'on all time 60 off all'
 
-.. index::
-   single: lsc
-   single: compiler
-   single: lightbulb script compiler
+.. index:: lsc, compiler, lightbulb script compiler, command line; lsc
 
 lsc - Lightbulb Script Compiler
 ===============================
@@ -164,9 +162,7 @@ For example, after you've generated the Python program:
 This would not affect any physical lights, but would send text to the screen
 indicating what the program would do.
 
-.. index::
-   single: capture
-   single: lscap
+.. index:: capture light state, lscap, command line; lscap
 
 lscap - Capture Light State
 ===========================

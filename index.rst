@@ -8,6 +8,8 @@
 Bardolph Project
 ================
 
+* :ref:`genindex`
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents
@@ -20,11 +22,3 @@ Bardolph Project
    docs/web_server
    docs/python_interface
    docs/controller
-
-.. toctree::
-    :maxdepth: 2
-    :caption: Article
-
-    docs/iter
-
-* :ref:`genindex`

@@ -27,7 +27,6 @@ exclude_patterns = []
 
 html_favicon = 'www/logo_ico.png'
 html_static_path = ['web/static']
-# html_theme = 'nature'
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
     'analytics_id': 'UA-162715494-1'

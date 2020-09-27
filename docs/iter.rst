@@ -4,9 +4,6 @@
 
    http://www.bardolph.org
 
-.. index::
-    single: iterations; introduction to
-
 .. _iteration:
 
 ***************************************************
@@ -90,10 +87,3 @@ and saturation the same:
 
 In this case, the run-time system uses the number of lights on the network
 to calculate a delta and assign evenly-distributed values to `the_hue`.
-
-.. index::
-   single: virtual machine
-   single: VM registers
-
-Plain Iterations
-================

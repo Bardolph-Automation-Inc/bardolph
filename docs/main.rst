@@ -36,8 +36,7 @@ It may be missing some of what you might expect of a scripting language,
 as it's still under development. However, it is also very simple, and
 should be usable by non-programmers.
 
-.. index::
-   single: quick examples
+.. index:: quick examples
 
 Quick Examples
 ==============
@@ -96,8 +95,7 @@ turn off all the lights from the keyboard:
 
   lsrun -s 'off all'
 
-.. index::
-   single: web server; overview
+.. index:: web server; overview
 
 Web Server
 ==========
@@ -121,8 +119,7 @@ in :ref:`web_install`.
 
 The theory of operation for the web server can be found in :ref:`web_server`.
 
-.. index::
-   single: Python interface; overview
+.. index:: Python interface; overview
 
 Python Interface
 ================
@@ -143,8 +140,7 @@ another 5 seconds:
 More information on using scripts in Python code is available in
 :ref:`python_interface`.
 
-.. index::
-   single: installation; quick intro
+.. index:: installation; quick
 
 Quick Installation
 ##################
@@ -226,19 +222,17 @@ Uninstall
 
   pip uninstall bardolph
 
-
-.. index:
-   single: system requirements
+.. index:: system requirements
 
 System Requirements
 ###################
-The program has been tested on Python versions at or above 3.5.1. Because I
+The program has been tested on Python versions at or above 3.7. Because I
 haven't done any stress testing, I don't know the limits on
 script size. Note that the application loads the encoded script into memory
 before executing it.
 
-I've run the program on MacOS 10.15.5, Debian Linux Stretch, and the
-February, 2020, release of Raspbian. It works fine for me on a Raspberry Pi
+I've run the program on MacOS 10.15.5, Debian Linux 10 buster, and the
+August, 2020, release of Raspberry Pi OS. It works fine for me on a Raspberry Pi
 Zero W, controlling 5 bulbs. I haven't gotten my hands on a 4, yet.
 
 Supported Devices
@@ -251,14 +245,6 @@ work ok, although I don't really know.
 
 For multizone, I've done some testing with the Z LED strip, and it seems to
 work well. I would expect it to work with other multizone lights.
-
-Missing Features
-################
-These are among the missing features that I'll be working on, in no particular
-order:
-
-* Easy-to-use web server.
-* Support for tile devices.
 
 Project Name Source
 ###################

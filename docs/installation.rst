@@ -3,8 +3,7 @@
 
    http://www.bardolph.org
 
-.. index::
-   single: basic installation; full instructions
+.. index:: basic installation, installation; basic
 
 .. _installation:
 
@@ -98,8 +97,7 @@ without accessing any actual lights.
 
 Note that the above commands are documented in :ref:`command_line`.
 
-.. index::
-   single: local build
+.. index:: local build
 
 Alternative: Build and Install
 ==============================
@@ -141,8 +139,7 @@ When you get a newer release of the code, you can upgrade it with:
     python setup.py bdist
     pip install --upgrade --no-index --find-links ./dist bardolph
 
-.. index::
-   single: uninstall
+.. index:: uninstall
 
 Uninstalling
 ============
@@ -155,8 +152,7 @@ Uninstall with:
 This will work whether you installed a downloaded package, or built and
 installed a package locally.
 
-.. index::
-   single: logging configuration
+.. index:: logging configuration
 
 Modifying the Configuration
 ===========================

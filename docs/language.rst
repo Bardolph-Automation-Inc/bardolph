@@ -21,6 +21,8 @@ source file and compiles it into a sequence of encoded instructions. Next, a
 simple virtual machine executes those instructions. A job-control facility
 maintains a queue, allowing execution of a sequence of compiled scripts.
 
+.. index:: color; set for all
+
 Syntax
 ======
 A script is a plain-text file in which all whitespace is equivalent. You can
@@ -54,7 +56,7 @@ to the lights.
 The value you supply for `hue` is an angle expressed in
 in degrees, normally between 0 and 360. The values for `saturation`
 and `brightness` are treated as percentages, while `kelvin` is considered
-a temperature in degrees Kelvin. The value for `duration` is expressed in
+a temperature in °K. The value for `duration` is expressed in
 seconds, and tells the light how long to take to transition from its current
 state to the one you are now specifying. If you never supply a value for
 `duration`, it defaults to zero, and transitions occur instantaneously.
@@ -69,9 +71,7 @@ the color wheel in the LIFX mobile app. In that app, you can see values for hue,
 saturation, and brightness in real time. If you wanted to reproduce a color, you
 could put the values displayed by the app into a script.
 
-.. index::
-    pair: color setting; definition
-    pair: color; definition
+.. index:: color; definition of term
 
 .. note:: The term *color* is somewhat ambiguous. Intuitively, you may
   consider brightness (intensity) to be separate from a bulb's color.
@@ -104,8 +104,7 @@ to unwanted results, so each of the values should be set at least once before
 setting the color of any lights. Or, consider starting your script with
 `get all` (the `get` command is described below).
 
-.. index::
-  pair: name; syntax
+.. index:: name syntax
 
 Names
 -----
@@ -120,9 +119,7 @@ name can contain letters, numbers, and underscores. For example:
 
 Names are handled with case-sensitive logic.
 
-.. index::
-   single: individual lights
-   single: lights; set color
+.. index:: lights; individual, lights; set color, color; set for light
 
 Individual Lights
 =================
@@ -152,8 +149,7 @@ If a script contains a name for a light that has not been discovered or is
 otherwise unavailable, an error is sent to the log, but execution of the script
 continues.
 
-.. index::
-   single: multi-zone
+.. index:: multi-zone lights, lights; multi-zone
 
 Multi-Zone Lights
 =================
@@ -187,8 +183,7 @@ the log, and the light will not be accessed. Unlike Python ranges, the
 numbers are inclusive. For example, `zone 1 3` would include zones 1, 2,
 and 3.
 
-.. index::
-   single: power
+.. index:: power
 
 Power Command
 =============
@@ -211,8 +206,7 @@ When applied to a multi-zone light, the entire device is powered
 on or off; you can't set the power for individual zones (although you
 can set the brightness to zero).
 
-.. index::
-   single: abbreviations
+.. index:: abbreviations
 
 Abbreviations
 =============
@@ -225,8 +219,7 @@ lines do the same thing:
   hue 180 saturation 100 brightness 50 kelvin 2700 set all
   h 180 s 100 b 50 k 2700 set all
 
-.. index::
-   single: timing
+.. index:: timing
 
 Timing Color Changes
 ====================
@@ -332,11 +325,7 @@ that instruction gets executed without any timer delay. If delay times are too
 short for the program to keep up, it will simply keep executing
 instructions as fast as it can.
 
-.. index::
-  single: clock time
-  single: time of day
-  single: time pattern
-  pair: time pattern; syntax
+.. index:: clock time, time of day, time pattern
 
 Wait for Time of Day
 =====================
@@ -404,9 +393,7 @@ After a scheduled wait, the delay timer is essentially reset. For example:
 This would turn on all the lights at noon and then turm them off 60 seconds
 later, which would be at 12:01 p.m.
 
-.. index::
-   single: pause
-   single: keypress
+.. index:: pause, keypress
 
 Pause for Keypress
 ==================
@@ -441,9 +428,7 @@ This script turns on all the lights at 12:00 noon. It then waits
 for the user to press a key at the keyboard. When a key has been pressed,
 it turns off all the lights, waits 10 s, and turns them on again.
 
-.. index::
-   single: groups
-   single: locations
+.. index:: groups, locations
 
 Wait With No Action
 ===================
@@ -492,9 +477,7 @@ You can combine lights, groups, and locations with the `and` keyword:
 
   set location "Living Room" and "Table" and group "Reading Lights"
 
-.. index::
-   pair: define; macro
-   single: macro
+.. index:: macro, define; macro
 
 Macro Definitions
 =================
@@ -535,9 +518,7 @@ A macro can be defined only once, which makes it suitable for constants:
   define blue 240
   define blue 260 # Error: already defined.
 
-.. index::
-  single: variables
-  pair: assign; syntax
+.. index:: variables, assignment
 
 Variables
 =========
@@ -585,9 +566,7 @@ Assignment of one variable to another has by-value semantics:
 In this example, `y` has an independent copy of the original value of `x`,
 even after `x` has been given a new value.
 
-.. index::
-  single: mathematical expressions
-  single: numeric operations
+.. index:: mathematical expressions, numeric operations
 
 Mathematical Expressions
 ========================
@@ -614,9 +593,7 @@ Registers can provide values:
 
   assign double_brt {double_brt - 10}
 
-.. index::
-  pair: define; routine
-  single: subroutine
+.. index:: routine, subourtine, define; routine
 
 Routine Definitions
 ===================
@@ -726,9 +703,7 @@ visible in all scopes:
   set_global
   saturation y   # Set saturation to 50.
 
-.. index::
-   single: conditional
-   single: if
+.. index:: conditional, if
 
 Conditionals
 ============
@@ -752,10 +727,7 @@ one or more commands. It can also have an `else` clause:
      off all
   end
 
-.. index::
-   single: loops
-   single: repeat
-   single: iteration
+.. index:: loops, repeat, repeat; infinite loop, iteration
 
 Repeat Loops
 ============
@@ -792,6 +764,8 @@ To repeat a loop a given number of times:
       on all
       off all
     end
+
+.. index:: interpolation in loops, repeat; with interpolation
 
 Interpolation in Loops
 ----------------------
@@ -845,15 +819,30 @@ curly braces. For example:
 .. code-block:: lightbulb
 
     assign x 7
-    repeat {5 + x} with sat from {x * 4} to {x * 6}
+    repeat {5 + x} with y from {x * 4} to {x * 6}
     ...
 
     # Equivalent to:
-    repeat 12 with sat from 28 to 42
+    repeat 12 with y from 28 to 42
     ...
 
-.. index::
-   single: iteration by light
+Note that the loop limit is calculated only once. In the following example,
+the loop is executed 5 times, even though `light_count` is modified in the
+body of the loop.
+
+.. code-block:: lightbulb
+
+    assign light_count 5
+    repeat light_count begin
+        # Doesn't affect the number of iterations.
+        assign light_count 0
+        ...
+    end
+
+If you want to control the number of iterations dynamically, you can use a
+`repeat while` construct.
+
+.. index:: iteration by light, repeat; for every light
 
 By Light
 --------
@@ -872,15 +861,21 @@ A range of values can be applied to the lights. For example:
 
 .. code-block:: lightbulb
 
-    repeat all as bulb with brt from 10 to 100
+    repeat all as bulb with brt from 10 to 30
     begin
         brightness brt
         set bulb
     end
 
-In this case, the number of lights involved determines what increment should
-be added to the index variable, `brt`, with each iteration. This allows you to
-spread a set of values between some lights without knowing how many there are.
+In this case, the number of lights available determines what increment should
+be added to the index variable, `brt`. This allows you to distribute a set of
+values across some lights without knowing how many there are.
+
+For example, if you have 3 lights, the above loop will be executed 3 times,
+with `brt` having values of 10, 20, and 30. If you have 5 lights, you get
+5 iterations, with `brt` having values of 10, 15, 20, 25, and 30.
+
+.. index:: groups; iterating all, locations; iterating all
 
 All groups or locations can be enumerated:
 
@@ -890,6 +885,8 @@ All groups or locations can be enumerated:
         hue the_hue
         set group the_group
     end
+
+.. index:: groups; iterating within, locations; iterating within
 
 To iterate over all the lights in a location or group:
 
@@ -945,9 +942,7 @@ This loop assigns a different brightness to each group, ranging between 40%
 and 80%. Within each group, every light gets the same brightness, but their
 hues are distributed evenly across a 360° range.
 
-.. index::
-   single: get
-   single: retrieving colors
+.. index:: get, retrieving colors, color; get from light, lights; get color
 
 Retrieving Current Color
 ========================
@@ -970,11 +965,10 @@ only one setting:
 .. code-block:: lightbulb
 
     get light
-    brightness brt
+    brightness 100
     set light
 
-In this example, the light gets a new brightness, but appears to keep the same
-color tone.
+In this example, the light goes to full intensity withou changing colors.
 
 From a multi-zone light, you can retrieve the color of a single zone or
 the entire device:
@@ -1001,18 +995,67 @@ or multiple lights:
     get "Strip" zone 5 6
 
 .. index::
-   single: raw units
-   single: logical units
+    single: raw units
+    single: units; raw
+    single: RGB units
+    single: units; RGB
+    single: logical units
+    single: units; logical
 
-Raw and Logical Units
-=====================
-By default, numerical values in scripts are given in units that should be
-convenient to humans. However, during communication with the lights,
-those numbers are mapped to unsigned, 16-bit integer values as specified
-by the `LIFX API <https://lan.developer.lifx.com>`_.
+Raw, Logical, and RGB Units
+===========================
+For me, the HSB coordinate system isn't especially intuitive. For example, if
+I want bright green lights, I'll have to look up an angle for the hue, or
+maybe memorize which angle corresponds to which percieved color. The RGB color
+space can make this much easier, because I know what red, green and blue look
+like.
+
+.. index:: RGB units; using
+
+Using RGB
+---------
+By specifing certain values for red, green, and blue, you can probably make a
+pretty good prediction of how a color will look. Most people know that a mix
+of red and green yields yellow, green plus blue gives you cyan, and
+red with blue produces purple.
+
+With RGB units, each component's intensidy is expressed as a percentage, which
+can be given as a floating-point number. For example, to givee all your lights a
+somewhat dim purple, you could have:
+
+.. code-block:: lightbulb
+
+    units rgb
+    red 50 green 0 blue 50
+    set all
+
+As another example, to have white light that is rather bright:
+
+.. code-block:: lightbulb
+
+    units rgb
+    define brt 80
+    red brt green brt blue brt
+
+Under the hood, the VM converts these values to their HSB equivalents before
+sending them to the lights.
+
+Note that the setting for `kelvin` works the same for RGB units as it does
+for the default logical units. In practiced, I've found that it's easy to
+just set `kelvin` to 2700 at the top of the script and not bother with it after
+that.
+
+.. index:: raw units; using
+
+Using Raw Units
+---------------
+In the case of logical or RGB units, numerical values in scripts are given in
+units that are intended to be convenient to humans. However, during
+communication with the lights, those numbers are mapped to unsigned, 16-bit
+integer values as specified by the `LIFX API <https://lan.developer.lifx.com>`_.
 
 If you prefer to send unmodified numbers to the lights as specified by that
-API, you can use `raw` values (and switch back to `logical` units as desired).
+API, you can use raw values (and switch back to logical units as desired).
 "Raw" refers to an integer between 0 and 65535 that gets transmitted unmodified
 to the lights. These two actions are equivalent:
 
@@ -1027,8 +1070,8 @@ to the lights. These two actions are equivalent:
     hue 165 saturation 100 brightness 50 kelvin 2700 set all
 
 Note that with raw units, `time` and `duration` are rounded to an integer
-number of milliseconds. With logical units, `time` and
-`duration` are treated as a floating-point quantity of seconds.
+number of milliseconds. With logical or RGB units, `time` and
+`duration` are treated as a floating-point number of seconds.
 
 There's no limit to the precision of the floating-point value, but because it
 will be converted to milliseconds, any digits more than 3 places to the right
@@ -1038,25 +1081,143 @@ However, in practice, none of the timing is precise or accurate enough for you
 to see any difference in behavior for these examples. In my experience,
 you can't expect precision much better than 1/10 of a second.
 
-When in logical mode, a value moved between a variable and a setting
-is subject to conversion. Following is an example that illustrates this
-behavior. Note that 50% in logical units is equivalent to 32767 in raw
-units:
+.. index:: units; switching modes
+
+Switching Unit Modes
+--------------------
+In general, you'll probably just pick a mode at the top of your script and
+not change it. However, if a script does switch modes, some values get
+re-calculated to preserve the effect on the lights. For example,
+`hue` containing 180 in logical units is converted to 32,767 in raw units.
+
+Which settings get changed depends on what kind of transition takes place. For
+example, when switching from RGB to logical units, there's no need to
+convert `time` or `duration`. However, `hue`, `saturation`, and `brightness`
+are initialized, based on the current values of `red`, `green`, and `blue`.
+
+The following table lists which settings are overwritten, and which ones are
+unaltered, based on what kind of switch occurs:
+
+.. list-table:: Changed When Switching Units Mode
+    :header-rows: 1
+    :widths: 12 11 11 11 11 11 11 11 11
+
+    *   - From
+        - To
+        - time, dur.
+        - hue
+        - sat.
+        - brt.
+        - red
+        - green
+        - blue
+    *   - `logical`
+        - `raw`
+        - √
+        - √
+        - √
+        - √
+        - —
+        - —
+        - —
+    *   - `raw`
+        - `logical`
+        - √
+        - √
+        - √
+        - √
+        - —
+        - —
+        - —
+    *   - `rgb`
+        - `raw`
+        - √
+        - √
+        - √
+        - √
+        - —
+        - —
+        - —
+    *   - `raw`
+        - `rgb`
+        - √
+        - —
+        - —
+        - —
+        - √
+        - √
+        - √
+    *   - `rgb`
+        - `logical`
+        - —
+        - √
+        - √
+        - √
+        - —
+        - —
+        - —
+    *   - `logical`
+        - `rgb`
+        - —
+        - —
+        - —
+        - —
+        - √
+        - √
+        - √
+
+None of the changes in unit mode affect the contents of `kelvin`. That value
+is always considered to be a temperature measured in °K, and never requires
+conversion.
+
+.. note:: While in RGB mode, you can still set the values of `hue`,
+    `saturation`, or `brightness`. However, this will have no practical effect;
+    when you set the color of a light, the VM will ignore them. The transition
+    from RGB to logical or raw mode overwrites the contents of `hue`,
+    `saturation`, and `brightness`. Conversely, you can set `red`,
+    `green`, or `blue`, but they are unused if the VM is not in RGB mode.
+    Similarly, switching to RGB from logical or raw mode overwrites anything
+    previously stored in those three settings.
+
+Following is an example that illustrates some of this behavior:
 
 .. code-block:: lightbulb
 
     units logical
-    brightness 50
-    assign x brightness     # x contains 50.
+    kelvin 2500
+    time 1.5 duration 1.5
+    hue 120 saturation 100 brightness 100
 
-    units raw               # x still contains 50.
-    assign x brightness     # x now contains 32767.
+    units rgb
+    # red, green, and blue are overwritten:
+    #   kelvin = 2500
+    #   time = 1.5
+    #   duration = 1.5
+    #   red = 0
+    #   green = 100
+    #   blue = 0
+    #   hue = 120
+    #   saturation = 100
+    #   brightness = 100
 
-    units logical           # x still contains 32767.
-    assign x brightness     # Now it's 50 again.
 
-.. index::
-   single: print command
+    time 2.5 duration 3.5
+    red 0 green 0 blue 100
+    hue 0 saturation 0 brightness 0
+    units raw
+    # time, duration, hue, saturation, brightness are overwritten:
+    #   time = 2500
+    #   duration = 3500
+    #   red = 0
+    #   green = 0
+    #   blue = 100
+    #   hue = 43690
+    #   saturation = 65535
+    #   brightness = 65535
+    #   kelvin = 2500
+
+
+.. index:: print command
 
 Outputting Text
 ===============

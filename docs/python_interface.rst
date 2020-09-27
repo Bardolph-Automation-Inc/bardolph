@@ -1,10 +1,9 @@
 .. figure:: logo.png
    :align: center
-   
+
    http://www.bardolph.org
 
-.. index::
-   single: Python interface; reference
+.. index:: Python interface
 
 .. _python_interface:
 
@@ -12,8 +11,8 @@ Python Interface
 ################
 I hope that all the code is clear and modular enough to be reused in someone else's
 programs. However, if you're just looking to quickly write some Python code to
-control your lights, you can easily run lightbulb scripts using `ls_module.py`. 
-This simple module performs the necessary runtime initialization and offers a 
+control your lights, you can easily run lightbulb scripts using `ls_module.py`.
+This simple module performs the necessary runtime initialization and offers a
 clean entry point for running a script.
 
 In the source distribution, the `embedded` directory contains example programs
@@ -30,7 +29,7 @@ To remove the library from your environment, run `pip uninstall bardolph`.
 Usage
 =====
 Before running any scripts, the module needs to be initialzed once with
-`configure()`.  After that, you can queue up an arbitrary number of 
+`configure()`.  After that, you can queue up an arbitrary number of
 scripts with `queue_script()`. For example:
 
 .. code-block:: python
@@ -42,11 +41,11 @@ scripts with `queue_script()`. For example:
   ls_module.queue_script('time 5 all off')
 
 
-This program waits 10 seconds, turns on all the lights, and then turns them all off 
+This program waits 10 seconds, turns on all the lights, and then turns them all off
 again after 5 seconds.
 
-The `configure()` function performs a bunch of internal initialization, and 
-then discovers the lights out on the network. After that, It spawns a thread 
+The `configure()` function performs a bunch of internal initialization, and
+then discovers the lights out on the network. After that, It spawns a thread
 that repeats the discovery process every 5 minutes to continuously refresh
 its internal list of available lights.
 
@@ -56,14 +55,14 @@ even though the script may not run, yet.
 
 Your code can queue up jobs at any time, even while others are running. In
 the above example, the first call to `queue_script()` returns immediately,
-although the lights won't come on until 10 seconds have elapsed. The second 
+although the lights won't come on until 10 seconds have elapsed. The second
 script, which turns the lights off, gets queued up asynchronously while the
 first script continues to run. However, that second script will not start
 until the first one finishes.
 
 The `queue_script()` function parses the incoming string and puts the resulting
-byte code into a queue. That queue is processed by a separate thread that is 
+byte code into a queue. That queue is processed by a separate thread that is
 spawned by the `JobControl` class.
 
-If your program logic requires it, you can stop the current script and clear out the 
+If your program logic requires it, you can stop the current script and clear out the
 queue by calling `ls_module.request_stop()`.

@@ -22,9 +22,7 @@ you. It covers only the internals of the code.
 The module builds on a very simple virtual machine that executes a program
 built out of a narrow set of instructions, described below.
 
-.. index::
-   single: virtual machine
-   single: VM registers
+.. index:: virtual machine, VM; registers
 
 VM Architecture
 ===============
@@ -73,9 +71,6 @@ Here is an example that illustrates this behavior::
    assign x brightness   # x = 50
 
 .. index::
-   single: VM instructions
-
-.. index::
     single: operand register
 
 Operand Register
@@ -88,6 +83,8 @@ be applied to. Defined values for this register are `light`,
 The content of this register often specifies the meaning of the contents of the
 "name" register, which could be a name of a light, a group, or a location.
 
+.. index:: VM; instructions
+
 Instructions
 ============
 Although no assembler is available, it's convenient to think of a VM's program
@@ -98,9 +95,7 @@ in an assembly language, is represented by Enum `bardolph.vm.OpCode`.
 This section covers some of the instructions that I needed to document for
 myself while working on the VM.
 
-.. index::
-    single: move instruction
-    single: moveq instruction
+.. index:: VM; move instruction, VM; moveq instruction
 
 Move - `move` and `moveq`
 -------------------------
@@ -143,8 +138,7 @@ the symbol isn't in either dictionary, an error has occurred. The parser
 should catch that error and report it; if it doesn't, there's a bug in
 the parse code.
 
-.. index::
-    single: set instruction
+.. index:: VM; set instruction
 
 Set Color - `color`
 -------------------
@@ -156,8 +150,7 @@ contains "group" or "location", the `name` register will be treated as the
 name of a group or location. Lastly, if `operand` contains "all", the VM
 will set all known lights to that color.
 
-.. index::
-    single: get instruction
+.. index:: VM; get instruction
 
 Get Color - `get_color`
 -----------------------
@@ -174,8 +167,7 @@ stored in the registers.
 If the "operand" register contains `group` or `location`, then the registers
 receive the arithmetic mean of the lights belonging to that group or location.
 
-.. index::
-    single: power instruction
+.. index:: VM; power instruction
 
 Set Power - `power`
 -------------------
@@ -188,8 +180,7 @@ mean turn the lights on, and will send 65535 to the lights. As with the `set`
 command, the targetd lights are specified by the content of the `operand`
 register.
 
-.. index::
-    single: pause instruction
+.. index:: VM; pause instruction
 
 Pause for Keypress - `pause`
 ----------------------------
@@ -199,8 +190,10 @@ instructions. Pressing 'q' stops the execution and exits. Any other key resumes
 normal execution of the script.
 
 .. index::
-    single: disc, discn, discl, discp instruction
-    single: lights; discover
+    single: VM; disc instruction
+    single: VM; discn instruction
+    single: VM; discl instruction
+    single: VM; discp instruction
 
 Discover Lights - `disc`, `discm`
 ---------------------------------
@@ -257,8 +250,7 @@ To iterate within a group:
 To access locations: to iterate locations, use a process similar to the one
 above, but put `location` into the `operand` register.
 
-.. index::
-    single: wait instruction
+.. index:: VM; wait instruction
 
 Wait
 ----
@@ -267,8 +259,7 @@ the delay, expressed in milliseconds. If the `time` register contains
 a time pattern, then the VM idles until the system time matches the
 pattern.
 
-.. index::
-    single: variables
+.. index:: VM; variables
 
 Variables
 ---------
@@ -318,8 +309,7 @@ If the currently executing code is not within a routine, the top of
 the call stack will effectively point to the root frame, which
 contains the global variables.
 
-.. index::
-   single: macros
+.. index:: VM; macros
 
 Macros
 ------
@@ -332,8 +322,7 @@ Sequence:
 number, or time pattern.
 #. Save the value of the macro in the call context's globals.
 
-.. index::
-   single: routines
+.. index:: VM; routines
 
 Subroutines
 -----------

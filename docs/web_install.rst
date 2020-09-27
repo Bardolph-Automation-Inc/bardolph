@@ -3,8 +3,7 @@
 
    http://www.bardolph.org
 
-.. index::
-   single: web server; installation
+.. index:: web server; installation, installation; web server
 
 .. _web_install:
 
