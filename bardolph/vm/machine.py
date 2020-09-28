@@ -75,36 +75,13 @@ class Machine:
         self._vm_discover = VmDiscover(self._call_stack, self._reg)
         self._enable_pause = True
         self._keep_running = True
-        self._fn_table = {}
-        for opcode in (OpCode.BREAKPOINT,
-                       OpCode.COLOR,
-                       OpCode.CONSTANT,
-                       OpCode.DISC,
-                       OpCode.DISCM,
-                       OpCode.DNEXT,
-                       OpCode.DNEXTM,
-                       OpCode.END,
-                       OpCode.END_LOOP,
-                       OpCode.GET_COLOR,
-                       OpCode.JSR,
-                       OpCode.JUMP,
-                       OpCode.LOOP,
-                       OpCode.MOVE,
-                       OpCode.MOVEQ,
-                       OpCode.NOP,
-                       OpCode.OP,
-                       OpCode.OUT,
-                       OpCode.OUTQ,
-                       OpCode.PARAM,
-                       OpCode.PAUSE,
-                       OpCode.PUSH,
-                       OpCode.PUSHQ,
-                       OpCode.POP,
-                       OpCode.POWER,
-                       OpCode.TIME_PATTERN,
-                       OpCode.WAIT):
-            name = '_' + opcode.name.lower()
-            self._fn_table[opcode] = getattr(self, name)
+        excluded = (OpCode.STOP, OpCode.ROUTINE)
+        op_codes = [code for code in OpCode
+                    if not str(code.name).startswith('_')
+                    and code not in excluded]
+        self._fn_table = {
+            op_code: getattr(self, '_' + op_code.name.lower())
+            for op_code in (op_codes)}
         self._fn_table[OpCode.STOP] = self.stop
 
     def reset(self) -> None:
