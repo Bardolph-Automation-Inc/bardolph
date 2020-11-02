@@ -29,5 +29,5 @@ html_favicon = 'www/logo_ico.png'
 html_static_path = ['web/static']
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
-    'analytics_id': 'UA-162715494-1'
+    'analytics_id': 'UA-162669230-1'
 }

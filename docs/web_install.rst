@@ -101,7 +101,7 @@ Still logged in as the `lights` user:
 
   pip install bardolph
 
-.. note:: Python 3.5 or higher is required in all cases. If your system
+.. note:: Python 3.7 or higher is required in all cases. If your system
    defaults to Python 2.x, you probably need to use
    `pip3` instead of `pip` throughout these instructions. Notable
    culprits here are Raspbery Pi OS and Debian. You may even have to install

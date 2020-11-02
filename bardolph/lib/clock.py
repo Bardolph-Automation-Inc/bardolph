@@ -17,7 +17,6 @@ def configure():
 # All time quantities are in seconds.
 class Clock(i_lib.Clock):
     def __init__(self):
-        self._keep_going = False
         self._event = threading.Event()
         self._start_time = 0.0
         self._cue_time = 0.0

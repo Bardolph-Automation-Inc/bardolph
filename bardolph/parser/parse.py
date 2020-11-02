@@ -5,7 +5,6 @@ import logging
 
 from bardolph.controller.routine import Routine
 from bardolph.controller.units import UnitMode
-from bardolph.lib.coll_util import cvt_enum
 from bardolph.lib.symbol_table import SymbolType
 from bardolph.lib.time_pattern import TimePattern
 from bardolph.vm.vm_codes import OpCode, Operand, Register, SetOp
@@ -229,7 +228,7 @@ class Parser:
             TokenTypes.RAW, TokenTypes.RGB, TokenTypes.LOGICAL):
             return self.trigger_error(
                 'Invalid parameter "{}" for units.'.format(self._current_token))
-        mode = cvt_enum(self._current_token_type, UnitMode)
+        mode = UnitMode[self._current_token_type.name]
         self._add_instruction(OpCode.MOVEQ, mode, Register.UNIT_MODE)
         return self.next_token()
 
@@ -545,17 +544,13 @@ class Parser:
         value = self._current_constant()
         if isinstance(value, int):
             return value
-        if isinstance(value, float):
-            return round(value)
-        return None
+        return round(value) if isinstance(value, float) else None
 
     def _current_float(self):
         value = self._current_constant()
         if isinstance(value, float):
             return value
-        if isinstance(value, int):
-            return float(value)
-        return None
+        return float(value) if isinstance(value, int) else None
 
     def _current_str(self):
         value = self._current_constant()

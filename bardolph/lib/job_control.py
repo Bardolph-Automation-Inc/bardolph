@@ -45,6 +45,16 @@ class Agent:
             self._callback(self)
 
 
+def failed_job() -> Agent:
+    class FailedJob:
+        def execute(self):
+            return False
+        def request_stop(self):
+            return True
+    callback = lambda _: None
+    return Agent(FailedJob(), callback, "failed job")
+
+
 class JobControl:
     """
     Jobs are pulled out from the left (front of the queue). add_job() appends
@@ -60,13 +70,13 @@ class JobControl:
     def clear_queue(self) -> None:
         self._queue.clear()
 
-    def add_job(self, job, name=None) -> Agent:
+    def add_job(self, job, name=None):
         return self._enqueue_job(job, self._queue.append, name)
 
-    def insert_job(self, job, name=None) -> Agent:
+    def insert_job(self, job, name=None):
         return self._enqueue_job(job, self._queue.appendleft, name)
 
-    def spawn_job(self, job, name=None) -> Agent:
+    def spawn_job(self, job, name):
         agent = None
         if self._acquire_lock():
             try:
@@ -77,15 +87,15 @@ class JobControl:
                 self._release_lock()
         return agent
 
-    def get_queued(self) -> [Agent]:
+    def get_queued(self):
         return list(self._queue) if self._queue is not None else None
 
-    def get_background(self) -> [Agent]:
+    def get_background(self):
         if self._background is None:
             return None
         return self._background.values()
 
-    def get_current(self) -> Agent:
+    def get_current(self):
         return self._active_agent
 
     def is_running(self, name) -> bool:
@@ -146,7 +156,7 @@ class JobControl:
             finally:
                 self._release_lock()
 
-    def _enqueue_job(self, job, append_fn, name) -> Agent:
+    def _enqueue_job(self, job, append_fn, name):
         agent = None
         if self._acquire_lock():
             try:
@@ -181,3 +191,4 @@ class JobControl:
 
     def _release_lock(self):
         self._lock.release()
+

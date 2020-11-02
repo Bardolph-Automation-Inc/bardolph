@@ -17,6 +17,7 @@ from tests.lex_test import LexTest
 from tests.light_set_test import LightSetTest
 from tests.log_config_test import LogConfigTest
 from tests.loop_test import LoopTest
+from tests.ls_module_test import LsModuleTest
 from tests.machine_test import MachineTest
 from tests.parser_test import ParserTest
 from tests.print_test import PrintTest
@@ -45,6 +46,7 @@ for test_class in (
     LightSetTest,
     LogConfigTest,
     LoopTest,
+    LsModuleTest,
     MachineTest,
     ParserTest,
     SettingsTest,

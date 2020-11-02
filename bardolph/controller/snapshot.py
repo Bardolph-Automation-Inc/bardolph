@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-import os
+from numbers import Number
 
 from bardolph.lib import injection
 from bardolph.lib import settings
@@ -81,7 +81,7 @@ class ScriptSnapshot(Snapshot):
             Register.KELVIN], logical_color)
         for param in params:
             reg, value = param[0], param[1]
-            fmt = '{} {:.0f} ' if isinstance(value, (int, float)) else '{} {} '
+            fmt = '{} {:.0f} ' if isinstance(value, Number) else '{} {} '
             self._script += fmt.format(reg.name.lower(), value)
 
     def handle_power(self, power):

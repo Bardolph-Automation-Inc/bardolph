@@ -1,3 +1,4 @@
+from numbers import Number
 import operator
 
 from bardolph.controller.units import UnitMode
@@ -35,7 +36,7 @@ class VmMath:
         value = None
         if isinstance(srce, Register):
             value = self._reg.get_by_enum(srce)
-        elif isinstance(srce, (int, float, UnitMode)) or srce is Operand.NULL:
+        elif isinstance(srce, (Number, UnitMode)) or srce is Operand.NULL:
             value = srce
         elif isinstance(srce, (str, LoopVar)):
             value = self._call_stack.get_variable(srce)

@@ -1019,8 +1019,8 @@ pretty good prediction of how a color will look. Most people know that a mix
 of red and green yields yellow, green plus blue gives you cyan, and
 red with blue produces purple.
 
-With RGB units, each component's intensidy is expressed as a percentage, which
-can be given as a floating-point number. For example, to givee all your lights a
+With RGB units, each component's intensity is expressed as a percentage, which
+can be given as a floating-point number. For example, to make all your lights a
 somewhat dim purple, you could have:
 
 .. code-block:: lightbulb
@@ -1037,7 +1037,7 @@ As another example, to have white light that is rather bright:
     define brt 80
     red brt green brt blue brt
 
-Under the hood, the VM converts these values to their HSB equivalents before
+Internally, the VM converts these values to their HSB equivalents before
 sending them to the lights.
 
 Note that the setting for `kelvin` works the same for RGB units as it does

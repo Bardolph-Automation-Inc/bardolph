@@ -60,6 +60,7 @@ class TrackedJob(StoppableJob):
         self._call_list.append(self._id)
         super().execute()
 
+
 class JobControlTest(unittest.TestCase):
     def setUp(self):
         self.failed = False
@@ -95,13 +96,14 @@ class JobControlTest(unittest.TestCase):
         job1 = StoppableJob()
         job2 = StoppableJob()
         j_control = job_control.JobControl()
-        j_control.spawn_job(job1)
-        j_control.spawn_job(job2, True)
+        j_control.spawn_job(job1, 'job1')
+        j_control.spawn_job(job2, 'job2')
         time.sleep(0.5)
         j_control.stop_background()
         self.wait_for_threads(j_control)
         self.assertEqual(job1.call_count, 1)
         self.assertEqual(job2.call_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
