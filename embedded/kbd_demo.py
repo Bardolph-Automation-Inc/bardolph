@@ -6,8 +6,8 @@ This is a simple example that shows how to queue up scripts using Python
 code and ls_module.
 
 It queues up a script whenever the user presses one of several color keys. Each
-script turns the lights turn to a saturated color, waits for a few
-seconds, and returns the light to a neutral, zero-saturated color.
+script turns the lights to a saturated color, waits for a few seconds, and
+returns the light to a neutral, zero-saturated color.
 
 The available colors are blue, cyan, green, red, yellow, and violet. The color
 is chosen by pressing the first letter in a color's name.
