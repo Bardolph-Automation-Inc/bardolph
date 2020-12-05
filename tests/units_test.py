@@ -33,7 +33,7 @@ class UnitsTest(unittest.TestCase):
         self._assert_colors_equal(logical_color, [120.0, 100.0, 100.0, 4000])
 
         raw_color = units.rgb_to_raw([100.0, 50.0, 25.0, 4000])
-        self._assert_colors_equal(raw_color, [3640.83, 49151.25, 65535.0, 4000])
+        self._assert_colors_equal(raw_color, [3641, 49151, 65535, 4000])
 
         rgb_color = units.raw_to_rgb([21845, 21627, 43908, 4000])
         self._assert_colors_equal(rgb_color, [44.889, 67.0, 44.889, 4000])
@@ -74,6 +74,25 @@ class UnitsTest(unittest.TestCase):
             ])
         runner.check_call_list(
             'Bottom', (Action.SET_COLOR, ([38329, 43890, 49451, 2400], 0)))
+
+    def test_flip(self):
+        script = """
+            hue 120 saturation 100 brightness 100 kelvin 2000
+            set "Top"
+
+            units rgb
+            green {green / 2.0}
+            set "Top"
+        """
+        test_module.configure()
+        runner = ScriptRunner(self)
+        runner.run_script(script)
+        runner.check_call_list(
+            'Top', [
+                (Action.SET_COLOR, ([21845, 65535, 65535, 2000], 0)),
+                (Action.SET_COLOR, ([21845, 65535, 32768, 2000], 0))
+            ])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -544,7 +544,9 @@ of iteration has one of the following syntaxes:
         # do something
 
 In the last case, the `<light_set>` placeholder can be replaced with one or more
-lights, groups, and locations, connected by `and`::
+lights, groups, and locations, connected by ``and``.
+
+.. code-block:: lightbulb
 
     repeat the_light in "Top" and "Middle"
         on the_light
@@ -553,7 +555,7 @@ lights, groups, and locations, connected by `and`::
         on the_light
 
 The lights are traversed using the order in which they appear in the code.
-For example, the top `repeat` first turns on the light "Top", and then
+For example, the top ``repeat`` first turns on the light "Top", and then
 "Middle". In the lower loop, they are turned on in the opposite order.
 
 Within each group, the lights are traversed in alphabetical order of their
@@ -574,11 +576,13 @@ As an example, to reduce the brightness of all lights by 10%:
 
 Range of Values
 ^^^^^^^^^^^^^^^
-The addition of `with` sets up a kind of index variable that is updated
+The addition of ``with`` sets up a kind of index variable that is updated
 with each loop. The limits given indicate what the first and last desired
 values are. Using that and the number of repetitions, the VM evenly divides
 the range and sets the varaiable to the interpolated values. For example,
-to evenly bring up all the lights from 0% to 100%::
+to evenly bring up all the lights from 0% to 100%,
+
+.. code-block:: lightbulb
 
    # Do 10 iterations and distribute the values of brt so that they
    # are spread evenly between 0 and 100.
@@ -588,16 +592,18 @@ to evenly bring up all the lights from 0% to 100%::
       set all
    end
 
-The term `cycle` indicates that the index variable will start at the
-given point, and go through one complete rotation of 360 degrees::
+The term ``cycle`` indicates that the index variable will start at the
+given point, and go through one complete rotation of 360 degrees.
+
+.. code-block:: lightbulb
 
    repeat 10 with the_hue cycle 180
       hue the_hue
       set all
    end
 
-In this exmple, `the_hue` starts with a value of 180. It is then incremented
-10 times. At the end of the last iteration, `the_hue` contains the value
+In this exmple, ``the_hue`` starts with a value of 180. It is then incremented
+10 times. At the end of the last iteration, ``the_hue`` contains the value
 that comes immediately before 180.
 
 Loop Frame
@@ -628,3 +634,81 @@ empty, the scheduler effectively becomes idle. However, if "repeat" mode is
 active, completed scripts are immediately added to the end of the queue. The
 effect of this is to repeatedly execute all the scripts indefinitely until
 a stop is requested.
+
+.. index:: VM; I/O, VM; out instruction, VM; in instruction
+
+I/O
+===
+Aside from access to lights, I/O has been deliberatley absent. A small `VmIo`
+module enables simple output to logs and `stdout`.
+
+Syntax
+------
+Output is accomplished with one of the following commands:
+
+* ``print``: print a single value, followed by a space.
+* ``println``: print a single value, followed by a newline.
+* ``printf``: formatted output with zero or more parameters.
+
+For example:
+
+.. code-block:: lightbulb
+
+    print brightness
+    print {saturation / 100}
+    printf "Currently: {} {} {} {}\n" hue saturation brightness kelvin
+
+Note that ``print`` can take only one value, while ``printf`` takes an arbitrary
+number. Because the number of parameters depends on the
+format string, that string must be either a literal or macro, known at
+compile time.
+
+Support for the format specifier should be fairly complete, including placement
+by name:
+
+.. code-block:: lightbulb
+
+    printf "Currently: {kelvin} {} {} {}\n" hue saturation brightness kelvin
+    printf "Currently: {1} {0} {3} {2}\n" hue saturation brightness kelvin
+
+In terms of data format, all numeric values are floats in RGB and logical
+mode, and integers in raw mode. Light names are strings. Any variables and
+register names can appear within the format specifier, and expressions are
+anonymous:
+
+.. code-block:: lightbulb
+
+    printf "Currently: {kelvin} {} \n" {brightness / 100.0} kelvin
+
+VM Implementation
+-----------------
+All access to the I/O module is done via the ``out`` instruction. If I ever add
+input, it will likely be with an ``in`` instruction. The format of an ``out``
+instruction is `out <target> <payload>`. The `<target>` parameter can be one of:
+
+* `IoOp.UNNAMED`: the payload is a chunk of data to be output as an unnamed
+    value.
+* `IoOp.NAMED`: the payload is the value to associate with the name contained
+    in that string. For example, if the string is "x", then the value of the
+    variable `x` is to be output. This may include register names, such as
+    `kelvin` or `brightness`.
+* `IoOp.PRINT`: the payload is sent to `stdout` via Python's `print()` function.
+* `IoOp.PRINTF`: the payload is a string containing a format specfier that will
+    be passed to the `str.format()` method. The accumulated data is output.
+
+For example, this script:
+
+.. code-block:: lightbulb
+
+    print kelvin
+    printf "Data: {x} {kelvin} {} {}" x kelvin 5 saturation
+
+could yield the following instructions::
+
+    out IoOp.PRINT Register.KELVIN
+
+    out IoOp.NAMED "x"
+    out IoOp.NAMED Register.KELVIN
+    out IoOp.UNNAMED 5
+    out IoOp.UNNAMED Register.SATURATION
+    out IoOp.PRINTF "Data: {kelvin} {} {}"

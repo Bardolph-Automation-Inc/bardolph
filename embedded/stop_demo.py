@@ -3,7 +3,7 @@
 """Demonstration of stopping a script from Python
 
 This example shows how to stop a script that is running from Python code, using
-ls_module. It launches an script that runs in an infinite loop, and stops the
+ls_module. It launches a script that runs in an infinite loop, and stops the
 execution when the user hits "enter".
 """
 

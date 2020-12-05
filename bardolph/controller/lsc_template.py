@@ -11,7 +11,7 @@ from bardolph.controller import light_module
 from bardolph.controller.units import UnitMode
 from bardolph.vm import machine
 from bardolph.vm.instruction import Instruction, OpCode
-from bardolph.vm.vm_codes import JumpCondition, LoopVar, Operand, Operator
+from bardolph.vm.vm_codes import IoOp, JumpCondition, LoopVar, Operand, Operator
 from bardolph.vm.vm_codes import Register, SetOp
 
 _assembly = [
@@ -26,7 +26,8 @@ _param_counts.update({op_code: 1 for op_code in (OpCode.DISCM, OpCode.DNEXT,
     OpCode.END, OpCode.JSR, OpCode.OP, OpCode.POP, OpCode.PUSH, OpCode.PUSHQ,
     OpCode.ROUTINE)})
 _param_counts.update({op_code: 2 for op_code in (OpCode.CONSTANT, OpCode.DNEXTM,
-    OpCode.JUMP, OpCode.MOVE, OpCode.MOVEQ, OpCode.PARAM, OpCode.TIME_PATTERN)})
+    OpCode.JUMP, OpCode.MOVE, OpCode.MOVEQ, OpCode.OUT, OpCode.PARAM,
+    OpCode.TIME_PATTERN)})
 
 def get_assembly():
     current_instruction = 0

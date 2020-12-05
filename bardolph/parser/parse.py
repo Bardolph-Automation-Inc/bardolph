@@ -13,6 +13,7 @@ from . import lex
 from .call_context import CallContext
 from .code_gen import CodeGen
 from .expr_parser import ExprParser
+from .io_parser import IoParser
 from .lex import Lex
 from .loop_parser import LoopParser
 from .token_types import TokenTypes
@@ -39,7 +40,8 @@ class Parser:
             TokenTypes.ON: self._power_on,
             TokenTypes.PAUSE: self._pause,
             TokenTypes.PRINT: self._print,
-            TokenTypes.PRINTLN: self._print,
+            TokenTypes.PRINTF: self._printf,
+            TokenTypes.PRINTLN: self._println,
             TokenTypes.REGISTER: self._set_reg,
             TokenTypes.REPEAT: self._repeat,
             TokenTypes.SET: self._set,
@@ -175,7 +177,7 @@ class Parser:
             operand = Operand.LIGHT
 
         const_str = self._current_str()
-        if const_str is not None:
+        if len(const_str) > 0:
             self._add_instruction(OpCode.MOVEQ, const_str, Register.NAME)
             self.next_token()
         elif self._current_token_type is TokenTypes.NAME:
@@ -260,16 +262,14 @@ class Parser:
         self.next_token()
         return True
 
-    def _print(self):
-        add_newline = self._current_token_type is TokenTypes.PRINTLN
-        self.next_token()
-        while self._current_token_type.is_printable():
-            if not self.rvalue():
-                return self.token_error('Expected something to print, got {}')
-            self._code_gen.add_instruction(OpCode.OUT, Register.RESULT)
-        if add_newline:
-            self._code_gen.add_instruction(OpCode.OUTQ, Operand.NULL)
-        return True
+    def _print(self) -> bool:
+        return IoParser(self).print()
+
+    def _printf(self) -> bool:
+        return IoParser(self).printf()
+
+    def _println(self) -> bool:
+        return IoParser(self).println()
 
     def _time(self):
         self.next_token()
@@ -382,9 +382,9 @@ class Parser:
         """
         if self._call_context.has_routine(self._current_token):
             return True
-        return self._current_token_type in (
-            TokenTypes.BEGIN, TokenTypes.WITH,
-            TokenTypes.REGISTER, TokenTypes.SET)
+        if self._current_token_type.is_executable():
+            return True
+        return self._current_token_type in (TokenTypes.BEGIN, TokenTypes.WITH)
 
     def _macro_definition(self, name):
         """
@@ -552,9 +552,9 @@ class Parser:
             return value
         return float(value) if isinstance(value, int) else None
 
-    def _current_str(self):
+    def _current_str(self) -> str:
         value = self._current_constant()
-        return value if isinstance(value, str) else None
+        return value if isinstance(value, str) else ''
 
     def _current_time_pattern(self) -> TimePattern:
         """

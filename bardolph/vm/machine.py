@@ -12,6 +12,7 @@ from .call_stack import CallStack
 from .loader import Loader
 from .vm_codes import JumpCondition, LoopVar, OpCode, Operand, Register, SetOp
 from .vm_discover import VmDiscover
+from .vm_io import VmIo
 from .vm_math import VmMath
 
 
@@ -71,6 +72,7 @@ class Machine:
         self._reg = Registers()
         self._call_stack = CallStack()
         self._print_buffer = ''
+        self._vm_io = VmIo(self._call_stack, self._reg)
         self._vm_math = VmMath(self._call_stack, self._reg)
         self._vm_discover = VmDiscover(self._call_stack, self._reg)
         self._enable_pause = True
@@ -118,7 +120,10 @@ class Machine:
 
     def color_to_reg(self, color) -> None:
         reg = self._reg
-        reg.hue, reg.saturation, reg.brightness, reg.kelvin = color
+        if reg.unit_mode in (UnitMode.RAW, UnitMode.LOGICAL):
+            reg.hue, reg.saturation, reg.brightness, reg.kelvin = color
+        else:
+            reg.red, reg.green, reg.blue, reg.kelvin = color
 
     def color_from_reg(self):
         return self._reg.get_color()
@@ -252,14 +257,14 @@ class Machine:
                     color = light.get_color_zones(zone, zone + 1)[0]
                     self.color_to_reg(self._maybe_converted_color(color))
             else:
-                self.color_to_reg(
-                    self._maybe_converted_color(light.get_color()))
+                color = light.get_color()
+                self.color_to_reg(self._maybe_converted_color(color))
 
     def _param(self) -> None:
         """
-        param instruction: the name of the routine's parameter is in param0.
-        If the parameter is itself an incoming parameter, it needs to be
-        resolved to a real value before being put on the stack.
+        param instruction: the name of the parameter is in param0, and its
+        value is in param1. If the value is a Symbol or Register, it needs to
+        be dereferenced.
         """
         inst = self.current_inst
         value = inst.param1
@@ -336,22 +341,7 @@ class Machine:
             self.current_inst.param0, self.current_inst.param1)
 
     def _out(self) -> None:
-        value = self.current_inst.param0
-        if isinstance(value, Register):
-            value = self._reg.get_by_enum(value)
-        elif isinstance(value, (str, LoopVar)):
-            value = self._call_stack.get_variable(value)
-        self._print_buffer += str(value) + ' '
-        self._check_pbuf()
-
-    def _outq(self) -> None:
-        value = self.current_inst.param0
-        if value is Operand.NULL:
-            print(self._print_buffer.rstrip())
-            self._print_buffer = ''
-        else:
-            self._print_buffer += str(value) + ' '
-            self._check_pbuf()
+        self._vm_io.out(self.current_inst)
 
     def _check_pbuf(self) -> None:
         if len(self._print_buffer) > self._MAX_PRINTBUF:
@@ -483,7 +473,7 @@ class Machine:
 
     @staticmethod
     def _report_missing(name) -> None:
-        logging.warning("Light \"{}\" not found.".format(name))
+        logging.warning('Light "{}" not found.'.format(name))
 
     def _power_param(self):
         return 65535 if self._reg.power else 0

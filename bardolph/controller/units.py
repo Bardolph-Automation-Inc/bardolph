@@ -43,7 +43,8 @@ def raw_to_logical(raw_color):
 def rgb_to_raw(rgb_color):
     r, g, b = [rgb_color[i] / 100.0 for i in range(0, 3)]
     h, s, v = colorsys.rgb_to_hsv(r, g, b)
-    return [h * 65535.0, s * 65535.0, v * 65535.0, rgb_color[3]]
+    make_raw = lambda x: min(round(x * 65535.0), 65535)
+    return [make_raw(h), make_raw(s), make_raw(v), rgb_color[3]]
 
 def rgb_to_logical(rgb_color):
     r, g, b = [rgb_color[i] / 100.0 for i in range(0, 3)]

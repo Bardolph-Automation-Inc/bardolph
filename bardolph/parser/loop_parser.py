@@ -143,7 +143,7 @@ class LoopParser:
                     'Needed name of a group or location, got "{}"')
             code_gen.iter_members(operand, inner_code.program)
         else:
-            code_gen.iter_lights(operand, inner_code.program)
+            code_gen.iter_lights(inner_code.program)
         return True
 
     def _push_set_names(self, code_gen) -> bool:
@@ -225,7 +225,7 @@ class LoopParser:
 
     def _calc_counter(self, code_gen) -> bool:
         # abs(last - first) + 1
-        code_gen.subtraction(LoopVar.LAST, LoopVar.FIRST)
+        code_gen.subtract(LoopVar.LAST, LoopVar.FIRST)
         code_gen.pop(LoopVar.COUNTER)
         code_gen.test_op(Operator.LT, LoopVar.COUNTER, 0)
         marker = code_gen.if_true_start()
@@ -242,12 +242,12 @@ class LoopParser:
         # If count == 1, increment = 0.
         code_gen.test_op(Operator.NOTEQ, LoopVar.COUNTER, 1)
         marker = code_gen.if_true_start()
-        code_gen.subtraction(LoopVar.LAST, LoopVar.FIRST)
-        code_gen.subtraction(LoopVar.COUNTER, 1)
-        code_gen.add_list([
+        code_gen.subtract(LoopVar.LAST, LoopVar.FIRST)
+        code_gen.subtract(LoopVar.COUNTER, 1)
+        code_gen.add_list(
             (OpCode.OP, Operator.DIV),
             (OpCode.POP, LoopVar.INCR)
-        ])
+        )
         code_gen.if_else(marker)
         code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.INCR)
         code_gen.if_end(marker)

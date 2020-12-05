@@ -12,6 +12,7 @@ from tests.end_to_end_test import EndToEndTest
 from tests.example_test import ExampleTest
 from tests.expr_test import ExprTest
 from tests.injection_test import InjectionTest
+from tests.io_parser_test import IoParserTest
 from tests.job_control_test import JobControlTest
 from tests.lex_test import LexTest
 from tests.light_set_test import LightSetTest
@@ -41,6 +42,7 @@ for test_class in (
     ExampleTest,
     ExprTest,
     InjectionTest,
+    IoParserTest,
     JobControlTest,
     LexTest,
     LightSetTest,

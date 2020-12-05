@@ -1,5 +1,5 @@
 from enum import Enum, auto
-
+import logging
 
 class Register(Enum):
     BLUE = auto()
@@ -43,7 +43,6 @@ class OpCode(Enum):
     NOP = auto()
     OP = auto()
     OUT = auto()
-    OUTQ = auto()
     PARAM = auto()
     PAUSE = auto()
     POP = auto()
@@ -95,6 +94,11 @@ class Operand(Enum):
     LOCATION = auto()
     MZ_LIGHT = auto()
     NULL = auto()
+
+class IoOp(Enum):
+    PRINT = auto()
+    PRINTF = auto()
+    REGISTER = auto()
 
 class SetOp(Enum):
     """ Used with TimePattern """

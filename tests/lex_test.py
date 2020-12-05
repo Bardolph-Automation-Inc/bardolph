@@ -24,11 +24,11 @@ class LexTest(unittest.TestCase):
         self.assertEqual(TokenTypes.TIME_PATTERN, token_type)
 
     def test_all_tokens(self):
-        input_string = 'all and as at blue brightness \
-            define # comment \n duration green hue if in \
-            off on or kelvin logical print raw red rgb saturation \
-            set time wait zone 12:*4 {x * y} \
-            -1.0 01.234\n"Hello There" x _abc @'
+        input_string = """all and as at blue brightness
+            define # comment \n duration green hue if in
+            off on or kelvin logical print printf println raw red rgb
+            saturation set time wait zone 12:*4 {x * y}
+            -1.0 01.234\n"Hello There" x _abc @"""
         expected_tokens = [
             TokenTypes.ALL,
             TokenTypes.AND,
@@ -48,6 +48,8 @@ class LexTest(unittest.TestCase):
             TokenTypes.REGISTER,
             TokenTypes.LOGICAL,
             TokenTypes.PRINT,
+            TokenTypes.PRINTF,
+            TokenTypes.PRINTLN,
             TokenTypes.RAW,
             TokenTypes.REGISTER,
             TokenTypes.RGB,
@@ -84,6 +86,8 @@ class LexTest(unittest.TestCase):
             'kelvin',
             'logical',
             'print',
+            'printf',
+            'println',
             'raw',
             'red',
             'rgb',

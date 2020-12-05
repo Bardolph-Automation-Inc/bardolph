@@ -1,5 +1,7 @@
+import os
 
 from .vm_codes import OpCode
+
 
 class Instruction:
     def __init__(self, op_code, param0=None, param1=None):
@@ -39,10 +41,12 @@ class Instruction:
             return '{}, {}'.format(
                 self.op_code,
                 Instruction.quote_if_string(self.param0))
+        if self.param1 is os.linesep:
+            param1 = repr(os.linesep)
+        else:
+            param1 = Instruction.quote_if_string(self.param1)
         return '{}, {}, {}'.format(
-            self.op_code,
-            Instruction.quote_if_string(self.param0),
-            Instruction.quote_if_string(self.param1))
+            self.op_code, Instruction.quote_if_string(self.param0), param1)
 
     @staticmethod
     def quote_if_string(obj):

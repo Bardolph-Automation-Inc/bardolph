@@ -151,36 +151,3 @@ Uninstall with:
 
 This will work whether you installed a downloaded package, or built and
 installed a package locally.
-
-.. index:: logging configuration
-
-Modifying the Configuration
-===========================
-Under most conditions, there should be no need to modify the configuration.
-However, if you need to do so, you have a couple of choices. If you build
-and install the source code, you can edit
-`bardolph/controller/config_values.py`. That file contains all of the
-default settings.
-
-Alternatively, you can specify a configuration file when starting one of
-the command-line tools. The `lsrun`, `lsc`, and `lscapture` commands
-all accept the `-c` or `--config-file` option. For example:
-
-.. code-block:: bash
-
-    lsrun -c config.ini scripts/on-all.ls
-
-In this case, `lsrun` will first initialize all of its internal settings. It
-will then read the file `config.ini` and replace whatever settings are overridden
-by that file. For example, by default, all logging output is sent to the screen.
-To override that setting and send output to a file, you could put the
-following content into `config.ini`::
-
-    [logger]
-    log_file: /var/log/lights.log
-    log_to_console: False
-
-An example file with some candidates for customization are in the source
-distribution, in the file `docs/bardolph.ini`. Note that this file is
-for documentation purposes only; no configuration file outside of the
-default Python code should be necessary.

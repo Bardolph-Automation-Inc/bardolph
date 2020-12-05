@@ -7,7 +7,6 @@ class _JumpMarker:
     def __init__(self, inst, offset):
         self.jump = inst
         self.offset = offset
-        self.has_else = False
 
 class CodeGen:
     def __init__(self):
@@ -35,24 +34,22 @@ class CodeGen:
         self._code.append(inst)
         return inst
 
-    def add_list(self, inst_list) -> None:
+    def add_list(self, *inst_list) -> None:
         # Convert a list of tuples to Instructions.
         for code in inst_list:
             if isinstance(code, OpCode):
                 self.add_instruction(code)
             else:
-                op_code = code[0]
-                param0 = code[1] if len(code) > 1 else None
-                param1 = code[2] if len(code) > 2 else None
+                op_code, param0, param1, *_ = (*code, None, None)
                 self.add_instruction(op_code, param0, param1)
 
     def add_instructions(self, inst_list) -> None:
         self._code.extend(inst_list)
 
-    def addition(self, addend0, addend1) -> None:
+    def add(self, addend0, addend1) -> None:
         self.binop(Operator.ADD, addend0, addend1)
 
-    def subtraction(self, minuend, subtrahend) -> None:
+    def subtract(self, minuend, subtrahend) -> None:
         """
         minuend - subtrahend
         Leaves the difference on top of the stack.
@@ -70,11 +67,11 @@ class CodeGen:
     def binop(self, operator, param0, param1) -> None:
         push0 = CodeGen._push_op(param0)
         push1 = CodeGen._push_op(param1)
-        self.add_list([
+        self.add_list(
             (push0, param0),
             (push1, param1),
             (OpCode.OP, operator)
-        ])
+        )
 
     def plus_equals(self, dest, delta=1) -> None:
         self._op_equals(Operator.ADD, dest, delta)
@@ -88,12 +85,12 @@ class CodeGen:
     def _op_equals(self, operator, original, change) -> None:
         push0 = CodeGen._push_op(original)
         push1 = CodeGen._push_op(change)
-        self.add_list([
+        self.add_list(
             (push0, original),
             (push1, change),
             (OpCode.OP, operator),
             (OpCode.POP, original)
-        ])
+        )
 
     def push_context(self, params) -> None:
         self.add_instruction(OpCode.JSR, params)
@@ -110,7 +107,6 @@ class CodeGen:
         return _JumpMarker(inst, self.current_offset)
 
     def if_else(self, marker) -> None:
-        marker.has_else = True
         marker.jump.param1 = self.current_offset - marker.offset + 2
         inst = self.add_instruction(OpCode.JUMP, JumpCondition.ALWAYS)
         marker.jump = inst
@@ -119,21 +115,21 @@ class CodeGen:
     def if_end(self, marker) -> None:
         marker.jump.param1 = self.current_offset - marker.offset + 1
 
-    def iter_lights(self, operand, code) -> None:
+    def iter_lights(self, code) -> None:
         """ Generate code to iterate over all of the lights. """
-        self.add_list([
+        self.add_list(
             (OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND),
             OpCode.DISC
-        ])
+        )
         loop_marker = self.mark()
         self.add_instruction(OpCode.MOVE, Register.RESULT, LoopVar.CURRENT)
         self.test_op(Operator.NOTEQ, LoopVar.CURRENT, Operand.NULL)
         if_marker = self.if_true_start()
         self._code.extend(list(code))
-        self.add_list([
+        self.add_list(
             (OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND),
             (OpCode.DNEXT, LoopVar.CURRENT)
-        ])
+        )
         self.jump_back(loop_marker)
         self.if_end(if_marker)
 
@@ -146,10 +142,10 @@ class CodeGen:
         self.test_op(Operator.NOTEQ, Register.RESULT, Operand.NULL)
         if_marker = self.if_true_start()
         self._code.extend(list(code))
-        self.add_list([
+        self.add_list(
             (OpCode.MOVEQ, operand, Register.OPERAND),
             (OpCode.DNEXT, LoopVar.CURRENT)
-        ])
+        )
         self.jump_back(loop_marker)
         self.if_end(if_marker)
 
@@ -158,19 +154,19 @@ class CodeGen:
         Generate code to iterate over all members of a group or location. The
         name must be in LoopVar.FIRST.
         """
-        self.add_list([
+        self.add_list(
             (OpCode.MOVEQ, operand, Register.OPERAND),
             (OpCode.DISCM, LoopVar.FIRST)
-        ])
+        )
         loop_marker = self.mark()
         self.add_instruction(OpCode.MOVE, Register.RESULT, LoopVar.CURRENT)
         self.test_op(Operator.NOTEQ, LoopVar.CURRENT, Operand.NULL)
         if_marker = self.if_true_start()
         self._code.extend(list(code))
-        self.add_list([
+        self.add_list(
             (OpCode.MOVEQ, operand, Register.OPERAND),
             (OpCode.DNEXTM, LoopVar.FIRST, LoopVar.CURRENT)
-        ])
+        )
         self.jump_back(loop_marker)
         self.if_end(if_marker)
 

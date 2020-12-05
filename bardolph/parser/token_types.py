@@ -20,7 +20,6 @@ class TokenTypes(Enum):
     GROUP = auto()
     IF = auto()
     IN = auto()
-    LIGHTS = auto()
     LITERAL_STRING = auto()
     LOCATION = auto()
     LOGICAL = auto()
@@ -30,8 +29,8 @@ class TokenTypes(Enum):
     OFF = auto()
     ON = auto()
     OR = auto()
-    POWER = auto()
     PRINT = auto()
+    PRINTF = auto()
     PRINTLN = auto()
     PAUSE = auto()
     RAW = auto()
@@ -49,25 +48,10 @@ class TokenTypes(Enum):
     WAIT = auto()
     ZONE = auto()
 
-    @staticmethod
-    def commands():
-        return (TokenTypes.ASSIGN,
-                TokenTypes.GET,
-                TokenTypes.OFF,
-                TokenTypes.ON,
-                TokenTypes.POWER,
-                TokenTypes.PAUSE,
-                TokenTypes.REGISTER,
-                TokenTypes.SET,
-                TokenTypes.UNITS,
-                TokenTypes.WAIT)
-
-    def is_command(self):
-        return self in TokenTypes.commands()
-
-    def is_printable(self):
+    def is_executable(self):
         return self in (
-            TokenTypes.EXPRESSION, TokenTypes.LITERAL_STRING, TokenTypes.NAME,
-            TokenTypes.NUMBER, TokenTypes.REGISTER, TokenTypes.TIME_PATTERN,
-            TokenTypes.UNKNOWN
-        )
+            TokenTypes.ASSIGN, TokenTypes.BREAKPOINT,
+            TokenTypes.GET, TokenTypes.IF, TokenTypes.OFF, TokenTypes.ON,
+            TokenTypes.PRINT, TokenTypes.PRINTF, TokenTypes.PRINTLN,
+            TokenTypes.PAUSE, TokenTypes.REGISTER, TokenTypes.REPEAT,
+            TokenTypes.SET, TokenTypes.UNITS, TokenTypes.WHILE, TokenTypes.WAIT)

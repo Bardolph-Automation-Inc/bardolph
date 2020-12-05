@@ -24,9 +24,10 @@ class LoopFrame(StackFrame):
 
 class CallStack:
     """
-    Incoming parameters are saved in _current but are out of scope. That
-    StackFrame gets pushed when a routine is called, which brings the
-    parameters into scope.
+    As PARAM instructions are encountered, tncoming parameters are saved in
+    _current but are out of scope. That instance StackFrame gets pushed when a
+    routine is called. The presence of that StackFram at the top of the stack
+    brings the parameters into scope.
 
     Variables are immediately put into the StackFrame referenced by self.top.
     If the stack has only one StackFrame, then declared variables become
@@ -80,14 +81,14 @@ class CallStack:
     def get_return(self) -> int:
         return self.top.return_addr
 
-    def get_variable(self, index):
-        if isinstance(index, LoopVar):
+    def get_variable(self, name):
+        if isinstance(name, LoopVar):
             if isinstance(self.top, LoopFrame):
-                return self.top.get_loop_var(index)
+                return self.top.get_loop_var(name)
             return None
         for place in (self._constants, self.top.vars, self._root_frame.vars):
-            if index in place:
-                return place[index]
+            if name in place:
+                return place[name]
         return None
 
     def push_current(self) -> None:

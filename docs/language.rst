@@ -44,25 +44,25 @@ Here's an example, showing some comments
     set all
 
 This script sets the colors of all known lights to a bright shade of red.
-Note that the `set` command is what actually causes the lights to adopt the
-new settings and change their colors. The `all` parameter causes the given
+Note that the ``set`` command is what actually causes the lights to adopt the
+new settings and change their colors. The ``all`` parameter causes the given
 settings to be applied to all of the lights found on the network.
 
 A script sets the color and brightness of the lights by specifying
-5 numbers: `hue`, `saturation`, `brightness`, `kelvin`, and `duration`.
+5 numbers: ``hue``, ``saturation``, ``brightness``, ``kelvin``, and ``duration``.
 During execution, the Bardolph virtual machine sends these settings
 to the lights.
 
-The value you supply for `hue` is an angle expressed in
-in degrees, normally between 0 and 360. The values for `saturation`
-and `brightness` are treated as percentages, while `kelvin` is considered
-a temperature in °K. The value for `duration` is expressed in
+The value you supply for ``hue`` is an angle expressed in
+in degrees, normally between 0 and 360. The values for ``saturation``
+and ``brightness`` are treated as percentages, while ``kelvin`` is considered
+a temperature in °K. The value for ``duration`` is expressed in
 seconds, and tells the light how long to take to transition from its current
 state to the one you are now specifying. If you never supply a value for
-`duration`, it defaults to zero, and transitions occur instantaneously.
+``duration``, it defaults to zero, and transitions occur instantaneously.
 
-All of these numbers except `hue` must be positive, and may be floating-point
-values. Percentages above 100 are considered invalid. Angles for `hue`
+All of these numbers except ``hue`` must be positive, and may be floating-point
+values. Percentages above 100 are considered invalid. Angles for ``hue``
 greater than or equal to 360 are normalized to a number less
 than 360 by modulo arithmetic.
 
@@ -83,11 +83,11 @@ could put the values displayed by the app into a script.
 
   Throughout this documentation, *color setting* is defined as any of
   the parameters that control this so-called color. The available
-  color settings are `hue`, `saturation`, `brightness`, and `kelvin`.
+  color settings are ``hue``, ``saturation``, ``brightness``, and ``kelvin``.
 
 When a setting isn't specified a second time, the VM uses the existing value.
-For example, the following reuses numbers for `saturation`, `brightness`,
-and `kelvin`:
+For example, the following reuses numbers for ``saturation``, ``brightness``,
+and ``kelvin``:
 
 .. code-block:: lightbulb
 
@@ -102,7 +102,7 @@ This script will:
 Any uninitialized values default to zero, or an empty string. This can lead
 to unwanted results, so each of the values should be set at least once before
 setting the color of any lights. Or, consider starting your script with
-`get all` (the `get` command is described below).
+`get all` (the ``get`` command is described below).
 
 .. index:: name syntax
 
@@ -153,7 +153,7 @@ continues.
 
 Multi-Zone Lights
 =================
-With multiple-zone lights, the `set` command works the same,
+With multiple-zone lights, the ``set`` command works the same,
 but you can limit which zones it affects. It can set all of
 them to the same color, set the color of a single zone, or set
 it for a range of them. For example, I have a Z LED strip, which
@@ -164,7 +164,7 @@ I named "Strip". I can set the entire device to one color with:
   hue 150 saturation 100 brightness 50 kelvin 2700 duration 1.5
   set "Strip"
 
-To set only one zone, add a `zone` clause with a single number:
+To set only one zone, add a ``zone`` clause with a single number:
 
 .. code-block:: lightbulb
 
@@ -187,7 +187,7 @@ and 3.
 
 Power Command
 =============
-The commands to turn the lights on or off resemble the `set` command:
+The commands to turn the lights on or off resemble the ``set`` command:
 
 .. code-block:: lightbulb
 
@@ -196,8 +196,8 @@ The commands to turn the lights on or off resemble the `set` command:
 
 This turns off all the lights, and turns on the one named "Table".
 
-The "on" and "off" commands have no effect on the color of the lights.
-When "on" executes, each light will have whatever its color was when
+The ``on`` and ``off`` commands have no effect on the color of the lights.
+When ``on`` executes, each light will have whatever its color was when
 it was turned off. If a light is already on or off, an otherwise
 redundant power operation will have no visible effect, although the
 VM does send the power command to the bulbs.
@@ -210,8 +210,8 @@ can set the brightness to zero).
 
 Abbreviations
 =============
-Scripts can be much terser with shorthand color setting names: `h` (hue),
-`s` (saturation), `b` (brightness), and `k` (kelvin). The following two
+Scripts can be much terser with shorthand color setting names: ``h`` (hue),
+``s`` (saturation), ``b`` (brightness), and ``k`` (kelvin). The following two
 lines do the same thing:
 
 .. code-block:: lightbulb
@@ -246,16 +246,16 @@ This will:
    is off.
 
 The underlying API has a precision down to milliseconds. For example, all
-digits are significant in a `time` parameter of `1.234`.
+digits are significant in a ``time`` parameter of `1.234`.
 
-As mentioned above, the existing values for `time` and `duration` are re-used
-with each command. In this example, `time` is set only
+As mentioned above, the existing values for ``time`` and ``duration`` are re-used
+with each command. In this example, ``time`` is set only
 once, but there will be the same delay between every action.
 
 Multiple Lights Using `and`
 ---------------------------
 If you want to set multiple lights at the same time, you can chain them using
-`and`
+``and``
 
 .. code-block:: lightbulb
 
@@ -279,11 +279,11 @@ This script will:
 #. Wait 2 seconds.
 #. Turn on the light named "Chair Side".
 
-The `and` keyword works with `set`, `on`, and `off`. When multiple lights are
+The ``and`` keyword works with ``set``, ``on``, and ``off``. When multiple lights are
 specified this way, the interpreter attempts to change all of the lights at
 once, with (theoretically) no delay between each one.
 
-If a script specifies zones, the `and` comes after the zone numbers. This
+If a script specifies zones, the ``and`` comes after the zone numbers. This
 can be convenient for coordinating a multi-zone light with single-zone
 bulbs. For example, with a multi-zone light named "Strip" and a bulb named
 "Table"
@@ -330,7 +330,7 @@ instructions as fast as it can.
 Wait for Time of Day
 =====================
 Instead of waiting for a delay to elapse, you can specify the specific time
-that an action occurs, using the `at` modifier with the `time` command. For
+that an action occurs, using the ``at`` modifier with the ``time`` command. For
 example, to turn on all the lights at 8:00 a.m.:
 
 .. code-block:: lightbulb
@@ -447,14 +447,14 @@ executed. For example:
   duration 200 set all
   time 200 wait
 
-In this example, the `set` command will take 200 seconds to fully take effect.
+In this example, the ``set`` command will take 200 seconds to fully take effect.
 The script adds a 200-second wait to keep it from exiting before that slow
-`set` completes. If a script is waiting in the queue, this prevents that next
+``set`` completes. If a script is waiting in the queue, this prevents that next
 script from starting before the 200-second duration has elapsed.
 
 Groups and Locations
 ====================
-The `set`, `on`, and `off` commands can be applied to groups and locations.
+The ``set``, ``on``, and ``off`` commands can be applied to groups and locations.
 For example, if you have a location called "Living Room", you can turn them
 on and set them all to the same color with:
 
@@ -471,7 +471,7 @@ the "Reading Lights" group with:
 
   set group "Reading Lights"
 
-You can combine lights, groups, and locations with the `and` keyword:
+You can combine lights, groups, and locations with the ``and`` keyword:
 
 .. code-block:: lightbulb
 
@@ -580,7 +580,7 @@ put 5 + 4 into x:
 
 The syntax for an expression is a narrow subset of that of numerical
 expressions in Python. It can contain numbers, references to variables,
-registers, and the standard operators `+`, `-`, `*`, `/`, and `()`.
+registers, and the standard operators ``+``, ``-``, ``*``, ``/``, and ``()``.
 Currently, no mathematical functions are available.
 
 Registers can provide values:
@@ -606,7 +606,7 @@ and called:
   define shut_off_all off all
   shut_off_all
 
-A routine can have one or more parameters if the name is followed by the `with`
+A routine can have one or more parameters if the name is followed by the ``with``
 keyword:
 
 .. code-block:: lightbulb
@@ -617,7 +617,7 @@ keyword:
   set_mz "Strip" 7
 
 If a routine contains multiple commands, they need to be contained
-in `begin` and `end` keywords:
+in ``begin`` and ``end`` keywords:
 
 .. code-block:: lightbulb
 
@@ -705,9 +705,116 @@ visible in all scopes:
 
 .. index:: conditional, if
 
+Functions
+=========
+A routine can return a value, effectively becoming a so-called function. The
+return value can be a variable, macro, constant, or expression.
+
+.. code-block:: lightbulb
+
+    # Function definition
+    define max_rgb begin
+        assign max red
+        if {green > max}
+            assign max green
+        if {blue > max}
+            assign max blue
+        return max
+    end
+
+    # Function call
+    brightness max_rgb
+
+A function may take parameters, using the same syntax as a routine to declare
+them:
+
+.. code-block:: lightbulb
+
+    define sum with x and y and z begin
+        return {x + y + z}
+    end
+
+    define average with x and y and z begin
+        return {sum x y z / 3}
+    end
+
+You evaluate a function with a syntax similar to that of a routine call:
+
+.. code-block:: lightbulb
+
+    brightness average red green blue
+
+If a parameter consists of multiple tokens, it needs to be contained in curly
+braces, much like an expresstion:
+
+.. code-block:: lightbulb
+
+    brightness average {sum 10 20 30} green blue
+
+
+If a function is called within a mathematical expression, it must be contained
+in parentheses:
+
+.. code-block:: lightbulb
+
+    brightness {(average red green blue) / 2}
+
+    brightness {(average red green blue / 2)}
+    brightness {(average red green (blue / 2))}
+
+To enhance readability, you may want to add parentheses:
+
+.. code-block:: lightbulb
+
+    brightness {(average red green blue) / 2}
+    brightness {(average red green blue) / (average 10 20 30)}
+
+Note that expressions may be passed as parameters, including function calls:
+
+.. code-block:: lightbulb
+
+    assign x {average average 1 2 3 average 4 5 6 7}
+
+    # More readable version:
+    assign x {average (average 1 2 3) (average 4 5 6) 7}
+
+A function can return a string, although currently the lanugage doesn't have
+any support for string manipulation:
+
+.. code-block:: lightbulb
+
+    define pick_light with x begin
+        if {x == 1}
+            return "Chair Lamp"
+         else if {x == 2}
+            return "Table Light"
+        return "Bedroom Light"
+    end
+
+    on pick_light 3
+
+Note that a light's name can also be returned by a function. In this example,
+a function finds the name of the brightest light, which is used to turn it off.
+
+.. code-block:: lightbulb
+
+    define brightest begin
+        max_brightness = -1
+        repeat all as light begin
+            get light
+            if {brightness > max_brightness} begin
+                assign brightest_light light
+                assign max_brightness brightness
+            end
+        end
+        return brightest_light
+    end
+
+    off brightest_light
+
 Conditionals
 ============
-A conditional consists of the `if` keyword, followed by an expression and
+A conditional consists of the ``if`` keyword, followed by an expression and
 one or more commands. It can also have an `else` clause:
 
 .. code-block:: lightbulb
@@ -1166,16 +1273,16 @@ unaltered, based on what kind of switch occurs:
         - √
         - √
 
-None of the changes in unit mode affect the contents of `kelvin`. That value
+None of the changes in unit mode affect the contents of ``kelvin``. That value
 is always considered to be a temperature measured in °K, and never requires
 conversion.
 
-.. note:: While in RGB mode, you can still set the values of `hue`,
-    `saturation`, or `brightness`. However, this will have no practical effect;
+.. note:: While in RGB mode, you can still set the values of ``hue``,
+    ``saturation``, or ``brightness``. However, this will have no practical effect;
     when you set the color of a light, the VM will ignore them. The transition
-    from RGB to logical or raw mode overwrites the contents of `hue`,
-    `saturation`, and `brightness`. Conversely, you can set `red`,
-    `green`, or `blue`, but they are unused if the VM is not in RGB mode.
+    from RGB to logical or raw mode overwrites the contents of ``hue``,
+    ``saturation``, and ``brightness``. Conversely, you can set ``red``,
+    ``green``, or ``blue``, but they are unused if the VM is not in RGB mode.
     Similarly, switching to RGB from logical or raw mode overwrites anything
     previously stored in those three settings.
 
@@ -1217,37 +1324,190 @@ Following is an example that illustrates some of this behavior:
     #   kelvin = 2500
 
 
-.. index:: print command
+.. index:: print
 
 Outputting Text
 ===============
-Two commands, `print` and `println`, send output to the terminal. They both
-call Python's own `print` function, which under most conditions sends text
-to `stdout`, typically the user's terminal.
+Three commands, ``print``, ``println``, and ``printf``, send output to `stdout`.
+They all call Python's own `print` function, which under most conditions sends
+text to `stdout`, typically the user's terminal emulator.
 
-This is a fairly rudimentary, first implementation. The `print` command just
-puts out text, while `println` adds a line feed. The output is buffered, and
-text from `print` won't appear until `println` is called.
+Because this is not a general-purpose language, the support for text output
+is a fairly rudimentary implementation. I pretty much passses data along to the
+underlying Python `print` function, aided by the `string.format` method.
 
-You can print all of the settings, such as hue and brightness:
+You can print any of the settings, such as ``hue`` or ``brightness``, as well
+as variables and constants.
+
+The ``print`` and ``println`` commands take a single parameter, which is
+evaluated and sent to `stdout`. The ``print`` command appends a space to its
+output, while ``println`` and ``printf`` each append a line feed.
+
+For example to output some settings:
 
 .. code-block:: lightbulb
 
-    println hue brightness
+    hue 120 saturation 50 brightness 75 kelvin 2000
+    println "-----"
+    print hue
+    print saturation
+    print brightness
+    println kelvin
+    println "-----"
 
-The output can also contain light names and variables. Here's an example that
+This would generate the output::
+
+    -----
+    120 50 75 2000
+    -----
+
+.. index:: printf
+
+Formatted Output
+----------------
+For any kind of non-trivial output, you'll probably want to use ``printf``,
+which is a pass-through to Python's `string.format()` function.
+
+The ``printf`` command has the syntax::
+
+    printf <format> [param, ...]
+
+For example, to output the settings:
+
+.. code-block:: lightbulb
+
+    hue 120 saturation 50 brightness 75 kelvin 2000
+    printf "{} {} {} {}" hue saturation brightness kelvin
+
+Note that the field placeholders, in the form of `{}` correspond to the
+parameters.
+
+Because the compiler relies on the format string to determine the number of
+parameters, it must be either a literal or a macro.
+
+.. code-block:: lightbulb
+
+    define fmt "{}"
+    printf fmt hue
+    printf "{}" hue
+
+    assign fmt2 "{}"
+    printf fmt2 hue   # ERROR. Must be a literal or a macro.
+
+ It's possible to use named fields, which can give you cleaner code:
+
+.. code-block:: lightbulb
+
+    printf "{hue} {saturation} {brightness} {kelvin}"
+
+Named fields can be mixed with anonymous ones:
+
+.. code-block:: lightbulb
+
+    printf "{hue} {saturation} {brightness} {}" kelvin
+
+The output can contain variables and expressions:
+
+.. code-block:: lightbulb
+
+    assign x 100
+    assign y 200
+    printf "{x} {} {}" y {(x + y) / 2}
+
+The output can also contain light names. Here's an example that
 iterates over all of the lights, and outputs the settings for each one:
 
 .. code-block:: lightbulb
 
-    assign label "For light:"
-    define print_light with the_light begin
-        println label the_light
+    repeat all as light begin
         get the_light
-        print "hue:" hue "saturation:" saturation
-        print "brightness:" brightness
-        println "kelvin:" kelvin
+        printf "Light: {the_light} {hue} {saturation} {brightness} {kelvin}"
     end
 
-    repeat all as light
-        print_light light
+The formatting capabilities impelemented by the Python language are rather
+extensive and complicated. For more information on how this formatting works,
+I recommend that you consult the Python documentation:
+https://docs.python.org/3/library/string.html#formatspec
+
+In terms of data types, note that ``hue``, ``saturation``, ``brightness``,
+and ``kelvin`` are floating-point numbers in logical and RGB modes. In
+raw mode, these values are integers. Here's an example where the light
+settings are displayed, first in raw units, and then in RGB units:
+
+.. code-block:: lightbulb
+
+    define header_fmt "{:<9}{:>9}{:>9}{:>9}{:>9}"
+
+    units raw
+    println "----- Raw -----"
+    printf header_fmt "Name" "Hue" "Sat" "Brt" "Kelvin"
+    repeat all as light begin
+        get light
+        printf "{light:<9}{hue:>9d}{saturation:>9d}{brightness:>9d}{kelvin:>9d}"
+    end
+
+    units rgb
+    println ""
+    println "----- RGB -----"
+    printf header_fmt "Name" "Red" "Green" "Blue" "Kelvin"
+    repeat all as light begin
+        get light
+        printf "{light:<9}{red:>9.2f}{green:>9.2f}{blue:>9.2f}{kelvin:>9.2f}"
+    end
+
+Notice that the upper ``printf`` uses a format of `:>9d`, which outputs
+number as decimal integers, right-justified in a field 9 characters long. The
+RGB numbers are output with 2 decimal points.
+
+When I ran this script on my own lights one evening, I got this output::
+
+    ----- Raw -----
+    Name           Hue      Sat      Brt   Kelvin
+    Bottom       42597    65535    20001     2400
+    Middle       38957        0    40259     2700
+    Top          35316    65535    56432     2700
+
+    ----- RGB -----
+    Name           Red    Green     Blue   Kelvin
+    Bottom        0.00     3.05    30.52  2400.00
+    Middle       61.43    61.43    61.43  2700.00
+    Top           0.00    66.02    86.11  2700.00
+
+Examples with `printf`
+----------------------
+This code illustrates equivalent behavior using different parameters:
+
+.. code-block:: lightbulb
+
+    printf "{hue} {saturation} {brightness}"
+    printf "{} {} {}" hue saturation brightness
+    printf "{hue} {} {}" saturation brightness
+    printf "{2} {1} {0}" brightness saturation hue
+
+All of these lines produce the same output. Note that the bottom line in the
+code uses positional fields, which are a feature of the underlying Python
+implementation.
+
+Because of the data types of the settings, use of any integer type specifier
+requires raw mode:
+
+.. code-block:: lightbulb
+
+    units raw
+    printf "{:d}" hue   # Ok because hue is an integer in raw mode
+    printf "{:f}" hue   # Ok because an integer can be converted to float
+
+    units logical
+    printf "{:d}" hue   # ERROR: hue is a floating-point number
+
+Note that light names are Python strings:
+
+.. code-block:: lightbulb
+
+    println "Furniture group:"
+    repeat in group "Furniture" as light
+        printf "{light:>10s}"
+
+    println "Pole group:"
+    repeat in group "Pole" as light
+        printf "{light:>10}"

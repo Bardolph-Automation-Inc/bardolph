@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="bardolph",
-    version="0.1.1",
+    version="0.1.2",
     author="Al Fontes",
     author_email="bardolph@fontes.org",
     description="Simple scripting language for LIFX lights",

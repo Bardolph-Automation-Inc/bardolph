@@ -193,3 +193,61 @@ output it produces. If no option is provided, it defaults to `-t`.
 * `-n` or `--num-lights`: Specify the number of lights that are on the network.
   If you know how many lights are connected, using this option can make a
   noticable reduction in initialization time.
+
+.. index:: configuration file
+
+Modifying the Configuration
+===========================
+Under most conditions, there should be no need to modify the configuration.
+However, if you need to do so, you have a couple of choices. If you build
+and install the source code, you can edit
+`bardolph/controller/config_values.py`. That file contains all of the
+default settings.
+
+Alternatively, you can specify a configuration file when starting one of
+the command-line tools. The `lsrun`, `lsc`, and `lscapture` commands
+all accept the `-c` or `--config-file` option. For example:
+
+.. code-block:: bash
+
+    lsrun -c config.ini scripts/on-all.ls
+
+In this case, `lsrun` will first initialize all of its internal settings. It
+will then read the file `config.ini` and replace whatever settings are
+overridden by that file. For example, by default, all logging output is sent to
+the screen. To override that setting and send output to a file, you could put
+the following content into `config.ini`::
+
+    [logger]
+    log_file: /var/log/lights.log
+    log_to_console: False
+
+An example file with some candidates for customization are in the source
+distribution, in the file `docs/bardolph.ini`. Note that this file is
+for documentation purposes only; no configuration file outside of the
+default Python code should be necessary.
+
+.. index:: environment variable
+
+Environment
+-----------
+During development, you may want to have a specific configuration as your
+default. In particular, it's helpful to make use of fake lights, so as to avoid
+giving yourself a headache from a bunch of blinking lights while you debug your
+scripts. For this purpose, you can set the `BARDOLPH_INI` environment
+variable to the name of a configuration file.
+
+For example, on my development machine, I have a file called `dev.ini`, which
+contains::
+
+    [logger]
+    log_level: DEBUG
+
+    [controller]
+    use_fakes: True
+
+And from the command line,
+
+.. code-block:: bash
+
+    export BARDOLPH_INI=dev.ini
