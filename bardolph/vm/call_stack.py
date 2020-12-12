@@ -24,7 +24,7 @@ class LoopFrame(StackFrame):
 
 class CallStack:
     """
-    As PARAM instructions are encountered, tncoming parameters are saved in
+    As PARAM instructions are encountered, incoming parameters are saved in
     _current but are out of scope. That instance StackFrame gets pushed when a
     routine is called. The presence of that StackFram at the top of the stack
     brings the parameters into scope.
@@ -101,6 +101,10 @@ class CallStack:
     def exit_loop(self) -> None:
         assert len(self._stack) > 1
         self._stack.pop()
+
+    def unwind_loops(self) -> None:
+        while isinstance(self.top, LoopFrame):
+            self._stack.pop()
 
     def pop_current(self) -> None:
         assert len(self._stack) > 1

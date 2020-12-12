@@ -3,7 +3,7 @@
 import unittest
 
 from tests.activity_log_test import ActivityLogTest
-from tests.call_context_test import CallContextTest
+from tests.context_test import ContextTest
 from tests.call_stack_test import CallStackTest
 from tests.clock_test import ClockTest
 from tests.code_gen_test import CodeGenTest
@@ -33,8 +33,8 @@ tests = unittest.TestSuite()
 
 for test_class in (
     ActivityLogTest,
-    CallContextTest,
     CallStackTest,
+    ContextTest,
     ClockTest,
     CodeGenTest,
     DefineTest,
@@ -51,6 +51,7 @@ for test_class in (
     LsModuleTest,
     MachineTest,
     ParserTest,
+    PrintTest,
     SettingsTest,
     SortedListTest,
     TimePatternTest,

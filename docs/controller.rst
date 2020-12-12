@@ -38,6 +38,7 @@ The VM has a set of special-purpose registers. They are:
 * power
 * name
 * operand
+* pc (program counter)
 * result
 * time
 * unit_mode
@@ -166,6 +167,28 @@ stored in the registers.
 
 If the "operand" register contains `group` or `location`, then the registers
 receive the arithmetic mean of the lights belonging to that group or location.
+
+.. index:: VM; jump instruction
+
+Jump to Address - `jump`
+------------------------
+In order to keep the code relocatable, all `jump` instructions have relative
+addresses. To effect the jump, the VM adds an offset, which may be negative,
+to the `pc` register.
+
+Each instruction has a condition that controls the behavior of the jump. Those
+conditions are defined in the `JumpCondition` enum in `vm/vm_codes.py`. In this
+context, the term "truthy" describes an object for which the Python `bool()`
+function would `True`.
+
+* `ALWAYS`: jump unconditionally. Add `param1` from the instruction to the `pc`
+    register.
+* `IF_FALSE`: if the `result` register is not truthy, add `param1` to the `pc`
+    register.
+* `IF_TRUE`: if the `result` register is truthy, add `param1` to the `pc`
+    register.
+* `INDIRECT`: jump unconditionally, but treat `param1` as the name of a variable
+    and get the offset by dereferencing that variable.
 
 .. index:: VM; power instruction
 
@@ -640,7 +663,7 @@ a stop is requested.
 I/O
 ===
 Aside from access to lights, I/O has been deliberatley absent. A small `VmIo`
-module enables simple output to logs and `stdout`.
+module enables simple output to `stdout`.
 
 Syntax
 ------

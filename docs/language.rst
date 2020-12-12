@@ -1333,7 +1333,7 @@ They all call Python's own `print` function, which under most conditions sends
 text to `stdout`, typically the user's terminal emulator.
 
 Because this is not a general-purpose language, the support for text output
-is a fairly rudimentary implementation. I pretty much passses data along to the
+is a fairly rudimentary implementation. It pretty much passses data along to the
 underlying Python `print` function, aided by the `string.format` method.
 
 You can print any of the settings, such as ``hue`` or ``brightness``, as well
@@ -1394,7 +1394,7 @@ parameters, it must be either a literal or a macro.
     assign fmt2 "{}"
     printf fmt2 hue   # ERROR. Must be a literal or a macro.
 
- It's possible to use named fields, which can give you cleaner code:
+It's possible to use named fields, which can give you cleaner code:
 
 .. code-block:: lightbulb
 

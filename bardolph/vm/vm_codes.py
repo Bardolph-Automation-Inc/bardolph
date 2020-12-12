@@ -12,6 +12,7 @@ class Register(Enum):
     KELVIN = auto()
     NAME = auto()
     OPERAND = auto()
+    PC = auto()
     POWER = auto()
     RED = auto()
     RESULT = auto()
@@ -58,9 +59,9 @@ class JumpCondition(Enum):
     ALWAYS = auto()
     IF_FALSE = auto()
     IF_TRUE = auto()
+    INDIRECT = auto()
 
 class LoopVar(Enum):
-    BREAK = auto()
     COUNTER = auto()
     CURRENT = auto()
     EXIT_JMP = auto()

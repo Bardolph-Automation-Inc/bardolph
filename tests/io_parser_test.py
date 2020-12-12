@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging
+import os
 import unittest
 
 from bardolph.parser.parse import Parser
@@ -19,10 +20,10 @@ class IoParserTest(unittest.TestCase):
             Instruction(OpCode.MOVEQ, 100, "y"),
             Instruction(OpCode.MOVE, "y", Register.RESULT),
             Instruction(OpCode.OUT, IoOp.REGISTER, Register.RESULT),
-            Instruction(OpCode.OUT, IoOp.PRINT),
+            Instruction(OpCode.OUT, IoOp.PRINT, ' '),
             Instruction(OpCode.MOVE, "y", Register.RESULT),
             Instruction(OpCode.OUT, IoOp.REGISTER, Register.RESULT),
-            Instruction(OpCode.OUT, IoOp.PRINT)
+            Instruction(OpCode.OUT, IoOp.PRINT, ' ')
         ]
         actual = self.parser.parse(input_string)
         self.assertEqual(
@@ -34,7 +35,7 @@ class IoParserTest(unittest.TestCase):
         expected = [
             Instruction(OpCode.MOVEQ, 10, Register.RESULT),
             Instruction(OpCode.OUT, IoOp.REGISTER, Register.RESULT),
-            Instruction(OpCode.OUT, IoOp.PRINTLN)
+            Instruction(OpCode.OUT, IoOp.PRINT, os.linesep)
         ]
         actual = self.parser.parse(input_string)
         self.assertEqual(

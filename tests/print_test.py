@@ -12,27 +12,26 @@ class PrintTest(unittest.TestCase):
         self._runner = ScriptRunner(self)
 
     @patch('builtins.print')
-    def test_script(self, print_fn):
+    def test_print(self, print_fn):
+        script = 'print "hello"'
+        self._runner.run_script(script)
+        print_fn.assert_called_with('hello', end=' ')
+
+    @patch('builtins.print')
+    def test_println(self, print_fn):
+        script = 'println "hello"'
+        self._runner.run_script(script)
+        print_fn.assert_called_with('hello', end='\n')
+
+    @patch('builtins.print')
+    def test_printf(self, print_fn):
         script = """
-            units raw
-            hue 1 saturation 2 brightness 3 kelvin 4
-            set all
-            hue 10 saturation 20 brightness 30 kelvin 40
-            assign label "Light"
-
-            define print_light with the_light begin
-                print label the_light {time + 5}
-                get the_light
-                print "hue:" hue "saturation:" saturation
-                print "brightness:"
-                println brightness "kelvin:" kelvin
-            end
-
-            print_light "Table"
+            hue 456
+            printf "{} {hue}" 123
         """
         self._runner.run_script(script)
-        print_fn.assert_called_with(
-            'Light Table 5.0 hue: 1 saturation: 2 brightness: 3 kelvin: 4')
+        print_fn.assert_called_with('123 456')
+
 
 if __name__ == '__main__':
     unittest.main()

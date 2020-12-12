@@ -3,26 +3,28 @@ from collections import deque
 from bardolph.lib.symbol import Symbol, SymbolType
 from bardolph.lib.symbol_table import Symbol, SymbolTable
 
-class CallContext:
-    _empty_table = SymbolTable()
 
+class _LoopContext:
     def __init__(self):
-        self._stack = deque()
-        self._in_routine = False
+        self.break_list = []
+
+
+class Context:
+    def __init__(self):
         self._globals = SymbolTable()
-        self._stack.append(self._globals)
+        self._locals = SymbolTable()
+        self._loop_stack = deque()
+        self._loop_depth = 0
+        self._in_routine = False
 
     def __contains__(self, name) -> bool:
-        """
-        Return True if the name exists as any type in the current context.
-        """
-        return name in self.peek() or name in self._globals
+        return name in self._locals or name in self._globals
 
     def clear(self) -> None:
         self._in_routine = False
         self._globals.clear()
-        self._stack.clear()
-        self._stack.append(self._globals)
+        self._locals.clear()
+        self._loop_stack.clear()
 
     def enter_routine(self) -> None:
         self._in_routine = True
@@ -32,23 +34,29 @@ class CallContext:
 
     def exit_routine(self) -> None:
         self._in_routine = False
+        self._locals.clear()
 
-    def push(self, symbol_table=None) -> None:
-        self._stack.append(symbol_table or SymbolTable())
+    def enter_loop(self) -> None:
+        self._loop_stack.append(_LoopContext())
 
-    def pop(self) -> SymbolTable:
-        assert len(self._stack) > 1
-        return self._stack.pop()
+    def in_loop(self) -> bool:
+        return len(self._loop_stack) > 0
 
-    def peek(self) -> SymbolTable:
-        assert len(self._stack) > 0
-        return self._stack[-1]
+    def exit_loop(self) -> None:
+        self._loop_stack.pop()
+
+    def add_break(self, inst) -> None:
+        self._loop_stack[-1].break_list.append(inst)
+
+    def break_list(self):
+        return self._loop_stack[-1].break_list
 
     def add_routine(self, routine) -> None:
         self._globals.add_symbol(routine.name, SymbolType.ROUTINE, routine)
 
     def add_variable(self, name, value=None) -> None:
-        self.peek().add_symbol(name, SymbolType.VAR, value)
+        dest = self._locals if self._in_routine else self._globals
+        dest.add_symbol(name, SymbolType.VAR, value)
 
     def add_global(self, name, symbol_type, value) -> None:
         self._globals.add_symbol(name, symbol_type, value)
@@ -61,7 +69,7 @@ class CallContext:
         Get a parameter from the top of the stack. If it's not there, check
         the globals.
         """
-        symbol = self.peek().get_symbol(name)
+        symbol = self._locals.get_symbol(name)
         if symbol.undefined:
             symbol = self._globals.get_symbol(name)
         return symbol
@@ -85,10 +93,10 @@ class CallContext:
     def has_routine(self, name):
         return not self._global_of_type(name, SymbolType.ROUTINE).undefined
 
-    def get_macro(self, name):
+    def get_macro(self, name) -> Symbol:
         return self._global_of_type(name, SymbolType.MACRO)
 
-    def _global_of_type(self, name, symbol_type):
+    def _global_of_type(self, name, symbol_type) -> Symbol:
         symbol = self._globals.get_symbol(name)
         if symbol.undefined or symbol.symbol_type == symbol_type:
             return symbol

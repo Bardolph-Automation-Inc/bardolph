@@ -41,9 +41,9 @@ class LightSet(i_controller.LightSet):
 
     @inject(Lifx)
     def discover(self, lifx):
-        logging.info('start discover. so far, successes = {}, fails = {}'
-                     .format(self._num_successful_discovers,
-                             self._num_failed_discovers))
+        logging.debug('start discover. so far, successes = {}, fails = {}'
+                      .format(self._num_successful_discovers,
+                              self._num_failed_discovers))
         try:
             for lifx_light in lifx.get_lights():
                 light = Light(lifx_light)
@@ -173,10 +173,8 @@ def light_refresh(settings):
         lights = LightSet.get_instance()
         try:
             complete_success = lights.refresh()
-            lights._num_successful_discovers += 1
         except lifxlan.errors.WorkflowException as ex:
             logging.warning("Error during discovery {}".format(ex))
-            lights._num_failed_discovers += 1
 
 
 @inject(Settings)

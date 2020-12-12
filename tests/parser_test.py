@@ -67,5 +67,19 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(expected, actual,
                          "Multi-zone failed: {} {}".format(expected, actual))
 
+    def test_break(self):
+        input_string = """
+            repeat begin
+                assign x 5
+                break
+                assign y 6
+                if {x < 6}
+                    break
+                assign z 7
+                set all
+            end
+        """
+
+
 if __name__ == '__main__':
     unittest.main()

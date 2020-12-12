@@ -6,11 +6,9 @@ from bardolph.controller.script_job import ScriptJob
 class LsModule:
     _jobs = job_control.JobControl()
 
-    @classmethod
-    def queue_script(cls, script, bindvars=None):
-        if bindvars is not None:
-            script = script.format(bindvars)
-        return cls._jobs.add_job(ScriptJob.from_string(script))
+    @staticmethod
+    def queue_script(script):
+        return LsModule._jobs.add_job(ScriptJob.from_string(script))
 
 
 def configure():

@@ -25,7 +25,7 @@ class IoParser(SubParser):
 
     def printf(self) -> bool:
         self.next_token()
-        format_str = self.parser._current_str()
+        format_str = self.current_str
         if len(format_str) == 0:
             return self.token_error('Expected format specifier, got {}')
         self.next_token()
@@ -48,18 +48,18 @@ class IoParser(SubParser):
         return fn()
 
     def _out_expr(self) -> bool:
-        if not self.parser.rvalue():
+        if not self.rvalue():
             return False
         self._code_out_reg()
         return True
 
     def _out_reg(self) -> bool:
-        self._code_out_reg(self.parser._current_reg())
+        self._code_out_reg(self.current_reg)
         return self.next_token()
 
     def _out_symbol(self) -> bool:
         name = self.current_token
-        if not self.parser._call_context.has_symbol_typed(
+        if not self.context.has_symbol_typed(
                 name, SymbolType.MACRO, SymbolType.VAR):
             return self.token_error('Unknown: {}')
         self.code_gen.add_instruction(OpCode.MOVE, name, Register.RESULT)
@@ -67,7 +67,7 @@ class IoParser(SubParser):
         return self.next_token()
 
     def _out_literal(self) -> bool:
-        literal = self.parser._current_literal()
+        literal = self.current_literal
         if literal is None:
             return False
         self.code_gen.add_instruction(OpCode.MOVEQ, literal, Register.RESULT)

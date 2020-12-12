@@ -29,6 +29,7 @@ class Registers:
         self.last_zone = 0
         self.name = None
         self.operand = Operand.NULL
+        self.pc = 0
         self.power = False
         self.red = 0.0
         self.result = None
@@ -61,17 +62,13 @@ class Registers:
 
 
 class Machine:
-    _MAX_PRINTBUF = 2048
-
     def __init__(self):
-        self._pc = 0
         self._cue_time = 0
         self._clock = provide(Clock)
         self._variables = {}
         self._program = []
         self._reg = Registers()
         self._call_stack = CallStack()
-        self._print_buffer = ''
         self._vm_io = VmIo(self._call_stack, self._reg)
         self._vm_math = VmMath(self._call_stack, self._reg)
         self._vm_discover = VmDiscover(self._call_stack, self._reg)
@@ -89,7 +86,6 @@ class Machine:
     def reset(self) -> None:
         self._reg.reset()
         self._variables.clear()
-        self._pc = 0
         self._cue_time = 0
         self._call_stack.reset()
         self._vm_math.reset()
@@ -102,17 +98,23 @@ class Machine:
         self._program = loader.code
         self._keep_running = True
 
+        logging.debug('Starting to execute.')
         self._clock.start()
-        while self._keep_running and self._pc < len(self._program):
-            inst = self._program[self._pc]
-            if inst.op_code == OpCode.STOP:
-                break
-            self._fn_table[inst.op_code]()
-            if inst.op_code not in (OpCode.END, OpCode.JSR, OpCode.JUMP):
-                self._pc += 1
-        self._clock.stop()
-        if len(self._print_buffer) > 0:
-            print(self._print_buffer.rstrip())
+        program_len = len(self._program)
+        try:
+            while self._keep_running and self._reg.pc < program_len:
+                inst = self._program[self._reg.pc]
+                if inst.op_code == OpCode.STOP:
+                    break
+                self._fn_table[inst.op_code]()
+                if inst.op_code not in (OpCode.END, OpCode.JSR, OpCode.JUMP):
+                    self._reg.pc += 1
+            self._clock.stop()
+            logging.debug(
+                'Stopped, _keep_running = {}, _pc = {}, program_len = {}'.format(
+                    self._keep_running, self._reg.pc, program_len))
+        except Exception as ex:
+            logging.error("Machine stopped due to {}".format(ex))
 
     def stop(self) -> None:
         self._keep_running = False
@@ -133,7 +135,7 @@ class Machine:
 
     @property
     def current_inst(self):
-        return self._program[self._pc]
+        return self._program[self._reg.pc]
 
     def _color(self) -> None:
         fn_map = {operand: fn for operand, fn in (
@@ -170,10 +172,13 @@ class Machine:
             end_index = self._reg.last_zone
             if end_index is None:
                 end_index = start_index
-            light.set_zone_color(
-                start_index, end_index + 1,
-                self._assure_raw_color(self._reg.get_color()),
-                self._assure_raw_time(self._reg.duration))
+            try:
+                light.set_zone_color(
+                    start_index, end_index + 1,
+                    self._assure_raw_color(self._reg.get_color()),
+                    self._assure_raw_time(self._reg.duration))
+            except Exception as ex:
+                logging.error("Error calling set_zone_color: {}", ex)
 
     @inject(LightSet)
     def _color_group(self, light_set=injected) -> None:
@@ -276,36 +281,41 @@ class Machine:
 
     def _jsr(self) -> None:
         inst = self.current_inst
-        self._call_stack.set_return(self._pc + 1)
+        self._call_stack.set_return(self._reg.pc + 1)
         self._call_stack.push_current()
         routine_name = inst.param0
         rtn = self._variables.get(routine_name, None)
-        self._pc = rtn.get_address()
+        self._reg.pc = rtn.get_address()
+
+    def _end(self) -> None:
+        self._call_stack.unwind_loops()
+        ret_addr = self._call_stack.get_return()
+        self._call_stack.pop_current()
+        self._reg.pc = ret_addr
 
     def _jump(self) -> None:
         # In the current instruction, param0 contains the condition, and
         # param1 contains the offset.
         inst = self.current_inst
-        jump_if = {
-            JumpCondition.ALWAYS: {True: True, False: True},
-            JumpCondition.IF_FALSE: {True: False, False: True},
-            JumpCondition.IF_TRUE: {True: True, False: False}
-        }
-        if jump_if[inst.param0][bool(self._reg.result)]:
-            self._pc += inst.param1
+        if inst.param0 is JumpCondition.INDIRECT:
+            address = self._call_stack.get_variable(inst.param1)
+            self._reg.pc = address
         else:
-            self._pc += 1
+            jump_if = {
+                JumpCondition.ALWAYS: {True: True, False: True},
+                JumpCondition.IF_FALSE: {True: False, False: True},
+                JumpCondition.IF_TRUE: {True: True, False: False}
+            }
+            if jump_if[inst.param0][bool(self._reg.result)]:
+                self._reg.pc += inst.param1
+            else:
+                self._reg.pc += 1
 
     def _loop(self) -> None:
         self._call_stack.enter_loop()
 
     def _end_loop(self) -> None:
         self._call_stack.exit_loop()
-
-    def _end(self) -> None:
-        ret_addr = self._call_stack.get_return()
-        self._call_stack.pop_current()
-        self._pc = ret_addr
 
     def _nop(self) -> None: pass
 
@@ -342,11 +352,6 @@ class Machine:
 
     def _out(self) -> None:
         self._vm_io.out(self.current_inst)
-
-    def _check_pbuf(self) -> None:
-        if len(self._print_buffer) > self._MAX_PRINTBUF:
-            print(self._print_buffer, end='')
-            self._print_buffer = ''
 
     def _pause(self) -> None:
         if self._enable_pause:

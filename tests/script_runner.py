@@ -51,11 +51,10 @@ class ScriptRunner:
         self.run_script(script)
         self.check_all_call_lists(expected)
 
-    def check_no_others(self, allowed):
+    def check_no_others(self, *allowed):
         """
         Assert that only the lights in the list got any calls.
         """
-        allowed = self.assure_list(allowed)
         lifx = provide(i_controller.Lifx)
         for light in lifx.get_lights():
             if light.get_label() not in allowed:

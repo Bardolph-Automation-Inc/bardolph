@@ -8,6 +8,12 @@ class _JumpMarker:
         self.jump = inst
         self.offset = offset
 
+
+class _JumpSet:
+    def __init__(self):
+        self.jumps = []
+
+
 class CodeGen:
     def __init__(self):
         self._code = []
@@ -24,7 +30,7 @@ class CodeGen:
         self._code.clear()
 
     def push(self, operand) -> None:
-        self.add_instruction(CodeGen._push_op(operand), operand)
+        self.add_instruction(self._push_op(operand), operand)
 
     def pop(self, operand) -> None:
         self.add_instruction(OpCode.POP, operand)
@@ -65,8 +71,8 @@ class CodeGen:
         self.add_instruction(OpCode.POP, Register.RESULT)
 
     def binop(self, operator, param0, param1) -> None:
-        push0 = CodeGen._push_op(param0)
-        push1 = CodeGen._push_op(param1)
+        push0 = self._push_op(param0)
+        push1 = self._push_op(param1)
         self.add_list(
             (push0, param0),
             (push1, param1),
@@ -83,8 +89,8 @@ class CodeGen:
         self._op_equals(Operator.MUL, dest, pi)
 
     def _op_equals(self, operator, original, change) -> None:
-        push0 = CodeGen._push_op(original)
-        push1 = CodeGen._push_op(change)
+        push0 = self._push_op(original)
+        push1 = self._push_op(change)
         self.add_list(
             (push0, original),
             (push1, change),

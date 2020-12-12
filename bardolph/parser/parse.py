@@ -7,10 +7,11 @@ from bardolph.controller.routine import Routine
 from bardolph.controller.units import UnitMode
 from bardolph.lib.symbol_table import SymbolType
 from bardolph.lib.time_pattern import TimePattern
-from bardolph.vm.vm_codes import OpCode, Operand, Register, SetOp
+from bardolph.vm.vm_codes import (JumpCondition, LoopVar, OpCode, Operand,
+                                  Register, SetOp)
 
 from . import lex
-from .call_context import CallContext
+from .context import Context
 from .code_gen import CodeGen
 from .expr_parser import ExprParser
 from .io_parser import IoParser
@@ -23,13 +24,14 @@ class Parser:
     def __init__(self):
         self._lexer = None
         self._error_output = ''
-        self._call_context = CallContext()
+        self._context = Context()
         self._current_token_type = TokenTypes.NULL
         self._current_token = ''
         self._op_code = OpCode.NOP
         self._code_gen = CodeGen()
         self._command_map = {
             TokenTypes.ASSIGN: self._assignment,
+            TokenTypes.BREAK: self._break,
             TokenTypes.BREAKPOINT: self._breakpoint,
             TokenTypes.DEFINE: self._definition,
             TokenTypes.GET: self._get,
@@ -52,7 +54,7 @@ class Parser:
         self._token_trace = False
 
     def parse(self, input_string):
-        self._call_context.clear()
+        self._context.clear()
         self._code_gen.clear()
         self._error_output = ''
         self._lexer = lex.Lex(input_string)
@@ -112,7 +114,7 @@ class Parser:
         self.next_token()
         if self._current_token_type is TokenTypes.LITERAL_STRING:
             return self._string_to_reg(reg)
-        return self.rvalue(reg)
+        return self._rvalue(reg)
 
     def _string_to_reg(self, reg) -> bool:
         if reg != Register.NAME:
@@ -195,7 +197,7 @@ class Parser:
         return True
 
     def _var_operand(self) -> bool:
-        if not self._call_context.has_symbol_typed(
+        if not self._context.has_symbol_typed(
                 self._current_token, SymbolType.MACRO, SymbolType.VAR):
             return self.token_error('Neither variable nor macro: "{}"')
         self._add_instruction(OpCode.MOVE, self._current_token, Register.NAME)
@@ -214,12 +216,12 @@ class Parser:
         that populate the FIRST_ZONE and LAST_ZONE registers. If only one
         parameter is present, put None into LAST_ZONE.
         """
-        if not self.at_rvalue():
+        if not self._at_rvalue():
             return self.token_error('Expected zone, got "{}"')
-        if not self.rvalue(Register.FIRST_ZONE):
+        if not self._rvalue(Register.FIRST_ZONE):
             return False
-        if not only_one and self.at_rvalue():
-            return self.rvalue(Register.LAST_ZONE)
+        if not only_one and self._at_rvalue():
+            return self._rvalue(Register.LAST_ZONE)
 
         self._add_instruction(OpCode.MOVEQ, None, Register.LAST_ZONE)
         return True
@@ -240,9 +242,9 @@ class Parser:
 
     def _get(self) -> bool:
         self.next_token()
-        if not self.at_rvalue():
+        if not self._at_rvalue():
             return self.token_error('Needed light for get, got "{}".')
-        if not self.rvalue(Register.NAME):
+        if not self._rvalue(Register.NAME):
             return False
 
         if self._current_token_type is TokenTypes.ZONE:
@@ -276,7 +278,7 @@ class Parser:
         if self._current_token_type is TokenTypes.AT:
             self.next_token()
             return self._process_time_patterns()
-        return self.rvalue(Register.TIME)
+        return self._rvalue(Register.TIME)
 
     def _process_time_patterns(self):
         time_pattern = self._current_time_pattern()
@@ -303,12 +305,12 @@ class Parser:
             return self.token_error('Expected name for assignment, got "{}"')
         dest_name = self._current_token
         self.next_token()
-        if not self.rvalue(dest_name):
+        if not self._rvalue(dest_name):
             return False
-        self._call_context.add_variable(dest_name)
+        self._context.add_variable(dest_name)
         return True
 
-    def rvalue(self, dest=Register.RESULT, code_gen=None) -> bool:
+    def _rvalue(self, dest=Register.RESULT, code_gen=None) -> bool:
         """
         Consume the current token as an rvalue, generating the code to evaluate
         it and to move the result into dest.
@@ -321,7 +323,7 @@ class Parser:
             move_inst = OpCode.MOVEQ
         elif self._current_token_type is TokenTypes.NAME:
             name = self._current_token
-            if self._call_context.has_symbol_typed(name, SymbolType.VAR):
+            if self._context.has_symbol_typed(name, SymbolType.VAR):
                 value = name
             else:
                 return self.token_error('Unknown: "{}"')
@@ -339,7 +341,7 @@ class Parser:
         code_gen.add_instruction(move_inst, value, dest)
         return self.next_token()
 
-    def at_rvalue(self) -> bool:
+    def _at_rvalue(self) -> bool:
         if self._current_token_type not in (
                 TokenTypes.EXPRESSION,
                 TokenTypes.LITERAL_STRING,
@@ -348,17 +350,17 @@ class Parser:
             return False
         if self._current_token_type != TokenTypes.NAME:
             return True
-        return not self._call_context.has_routine(self.current_token)
+        return not self._context.has_routine(self.current_token)
 
     def at_light(self) -> bool:
         if self._current_token_type is TokenTypes.LITERAL_STRING:
             return True
 
         if self._current_token_type is TokenTypes.NAME:
-            return self._call_context.has_symbol_typed(
+            return self._context.has_symbol_typed(
                 SymbolType.MACRO, SymbolType.PARAM, SymbolType.VAR)
 
-        return not self._call_context.has_routine(self.current_token)
+        return not self._context.has_routine(self.current_token)
 
     def _definition(self) -> bool:
         self.next_token()
@@ -368,7 +370,7 @@ class Parser:
 
         self.next_token()
         if self._detect_routine_start():
-            if not self._call_context.get_routine(name).undefined:
+            if not self._context.get_routine(name).undefined:
                 return self.token_error('Already defined: "{}"')
             return self._routine_definition(name)
 
@@ -380,7 +382,7 @@ class Parser:
         to a command, or the name of an existing routine, it's defining a new
         routine and not a variable.
         """
-        if self._call_context.has_routine(self._current_token):
+        if self._context.has_routine(self._current_token):
             return True
         if self._current_token_type.is_executable():
             return True
@@ -395,33 +397,31 @@ class Parser:
         """
         value = self._current_literal()
         if value is None:
-            inner_macro = self._call_context.get_macro(self._current_token)
+            inner_macro = self._context.get_macro(self._current_token)
             if inner_macro is None:
                 return self.token_error('Macro needs constant, got "{}"')
             value = inner_macro.value
-        self._call_context.add_global(name, SymbolType.MACRO, value)
+        self._context.add_global(name, SymbolType.MACRO, value)
         self._add_instruction(OpCode.CONSTANT, name, value)
         return self.next_token()
 
     def _routine_definition(self, name):
-        if self._call_context.in_routine():
+        if self._context.in_routine():
             return self.trigger_error('Nested definition not allowed.')
 
-        self._call_context.enter_routine()
-        self._call_context.push()
+        self._context.enter_routine()
         self._add_instruction(OpCode.ROUTINE, name)
 
         routine = Routine(name)
-        self._call_context.add_routine(routine)
+        self._context.add_routine(routine)
         if self._current_token_type is TokenTypes.WITH:
             self.next_token()
             if not self._param_decl(routine):
                 return False
         result = self.command_seq()
-        self._call_context.pop()
         self._add_instruction(OpCode.END, name)
 
-        self._call_context.exit_routine()
+        self._context.exit_routine()
         return result
 
     def _param_decl(self, routine):
@@ -431,16 +431,16 @@ class Parser:
         """
         name = self._current_token
         routine.add_param(name)
-        self._call_context.add_variable(name)
+        self._context.add_variable(name)
         self.next_token()
         while (self._current_token_type is TokenTypes.NAME and not
-                self._call_context.has_routine(self._current_token)):
+                self._context.has_routine(self._current_token)):
             name = self._current_token
             if routine.has_param(name):
                 self.token_error('Duplicate parameter name: "{}"')
                 return None
             routine.add_param(name)
-            self._call_context.add_variable(name)
+            self._context.add_variable(name)
             self.next_token()
         return True
 
@@ -451,7 +451,7 @@ class Parser:
 
     def compound_command(self):
         self.next_token()
-        while self._current_token_type != TokenTypes.END:
+        while self._current_token_type is not TokenTypes.END:
             if self._current_token_type is TokenTypes.EOF:
                 return self.trigger_error('End of file before "end".')
             if not self._command():
@@ -459,13 +459,13 @@ class Parser:
         return self.next_token()
 
     def _call_routine(self):
-        routine = self._call_context.get_routine(self._current_token)
+        routine = self._context.get_routine(self._current_token)
         if routine.undefined:
             return self.token_error('Unknown name: "{}"')
 
         self.next_token()
         for param_name in routine.value.params:
-            if not self.rvalue():
+            if not self._rvalue():
                 return False
             self._add_instruction(OpCode.PARAM, param_name, Register.RESULT)
 
@@ -492,8 +492,17 @@ class Parser:
         self._code_gen.if_end(marker)
         return True
 
-    def _repeat(self):
-        return LoopParser(self).repeat(self._code_gen, self._call_context)
+    def _repeat(self) -> bool:
+        result = LoopParser(self).repeat(self._code_gen, self._context)
+        return result
+
+    def _break(self) -> bool:
+        if not self._context.in_loop():
+            return self.trigger_error('Encountered "break" not inside loop.')
+        inst = self._code_gen.add_instruction(
+            OpCode.JUMP, JumpCondition.ALWAYS, self._code_gen.current_offset)
+        self._context.add_break(inst)
+        return self.next_token()
 
     def _add_instruction(self, op_code, param0=None, param1=None):
         return self._code_gen.add_instruction(op_code, param0, param1)
@@ -537,7 +546,7 @@ class Parser:
             return value
         if self._current_token_type != TokenTypes.NAME:
             return None
-        macro = self._call_context.get_macro(self._current_token)
+        macro = self._context.get_macro(self._current_token)
         return None if macro.undefined else macro.value
 
     def _current_int(self):
@@ -563,7 +572,7 @@ class Parser:
         if self._current_token_type is TokenTypes.TIME_PATTERN:
             return TimePattern.from_string(self._current_token)
         if self._current_token_type is TokenTypes.NAME:
-            return self._call_context.get_macro(self._current_token).value
+            return self._context.get_macro(self._current_token).value
         return TimePattern(None, None)
 
     def _current_reg(self):
