@@ -27,7 +27,7 @@ class LexTest(unittest.TestCase):
         input_string = """all and as at blue brightness
             define # comment \n duration green hue if in
             off on or kelvin logical print printf println raw red rgb
-            saturation set time wait zone 12:*4 {x * y}
+            saturation set time wait zone 12:*4 {x * y} { a * b }
             -1.0 01.234\n"Hello There" x _abc @"""
         expected_tokens = [
             TokenTypes.ALL,
@@ -59,6 +59,7 @@ class LexTest(unittest.TestCase):
             TokenTypes.WAIT,
             TokenTypes.ZONE,
             TokenTypes.TIME_PATTERN,
+            TokenTypes.EXPRESSION,
             TokenTypes.EXPRESSION,
             TokenTypes.NUMBER,
             TokenTypes.NUMBER,
@@ -98,6 +99,7 @@ class LexTest(unittest.TestCase):
             'zone',
             '12:*4',
             'x * y',
+            ' a * b ',
             '-1.0',
             '01.234',
             'Hello There',

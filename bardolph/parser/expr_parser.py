@@ -84,7 +84,7 @@ class Visitor:
 class ExprParser:
     def __init__(self, expr_string):
         try:
-            self._tree = ast.parse(expr_string, mode="eval")
+            self._tree = ast.parse(expr_string.strip(), mode="eval")
         except SyntaxError:
             self._tree = None
 

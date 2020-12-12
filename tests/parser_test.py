@@ -5,7 +5,7 @@ import unittest
 
 from bardolph.parser.parse import Parser
 from bardolph.vm.instruction import Instruction
-from bardolph.vm.vm_codes import OpCode, Operand, Register
+from bardolph.vm.vm_codes import OpCode, Operand, Operator, Register
 
 
 def _filter(inst_list):
@@ -67,18 +67,17 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(expected, actual,
                          "Multi-zone failed: {} {}".format(expected, actual))
 
-    def test_break(self):
-        input_string = """
-            repeat begin
-                assign x 5
-                break
-                assign y 6
-                if {x < 6}
-                    break
-                assign z 7
-                set all
-            end
-        """
+    def test_expr_space(self):
+        input_string = 'assign x { 3 * 4 }'
+        expected = [
+            Instruction(OpCode.PUSH, 3),
+            Instruction(OpCode.PUSH, 4),
+            Instruction(OpCode.OP, Operator.MUL),
+            Instruction(OpCode.POP, Register.RESULT),
+            Instruction(OpCode.MOVE, Register.RESULT, "x")
+        ]
+        actual = self.parser.parse(input_string)
+        self.assertEqual(expected, actual, "Error with space in expression.")
 
 
 if __name__ == '__main__':
