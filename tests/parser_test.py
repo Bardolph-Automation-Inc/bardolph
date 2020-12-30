@@ -46,24 +46,28 @@ class ParserTest(unittest.TestCase):
     def test_single_zone(self):
         input_string = 'set "Strip" zone 7'
         expected = [
+            Instruction(OpCode.WAIT),
             Instruction(OpCode.MOVEQ, "Strip", Register.NAME),
             Instruction(OpCode.MOVEQ, 7, Register.FIRST_ZONE),
             Instruction(OpCode.MOVEQ, None, Register.LAST_ZONE),
             Instruction(OpCode.MOVEQ, Operand.MZ_LIGHT, Register.OPERAND),
+            Instruction(OpCode.COLOR)
         ]
-        actual = _filter(self.parser.parse(input_string))
+        actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual,
                          "Single zone failed: {} {}".format(expected, actual))
 
     def test_multi_zone(self):
         input_string = 'set "Strip" zone 3 5'
         expected = [
+            Instruction(OpCode.WAIT),
             Instruction(OpCode.MOVEQ, "Strip", Register.NAME),
             Instruction(OpCode.MOVEQ, 3, Register.FIRST_ZONE),
             Instruction(OpCode.MOVEQ, 5, Register.LAST_ZONE),
             Instruction(OpCode.MOVEQ, Operand.MZ_LIGHT, Register.OPERAND),
+            Instruction(OpCode.COLOR)
         ]
-        actual = _filter(self.parser.parse(input_string))
+        actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual,
                          "Multi-zone failed: {} {}".format(expected, actual))
 
@@ -73,11 +77,11 @@ class ParserTest(unittest.TestCase):
             Instruction(OpCode.PUSH, 3),
             Instruction(OpCode.PUSH, 4),
             Instruction(OpCode.OP, Operator.MUL),
-            Instruction(OpCode.POP, Register.RESULT),
-            Instruction(OpCode.MOVE, Register.RESULT, "x")
+            Instruction(OpCode.POP, "x")
         ]
         actual = self.parser.parse(input_string)
-        self.assertEqual(expected, actual, "Error with space in expression.")
+        self.assertEqual(expected, actual,
+                         "Error with space in expression.")
 
 
 if __name__ == '__main__':

@@ -1,79 +1,80 @@
 import re
 
 from bardolph.lib.time_pattern import TimePattern
-from .token_types import TokenTypes
+from .token import Token
+from .token import TokenTypes
 
 
 class Lex:
-    reg_list = 'hue saturation brightness kelvin red green blue duration time'
-    REG_REGEX = re.compile(
-        '^' + "$|^".join([reg for reg in reg_list.split()]) + '$')
-    EXPR_REGEX = re.compile(r'^\{.*?\}$')
-    TOKEN_REGEX = re.compile(r'#.*$|".*?"|\{.*?\}|\S+')
-    NAME_REGEX = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
-    NUMBER_REGEX = re.compile(r'^\-?[0-9]*\.?[0-9]+$')
-    INT_REGEX = re.compile(r'^\-?[0-9]*$')
+    """
+    A token is a punctuation mark, a register name, a user-defined identifier,
+    a number, an expression, or a string.
+    """
+    _EXPR_SPEC = '{.*?}'
+    _REG = 'hue saturation brightness kelvin red green blue duration time'
+    _REG_LIST = _REG.split()
+    _MARK_LIST = r'[]{}+-*/#:'
+    _MARK_SPEC = r'[\[\]{}+\-*/#:]'
+    _NUMBER_SPEC = r'\-?[0-9]*\.?[0-9]+'
+    _STRING_SPEC = r'"([^"]|(?<=\\)")*"'
+    _WORD_SPEC = r'[^\s\[\]{}+\-*/#:]+'
 
+    _EXPR = re.compile(_EXPR_SPEC)
+    _STRING = re.compile(_STRING_SPEC)
+    _TOKEN = re.compile(
+        '|'.join((_EXPR_SPEC, TimePattern.REGEX_SPEC, _STRING_SPEC,
+                  _NUMBER_SPEC, _MARK_SPEC, _WORD_SPEC)))
+    _NAME = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+    _NUMBER = re.compile(_NUMBER_SPEC)
+    _TIME_PATTERN = TimePattern.REGEX
+    _INT = re.compile(r'^\-?[0-9]*$')
 
-    def __init__(self, input_string):
+    def __init__(self, input_string, source=''):
         self._lines = iter(input_string.split('\n'))
-        self._line_num = 0
-        self._tokens = None
-        self._next_line()
+        self._source = source
 
-    def _next_line(self):
-        current_line = next(self._lines, None)
-        if current_line is None:
-            self._tokens = None
-        else:
-            self._line_num += 1
-            self._tokens = self.TOKEN_REGEX.finditer(current_line)
+    def tokens(self):
+        line_num = 0
+        for line in self._lines:
+            line_num += 1
+            for match in self._TOKEN.finditer(line):
+                word = self._unabbreviate(
+                    match.string[match.start():match.end()])
+                if word == '#':
+                    break
+                if word in self._MARK_LIST:
+                    token_type = TokenTypes.MARK
+                else:
+                    token_type = self._token_type(word)
+                    if token_type is TokenTypes.LITERAL_STRING:
+                        word = word[1:-1]
+                        word = word.replace(r'\"', '"')
+                yield Token(token_type, word, line_num, self._source)
+        yield Token(TokenTypes.EOF)
+
+    @staticmethod
+    def is_int(text):
+        return Lex._INT.match(text) is not None
+
+    def _token_type(self, word):
+        token_type = TokenTypes.__members__.get(word.upper())
+        if token_type is not None:
+            return token_type
+        if word in self._REG_LIST:
+            return TokenTypes.REGISTER
+        pairs = (
+            (self._EXPR, TokenTypes.EXPRESSION),
+            (self._TIME_PATTERN, TokenTypes.TIME_PATTERN),
+            (self._STRING, TokenTypes.LITERAL_STRING),
+            (self._NUMBER, TokenTypes.NUMBER),
+            (self._NAME, TokenTypes.NAME))
+        for reg_expr, token_type in pairs:
+            if reg_expr.match(word):
+                return token_type
+        return TokenTypes.ERROR
 
     @staticmethod
     def _unabbreviate(token):
         return {
-            'h': 'hue', 's': 'saturation', 'b': 'brightness', 'k': 'kelvin'
+            'H': 'hue', 'S': 'saturation', 'B': 'brightness', 'K': 'kelvin'
         }.get(token, token)
-
-    def get_line_number(self):
-        return self._line_num
-
-    def _token_type(self, token):
-        token_type = TokenTypes.__members__.get(token.upper(), None)
-        if token_type is not None:
-            return token_type
-
-        pairs = (
-            (self.EXPR_REGEX, TokenTypes.EXPRESSION),
-            (self.REG_REGEX, TokenTypes.REGISTER),
-            (TimePattern.REGEX, TokenTypes.TIME_PATTERN),
-            (self.NUMBER_REGEX, TokenTypes.NUMBER),
-            (self.NAME_REGEX, TokenTypes.NAME)
-        )
-        for reg_expr, token_type in pairs:
-            if reg_expr.match(token):
-                return token_type
-
-        return TokenTypes.UNKNOWN
-
-    def next_token(self):
-        token_type, token = TokenTypes.NULL, ''
-        while token_type is TokenTypes.NULL:
-            match = None if self._tokens is None else next(self._tokens, None)
-            while match is None:
-                self._next_line()
-                if self._tokens is None:
-                    return (TokenTypes.EOF, '')
-                match = next(self._tokens, None)
-
-            token = Lex._unabbreviate(match.string[match.start():match.end()])
-            if token[0] != '#':
-                if token[0] == '"':
-                    token = token[1:-1]
-                    token_type = TokenTypes.LITERAL_STRING
-                else:
-                    token_type = self._token_type(token)
-                    if token_type is TokenTypes.EXPRESSION:
-                        token = token[1:-1]
-
-        return (token_type, token)

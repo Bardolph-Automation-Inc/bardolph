@@ -9,10 +9,6 @@ class SubParser:
         return self.parser.current_token
 
     @property
-    def current_token_type(self):
-        return self.parser.current_token_type
-
-    @property
     def code_gen(self):
         return self.parser._code_gen
 
@@ -40,6 +36,9 @@ class SubParser:
 
     def at_rvalue(self):
         return self.parser._at_rvalue()
+
+    def expr(self, dest, code_gen):
+        return self.parser._expr(dest, code_gen)
 
     def trigger_error(self, msg):
         return self.parser.trigger_error(msg)

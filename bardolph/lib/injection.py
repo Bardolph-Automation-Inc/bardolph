@@ -25,18 +25,10 @@ class ObjectBinder:
         Injection.providers[interface] = lambda: self._implementor
 
 
-def inject(*interfaces):
+def inject(interface):
     def fn_wrapper(fn):
         def param_wrapper(*args):
-            injected_args = []
-            for interface in interfaces:
-                if interface in Injection.providers:
-                    obj = Injection.providers[interface]()
-                else:
-                    obj = interface()
-                injected_args.append(obj)
-            args = args + tuple(injected_args)
-            return fn(*args)
+            return fn(*(*args, provide(interface)))
         return param_wrapper
     return fn_wrapper
 

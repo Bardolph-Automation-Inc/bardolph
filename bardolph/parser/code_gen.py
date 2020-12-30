@@ -122,7 +122,19 @@ class CodeGen:
         marker.jump.param1 = self.current_offset - marker.offset + 1
 
     def iter_lights(self, code) -> None:
-        """ Generate code to iterate over all of the lights. """
+        """ Generate code to iterate over all of the lights.
+            moveq  operand.light   register.operand
+            disc
+        mark marker
+            move register.result loopvar.current
+            test operator.noteq loopvar.current operand.null
+            if start
+               ...insert code...
+               moveq operand.light register.operand
+               dnext loopvar.current
+               jump mark
+            if end
+        """
         self.add_list(
             (OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND),
             OpCode.DISC

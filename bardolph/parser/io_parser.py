@@ -2,7 +2,7 @@ import os
 import string
 
 from bardolph.lib.symbol import SymbolType
-from bardolph.parser.token_types import TokenTypes
+from bardolph.parser.token import TokenTypes
 from bardolph.vm.vm_codes import IoOp, OpCode, Register
 
 from .sub_parser import SubParser
@@ -38,17 +38,18 @@ class IoParser(SubParser):
         return True
 
     def _out_current_token(self) -> bool:
+        if str(self.current_token) == '{':
+            return self._out_expr()
         fn =  {
-            TokenTypes.EXPRESSION: self._out_expr,
             TokenTypes.REGISTER: self._out_reg,
             TokenTypes.NAME: self._out_symbol,
             TokenTypes.LITERAL_STRING:  self._out_literal,
             TokenTypes.NUMBER: self._out_literal
-        }.get(self.current_token_type, self._out_unprintable)
+        }.get(self.current_token.token_type, self._out_unprintable)
         return fn()
 
     def _out_expr(self) -> bool:
-        if not self.rvalue():
+        if not self.expr(Register.RESULT, self.code_gen):
             return False
         self._code_out_reg()
         return True
@@ -58,7 +59,7 @@ class IoParser(SubParser):
         return self.next_token()
 
     def _out_symbol(self) -> bool:
-        name = self.current_token
+        name = str(self.current_token)
         if not self.context.has_symbol_typed(
                 name, SymbolType.MACRO, SymbolType.VAR):
             return self.token_error('Unknown: {}')

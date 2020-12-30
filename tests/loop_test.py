@@ -33,7 +33,6 @@ class LoopTest(unittest.TestCase):
     def test_all(self):
         script = """
             hue 180 saturation 50 brightness 50 kelvin 1000
-
             repeat all as the_light set the_light
 
             repeat all as the_light with brt from 0 to 100 begin

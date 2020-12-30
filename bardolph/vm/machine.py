@@ -1,5 +1,6 @@
 import logging
 
+
 from bardolph.controller import units
 from bardolph.controller.get_key import getch
 from bardolph.controller.i_controller import LightSet
@@ -65,7 +66,7 @@ class Machine:
     def __init__(self):
         self._cue_time = 0
         self._clock = provide(Clock)
-        self._variables = {}
+        self._routines = {}
         self._program = []
         self._reg = Registers()
         self._call_stack = CallStack()
@@ -85,7 +86,7 @@ class Machine:
 
     def reset(self) -> None:
         self._reg.reset()
-        self._variables.clear()
+        self._routines.clear()
         self._cue_time = 0
         self._call_stack.reset()
         self._vm_math.reset()
@@ -94,7 +95,7 @@ class Machine:
 
     def run(self, program) -> None:
         loader = Loader()
-        loader.load(program, self._variables)
+        loader.load(program, self._routines)
         self._program = loader.code
         self._keep_running = True
 
@@ -111,7 +112,8 @@ class Machine:
                     self._reg.pc += 1
             self._clock.stop()
             logging.debug(
-                'Stopped, _keep_running = {}, _pc = {}, program_len = {}'.format(
+                'Stopped, _keep_running = {}, _pc = {}, program_len = {}'
+                .format(
                     self._keep_running, self._reg.pc, program_len))
         except Exception as ex:
             logging.error("Machine stopped due to {}".format(ex))
@@ -168,17 +170,19 @@ class Machine:
         if light is None:
             Machine._report_missing(self._reg.name)
         elif self._zone_check(light):
-            start_index = self._reg.first_zone
-            end_index = self._reg.last_zone
-            if end_index is None:
-                end_index = start_index
-            try:
+            # Unknown why this happens.
+            if not hasattr(light, 'set_zone_color'):
+                logging.error(
+                    'No set_zone_color for light of type', type(light))
+            else:
+                start_index = self._reg.first_zone
+                end_index = self._reg.last_zone
+                if end_index is None:
+                    end_index = start_index
                 light.set_zone_color(
                     start_index, end_index + 1,
                     self._assure_raw_color(self._reg.get_color()),
                     self._assure_raw_time(self._reg.duration))
-            except Exception as ex:
-                logging.error("Error calling set_zone_color: {}", ex)
 
     @inject(LightSet)
     def _color_group(self, light_set=injected) -> None:
@@ -284,7 +288,7 @@ class Machine:
         self._call_stack.set_return(self._reg.pc + 1)
         self._call_stack.push_current()
         routine_name = inst.param0
-        rtn = self._variables.get(routine_name, None)
+        rtn = self._routines.get(routine_name, None)
         self._reg.pc = rtn.get_address()
 
     def _end(self) -> None:

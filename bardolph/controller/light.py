@@ -4,6 +4,17 @@ import time
 from lifxlan.errors import WorkflowException
 
 from bardolph.lib.color import rounded_color
+from bardolph.lib.retry import tries
+
+class LightException(Exception):
+    def __init__(self, cause):
+        super().__init__('Exception from light API {}'.format(cause))
+        self._cause = cause
+
+    @property
+    def cause(self):
+        return self._cause
+
 
 class Light:
     def __init__(self, lifx_light):
@@ -46,37 +57,33 @@ class Light:
         try:
             self._impl.set_color(rounded_color(color), duration, rapid)
         except WorkflowException as ex:
-            logging.warning("In set_color(): {}".format(ex))
+            logging.warning(ex)
 
     def get_color(self):
         try:
             return self._impl.get_color()
         except WorkflowException as ex:
-            logging.warning("In get_color(): {}".format(ex))
+            logging.warning(ex)
         return [-1] * 4
 
-    def set_zone_color(self, first_zone, last_zone, color, duration):
-        try:
+    @tries(3, WorkflowException)
+    def set_zone_color(self, first_zone, last_zone, color, duration) -> None:
+        # Unknown why this happens.
+        if not hasattr(self._impl, 'set_zone_color'):
+            logging.error(
+                'No set_zone_color for light of type', type(self._impl))
+        else:
             self._impl.set_zone_color(
                 first_zone, last_zone, rounded_color(color), duration)
-        except WorkflowException as ex:
-            logging.warning("In set_zone_color(): {}".format(ex))
 
+    @tries(3, WorkflowException)
     def get_color_zones(self, first_zone=None, last_zone=None):
-        try:
-            return self._impl.get_color_zones(first_zone, last_zone)
-        except WorkflowException as ex:
-            logging.warning("In get_color_zones(): {}".format(ex))
+        return self._impl.get_color_zones(first_zone, last_zone)
 
+    @tries(3, WorkflowException)
     def set_power(self, power, duration, rapid=True):
-        try:
-            return self._impl.set_power(round(power), duration, rapid)
-        except WorkflowException as ex:
-            logging.warning("In set_power(): {}".format(ex))
+        return self._impl.set_power(round(power), duration, rapid)
 
+    @tries(3, WorkflowException)
     def get_power(self):
-        try:
-            return self._impl.get_power()
-        except WorkflowException as ex:
-            logging.warning("In get_power(): {}".format(ex))
-        return -1
+        return self._impl.get_power()

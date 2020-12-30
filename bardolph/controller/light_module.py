@@ -1,7 +1,7 @@
-from ..lib import clock
-from ..lib import log_config
-from ..lib.i_lib import Settings
-from ..lib.injection import provide
+from bardolph.lib import clock
+from bardolph.lib import log_config
+from bardolph.lib.i_lib import Settings
+from bardolph.lib.injection import provide
 
 from . import light_set
 

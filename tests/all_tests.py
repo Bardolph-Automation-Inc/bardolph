@@ -22,6 +22,7 @@ from tests.ls_module_test import LsModuleTest
 from tests.machine_test import MachineTest
 from tests.parser_test import ParserTest
 from tests.print_test import PrintTest
+from tests.retry_test import RetryTest
 from tests.settings_test import SettingsTest
 from tests.sorted_list_test import SortedListTest
 from tests.time_pattern_test import TimePatternTest
@@ -52,6 +53,7 @@ for test_class in (
     MachineTest,
     ParserTest,
     PrintTest,
+    RetryTest,
     SettingsTest,
     SortedListTest,
     TimePatternTest,

@@ -1049,6 +1049,33 @@ This loop assigns a different brightness to each group, ranging between 40%
 and 80%. Within each group, every light gets the same brightness, but their
 hues are distributed evenly across a 360° range.
 
+.. index:: break
+
+Breaking Out of a Loop
+----------------------
+You can use a ``break`` command to terminate a loop before its normal end
+condition is met. The innermost loop is halted, but any outer loop continues
+to execute:
+
+.. code-block:: lightbulb
+
+    repeat 10 with the_hue from 10 to 360 begin
+        repeat all as bulb begin
+            get bulb
+            if {brigtness > 50}
+                break
+            brightness {brightness + 10}
+            set bulb
+        end
+
+        # Execution continues here after the break interrupts the nested loop.
+        hue the_hue
+        set all
+    end
+
+A ``break`` command outside of a loop is an error that will halt the
+compilation of a script.
+
 .. index:: get, retrieving colors, color; get from light, lights; get color
 
 Retrieving Current Color

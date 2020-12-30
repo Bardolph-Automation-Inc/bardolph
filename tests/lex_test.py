@@ -4,143 +4,107 @@ from re import LOCALE
 import unittest
 
 from bardolph.parser.lex import Lex
-from bardolph.parser.token_types import TokenTypes
+from bardolph.parser.token import Token, TokenTypes
 
 class LexTest(unittest.TestCase):
-    def test_token_regex(self):
-        test_input = """word "hello there you " 123.456 -abc- %
-            # comment1 # comment2"""
-        expected_strings = [
-            'word', '"hello there you "', '123.456', '-abc-', '%',
-            '# comment1 # comment2'
-        ]
-        actual_strings = [m.string[m.start():m.end()]
-                          for m in Lex.TOKEN_REGEX.finditer(test_input)]
-        self.assertListEqual(actual_strings, expected_strings)
-
     def test_time_pattern(self):
-        lexer = Lex('12:34')
-        (token_type, _) = lexer.next_token()
-        self.assertEqual(TokenTypes.TIME_PATTERN, token_type)
+        lexer = Lex('12:*4 *2:10 1*:01 *:21')
+        token_num = 0
+        for token in lexer.tokens():
+            if token_num < 4:
+                self.assertEqual(TokenTypes.TIME_PATTERN, token.token_type)
+            else:
+                self.assertEqual(TokenTypes.EOF, token.token_type)
+            token_num += 1
+        self.assertEqual(token_num, 5)
 
     def test_all_tokens(self):
-        input_string = """all and as at blue brightness
+        input_string = """[9] all and as at blue brightness
             define # comment \n duration green hue if in
             off on or kelvin logical print printf println raw red rgb
-            saturation set time wait zone 12:*4 {x * y} { a * b }
-            -1.0 01.234\n"Hello There" x _abc @"""
-        expected_tokens = [
-            TokenTypes.ALL,
-            TokenTypes.AND,
-            TokenTypes.AS,
-            TokenTypes.AT,
-            TokenTypes.REGISTER,
-            TokenTypes.REGISTER,
-            TokenTypes.DEFINE,
-            TokenTypes.REGISTER,
-            TokenTypes.REGISTER,
-            TokenTypes.REGISTER,
-            TokenTypes.IF,
-            TokenTypes.IN,
-            TokenTypes.OFF,
-            TokenTypes.ON,
-            TokenTypes.OR,
-            TokenTypes.REGISTER,
-            TokenTypes.LOGICAL,
-            TokenTypes.PRINT,
-            TokenTypes.PRINTF,
-            TokenTypes.PRINTLN,
-            TokenTypes.RAW,
-            TokenTypes.REGISTER,
-            TokenTypes.RGB,
-            TokenTypes.REGISTER,
-            TokenTypes.SET,
-            TokenTypes.REGISTER,
-            TokenTypes.WAIT,
-            TokenTypes.ZONE,
-            TokenTypes.TIME_PATTERN,
-            TokenTypes.EXPRESSION,
-            TokenTypes.EXPRESSION,
-            TokenTypes.NUMBER,
-            TokenTypes.NUMBER,
-            TokenTypes.LITERAL_STRING,
-            TokenTypes.NAME,
-            TokenTypes.NAME,
-            TokenTypes.UNKNOWN
-        ]
-        expected_strings = [
-            'all',
-            'and',
-            'as',
-            'at',
-            'blue',
-            'brightness',
-            'define',
-            'duration',
-            'green',
-            'hue',
-            'if',
-            'in',
-            'off',
-            'on',
-            'or',
-            'kelvin',
-            'logical',
-            'print',
-            'printf',
-            'println',
-            'raw',
-            'red',
-            'rgb',
-            'saturation',
-            'set',
-            'time',
-            'wait',
-            'zone',
-            '12:*4',
-            'x * y',
-            ' a * b ',
-            '-1.0',
-            '01.234',
-            'Hello There',
-            'x',
-            '_abc',
-            '@'
-        ]
-        self._lex_and_compare(input_string, expected_tokens, expected_strings)
+            saturation set time wait zone 12:*4 {3 * 4 + 5}
+            -1.0 01.234\n"Hello There" x _abc @ [ ]"""
+        expected = [
+            TokenTypes.MARK, '[',
+            TokenTypes.NUMBER,'9',
+            TokenTypes.MARK, ']',
+            TokenTypes.ALL, 'all',
+            TokenTypes.AND, 'and',
+            TokenTypes.AS, 'as',
+            TokenTypes.AT, 'at',
+            TokenTypes.REGISTER, 'blue',
+            TokenTypes.REGISTER, 'brightness',
+            TokenTypes.DEFINE,'define',
+            TokenTypes.REGISTER, 'duration',
+            TokenTypes.REGISTER, 'green',
+            TokenTypes.REGISTER,'hue',
+            TokenTypes.IF, 'if',
+            TokenTypes.IN, 'in',
+            TokenTypes.OFF, 'off',
+            TokenTypes.ON,'on',
+            TokenTypes.OR, 'or',
+            TokenTypes.REGISTER, 'kelvin',
+            TokenTypes.LOGICAL,'logical',
+            TokenTypes.PRINT, 'print',
+            TokenTypes.PRINTF, 'printf',
+            TokenTypes.PRINTLN,'println',
+            TokenTypes.RAW, 'raw',
+            TokenTypes.REGISTER, 'red',
+            TokenTypes.RGB,'rgb',
+            TokenTypes.REGISTER, 'saturation',
+            TokenTypes.SET, 'set',
+            TokenTypes.REGISTER, 'time',
+            TokenTypes.WAIT, 'wait',
+            TokenTypes.ZONE, 'zone',
+            TokenTypes.TIME_PATTERN, '12:*4',
+            TokenTypes.EXPRESSION, '{3 * 4 + 5}',
+            TokenTypes.NUMBER,'-1.0',
+            TokenTypes.NUMBER, '01.234',
+            TokenTypes.LITERAL_STRING, 'Hello There',
+            TokenTypes.NAME,'x',
+            TokenTypes.NAME, '_abc',
+            TokenTypes.ERROR, '@',
+            TokenTypes.MARK, '[',
+            TokenTypes.MARK, ']']
+        self._lex_and_compare_pairs(input_string, expected)
 
     def test_abbreviations(self):
-        input_string = 'h k s b'
-        expected_tokens = [TokenTypes.REGISTER for _ in range(0, 4)]
-        expected_strings = ['hue', 'kelvin', 'saturation', 'brightness']
-        self._lex_and_compare(input_string, expected_tokens, expected_strings)
+        input_string = 'H S B K'
+        expected = ('hue', 'saturation', 'brightness', 'kelvin')
+        self._lex_and_compare_same(input_string, TokenTypes.REGISTER, expected)
 
     def test_embedded_keywords(self):
         input_string = '''
             a_hue saturation_z _brightness_ kelvinkelvin xblue
             y_green redred
         '''
-        expected_tokens = [TokenTypes.NAME] * len(input_string.split())
-        expected_strings = [
-            'a_hue', 'saturation_z', '_brightness_', 'kelvinkelvin', 'xblue',
-            'y_green', 'redred'
+        expected = ('a_hue', 'saturation_z', '_brightness_', 'kelvinkelvin',
+            'xblue','y_green', 'redred')
+        self._lex_and_compare_same(input_string, TokenTypes.NAME, expected)
+
+    def test_mixed_in_string(self):
+        input_string = r'assign a "hello\"there" b'
+        expected = [
+            TokenTypes.ASSIGN, 'assign',
+            TokenTypes.NAME, 'a',
+            TokenTypes.LITERAL_STRING, 'hello"there',
+            TokenTypes.NAME, 'b'
         ]
-        self._lex_and_compare(input_string, expected_tokens, expected_strings)
+        self._lex_and_compare_pairs(input_string, expected)
 
-    def _lex_and_compare(self, input_string, expected_tokens, expected_strings):
-        actual_tokens = []
-        actual_strings = []
+    def _lex_and_compare_pairs(self, input_string, expected):
+        it = iter(expected)
+        expected_tokens = [Token(token_type, next(it)) for token_type in it]
+        self._lex_and_compare(input_string, expected_tokens)
 
-        lexer = Lex(input_string)
-        (token_type, token) = lexer.next_token()
-        while token_type not in (TokenTypes.EOF, None):
-            actual_tokens.append(token_type)
-            actual_strings.append(token)
-            token_type, token = lexer.next_token()
+    def _lex_and_compare_same(self, input_string, token_type, expected):
+        expected_tokens = [Token(token_type, word) for word in expected]
+        self._lex_and_compare(input_string, expected_tokens)
 
-        self.assertEqual(token_type, TokenTypes.EOF)
-        self.assertListEqual(actual_tokens, expected_tokens)
-        self.assertListEqual(actual_strings, expected_strings)
+    def _lex_and_compare(self, input_string, expected):
+        expected.append(Token(TokenTypes.EOF))
+        actual = list(Lex(input_string).tokens())
+        self.assertListEqual(expected, actual)
 
 if __name__ == '__main__':
     unittest.main()

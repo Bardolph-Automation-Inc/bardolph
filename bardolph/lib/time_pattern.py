@@ -6,7 +6,8 @@ from . import i_lib
 class TimePattern(i_lib.TimePattern):
     HOURS_24 = set(range(0, 24))
     MINUTES_60 = set(range(0, 60))
-    REGEX = re.compile(r'^(\*|\*\d|\d\*|\d\d?):(\d\d|\d\*|\*\d|\*)$')
+    REGEX_SPEC = r'(\*|\*\d|\d\*|\d\d?):(\d\d|\d\*|\*\d|\*)(?=(\s|$))'
+    REGEX = re.compile(REGEX_SPEC)
 
     def __init__(self, hours, minutes):
         self._repr = 'TimePattern("{}", "{}")'.format(hours, minutes)
@@ -22,7 +23,7 @@ class TimePattern(i_lib.TimePattern):
     def from_string(pattern):
         the_match = TimePattern.REGEX.match(pattern)
         if the_match is not None:
-            hours, minutes = the_match.groups()
+            hours, minutes, *_ = the_match.groups()
             if TimePattern.patterns_valid(hours, minutes):
                 return TimePattern(hours, minutes)
         return TimePattern(None, None)

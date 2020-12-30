@@ -50,7 +50,6 @@ class IoParserTest(unittest.TestCase):
         expected = [
             Instruction(OpCode.MOVEQ, 60, 'y'),
             Instruction(OpCode.CONSTANT, 'z', 'hello'),
-
             Instruction(OpCode.MOVEQ, 500, Register.RESULT),
             Instruction(OpCode.OUT, IoOp.REGISTER, Register.RESULT),
             Instruction(OpCode.OUT, IoOp.REGISTER, Register.SATURATION),

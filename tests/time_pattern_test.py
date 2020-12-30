@@ -35,10 +35,11 @@ class TimePatternTest(unittest.TestCase):
         }
         for key in matches.keys():
             actual_groups = TimePattern.REGEX.match(key).groups()
-            self.assertTupleEqual(matches[key], actual_groups)
+            expected = (*matches[key], '')
+            self.assertTupleEqual(expected, actual_groups)
 
         non_matches = (
-            '111:23', '11*:23', '**:23', '1:23*', '1:23 *m', '1:**', '11:2')
+            '111:23', '11*:23', '**:23', '1:23*', '1:23*m', '1:**', '11:2')
         for non_match in non_matches:
             self.assertIsNone(TimePattern.REGEX.match(non_match))
 
