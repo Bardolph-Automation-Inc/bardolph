@@ -30,7 +30,7 @@ def tries(num_tries, ex_type, fail_value=False):
                 try:
                     return fn(*args, **kwargs)
                 except ex_type as ex:
-                    logging.warning('Will try again after {}'.format(ex))
+                    logging.warning(ex)
                     tries_remaining -= 1
             logging.warning('Giving up after {} tries.'.format(num_tries))
             return fail_value

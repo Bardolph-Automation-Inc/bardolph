@@ -1,2 +1,6 @@
 #!/bin/bash
-for f in tests/scripts/*.ls; do python -m bardolph.controller.run -fv $f; done
+for f in tests/scripts/*.ls
+do
+    echo $f
+   python -m bardolph.controller.run -fv $f
+done

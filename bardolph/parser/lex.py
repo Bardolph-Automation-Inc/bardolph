@@ -6,10 +6,6 @@ from .token import TokenTypes
 
 
 class Lex:
-    """
-    A token is a punctuation mark, a register name, a user-defined identifier,
-    a number, an expression, or a string.
-    """
     _EXPR_SPEC = '{.*?}'
     _REG = 'hue saturation brightness kelvin red green blue duration time'
     _REG_LIST = _REG.split()
@@ -34,6 +30,10 @@ class Lex:
         self._source = source
 
     def tokens(self):
+        '''
+        Each token is an experssion, time pattern, quoted string, number,
+        puncuation mark, or other sequence of non-space characters.
+        '''
         line_num = 0
         for line in self._lines:
             line_num += 1

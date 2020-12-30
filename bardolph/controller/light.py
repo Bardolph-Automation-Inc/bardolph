@@ -6,6 +6,10 @@ from lifxlan.errors import WorkflowException
 from bardolph.lib.color import rounded_color
 from bardolph.lib.retry import tries
 
+
+_MAX_TRIES = 3
+
+
 class LightException(Exception):
     def __init__(self, cause):
         super().__init__('Exception from light API {}'.format(cause))
@@ -66,7 +70,7 @@ class Light:
             logging.warning(ex)
         return [-1] * 4
 
-    @tries(3, WorkflowException)
+    @tries(_MAX_TRIES, WorkflowException)
     def set_zone_color(self, first_zone, last_zone, color, duration) -> None:
         # Unknown why this happens.
         if not hasattr(self._impl, 'set_zone_color'):
@@ -76,14 +80,14 @@ class Light:
             self._impl.set_zone_color(
                 first_zone, last_zone, rounded_color(color), duration)
 
-    @tries(3, WorkflowException)
+    @tries(_MAX_TRIES, WorkflowException)
     def get_color_zones(self, first_zone=None, last_zone=None):
         return self._impl.get_color_zones(first_zone, last_zone)
 
-    @tries(3, WorkflowException)
+    @tries(_MAX_TRIES, WorkflowException)
     def set_power(self, power, duration, rapid=True):
         return self._impl.set_power(round(power), duration, rapid)
 
-    @tries(3, WorkflowException)
+    @tries(_MAX_TRIES, WorkflowException)
     def get_power(self):
         return self._impl.get_power()
