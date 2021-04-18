@@ -586,17 +586,17 @@ Logical expressions also are contained in curly braces:
 
 The following operators are available:
 
-* `+`: addition
-* `-`: subtraction or negative
-* `*`: multiplication
-* `/`: division
-* `^`: raised to the power of
-* `<`, `<=`: less than, less than or equal to
-* `>`, `>=`: greater than, greater than or equal to
-* `==`: equals
-* '!=': not equal to
+* ``+`` addition
+* ``-`` subtraction or negative
+* ``*`` multiplication
+* ``/`` division
+* ``^`` power of
+* ``<``, ``<=`` less than, less than or equal to
+* ``>``, ``>=`` greater than, greater than or equal to
+* ``==`` equals
+* ``!=`` not equal to
 
-The `or` and `and` keywords can be combined with comparison operations. Some
+The ``or`` and ``and`` keywords can be combined with comparison operations. Some
 examples of expressions:
 
 .. code-block:: lightbulb
@@ -607,13 +607,19 @@ examples of expressions:
 
   if {a > 0 and b != 4 or h < 5} on all
 
-Note that `*` and `/` have a higher precedence than `+` and `-`. The `and`
-operator has a higher precedence than `or`.
+Note that ``*`` and ``/`` have a higher precedence than ``+`` and ``-``. The
+``and`` operator has a higher precedence than ``or``.
 
 .. code-block:: lightbulb
 
   assign a {3 + 4 * 5}    # a = 23
-  assign b {(3 + 4) * 5}  # b = 12
+  assign b {(3 + 4) * 5}  # b = 35
+
+  if {5 > 1 or 10 < 100 and 20 == 30 }   # true
+    on all
+
+  if {(5 > 1 or 10 < 100) and 20 == 30 } # false
+    off all
 
 Numerical values in a logical context are coerced to booleans, where 0 is false,
 and any other value is true.
