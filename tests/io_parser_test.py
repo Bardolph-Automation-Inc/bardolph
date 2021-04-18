@@ -48,14 +48,15 @@ class IoParserTest(unittest.TestCase):
             printf "{} {brightness} {} {} {y} {}" 500 saturation "there" z
         """
         expected = [
-            Instruction(OpCode.MOVEQ, 60, 'y'),
-            Instruction(OpCode.CONSTANT, 'z', 'hello'),
+            Instruction(OpCode.MOVEQ, 60, "y"),
+            Instruction(OpCode.CONSTANT, "z", "hello"),
             Instruction(OpCode.MOVEQ, 500, Register.RESULT),
             Instruction(OpCode.OUT, IoOp.REGISTER, Register.RESULT),
-            Instruction(OpCode.OUT, IoOp.REGISTER, Register.SATURATION),
-            Instruction(OpCode.MOVEQ, 'there', Register.RESULT),
+            Instruction(OpCode.MOVE, Register.SATURATION, Register.RESULT),
             Instruction(OpCode.OUT, IoOp.REGISTER, Register.RESULT),
-            Instruction(OpCode.MOVE, 'z', Register.RESULT),
+            Instruction(OpCode.MOVEQ, "there", Register.RESULT),
+            Instruction(OpCode.OUT, IoOp.REGISTER, Register.RESULT),
+            Instruction(OpCode.MOVEQ, "hello", Register.RESULT),
             Instruction(OpCode.OUT, IoOp.REGISTER, Register.RESULT),
             Instruction(
                 OpCode.OUT, IoOp.PRINTF, "{} {brightness} {} {} {y} {}")

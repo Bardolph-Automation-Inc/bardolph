@@ -566,22 +566,57 @@ Assignment of one variable to another has by-value semantics:
 In this example, `y` has an independent copy of the original value of `x`,
 even after `x` has been given a new value.
 
-.. index:: mathematical expressions, numeric operations
+.. index:: mathematical expressions, numeric operations, logical expressions
 
-Mathematical Expressions
-========================
-An expression can be used wherever a number is needed. The syntax
-for an expression is to contain it in curly braces. For example, to
+Mathematical and Logical Expressions
+====================================
+An expression can be used wherever a number or truth value is needed. The
+syntax for an expression is to contain it in curly braces. For example, to
 put 5 + 4 into x:
 
 .. code-block:: lightbulb
 
   assign x {5 + 4}
 
-The syntax for an expression is a narrow subset of that of numerical
-expressions in Python. It can contain numbers, references to variables,
-registers, and the standard operators ``+``, ``-``, ``*``, ``/``, and ``()``.
-Currently, no mathematical functions are available.
+Logical expressions also are contained in curly braces:
+
+.. code-block:: lightbulb
+
+  if {x > 5} off all
+
+The following operators are available:
+
+* `+`: addition
+* `-`: subtraction or negative
+* `*`: multiplication
+* `/`: division
+* `^`: raised to the power of
+* `<`, `<=`: less than, less than or equal to
+* `>`, `>=`: greater than, greater than or equal to
+* `==`: equals
+* '!=': not equal to
+
+The `or` and `and` keywords can be combined with comparison operations. Some
+examples of expressions:
+
+.. code-block:: lightbulb
+
+  assign a {45 * -3)
+  assign b { (4 + 5) / 3 }
+  assign h { a^2 + b^2 }
+
+  if {a > 0 and b != 4 or h < 5} on all
+
+Note that `*` and `/` have a higher precedence than `+` and `-`. The `and`
+operator has a higher precedence than `or`.
+
+.. code-block:: lightbulb
+
+  assign a {3 + 4 * 5}    # a = 23
+  assign b {(3 + 4) * 5}  # b = 12
+
+Numerical values in a logical context are coerced to booleans, where 0 is false,
+and any other value is true.
 
 Registers can provide values:
 
@@ -616,24 +651,31 @@ keyword:
 
   set_mz "Strip" 7
 
+For code readability, you can contain a routine call in square braces. These
+two lines of code are equivalent:
+
+.. code-block:: lightbulb
+
+    set_mz "Strip" 7
+    [set_mz "Strip" 7]
+
 If a routine contains multiple commands, they need to be contained
 in ``begin`` and ``end`` keywords:
 
 .. code-block:: lightbulb
 
-  define partial_shut_off
-  begin
+  define partial_shut_off begin
     off group "Living Room"
   end
 
-  define off_3_seconds with the_light
-  begin
+  define off_3_seconds with the_light begin
     duration 3
     off the_light
   end
 
-  partial_shut_off
-  off_3_seconds "Chair"
+  # Another example of putting routine calls in optional brackets.
+  [partial_shut_off]
+  [off_3_seconds "Chair"]
 
 A routine can call another and pass along incoming parameters. The called
 routine must already be defined; there currently is no support for forward
@@ -704,113 +746,6 @@ visible in all scopes:
   saturation y   # Set saturation to 50.
 
 .. index:: conditional, if
-
-Functions
-=========
-A routine can return a value, effectively becoming a so-called function. The
-return value can be a variable, macro, constant, or expression.
-
-.. code-block:: lightbulb
-
-    # Function definition
-    define max_rgb begin
-        assign max red
-        if {green > max}
-            assign max green
-        if {blue > max}
-            assign max blue
-        return max
-    end
-
-    # Function call
-    brightness max_rgb
-
-A function may take parameters, using the same syntax as a routine to declare
-them:
-
-.. code-block:: lightbulb
-
-    define sum with x and y and z begin
-        return {x + y + z}
-    end
-
-    define average with x and y and z begin
-        return {sum x y z / 3}
-    end
-
-You evaluate a function with a syntax similar to that of a routine call:
-
-.. code-block:: lightbulb
-
-    brightness average red green blue
-
-If a parameter consists of multiple tokens, it needs to be contained in curly
-braces, much like an expresstion:
-
-.. code-block:: lightbulb
-
-    brightness average {sum 10 20 30} green blue
-
-
-If a function is called within a mathematical expression, it must be contained
-in parentheses:
-
-.. code-block:: lightbulb
-
-    brightness {(average red green blue) / 2}
-
-    brightness {(average red green blue / 2)}
-    brightness {(average red green (blue / 2))}
-
-To enhance readability, you may want to add parentheses:
-
-.. code-block:: lightbulb
-
-    brightness {(average red green blue) / 2}
-    brightness {(average red green blue) / (average 10 20 30)}
-
-Note that expressions may be passed as parameters, including function calls:
-
-.. code-block:: lightbulb
-
-    assign x {average average 1 2 3 average 4 5 6 7}
-
-    # More readable version:
-    assign x {average (average 1 2 3) (average 4 5 6) 7}
-
-A function can return a string, although currently the lanugage doesn't have
-any support for string manipulation:
-
-.. code-block:: lightbulb
-
-    define pick_light with x begin
-        if {x == 1}
-            return "Chair Lamp"
-         else if {x == 2}
-            return "Table Light"
-        return "Bedroom Light"
-    end
-
-    on pick_light 3
-
-Note that a light's name can also be returned by a function. In this example,
-a function finds the name of the brightest light, which is used to turn it off.
-
-.. code-block:: lightbulb
-
-    define brightest begin
-        max_brightness = -1
-        repeat all as light begin
-            get light
-            if {brightness > max_brightness} begin
-                assign brightest_light light
-                assign max_brightness brightness
-            end
-        end
-        return brightest_light
-    end
-
-    off brightest_light
 
 Conditionals
 ============

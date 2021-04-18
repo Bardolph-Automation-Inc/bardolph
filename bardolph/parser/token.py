@@ -1,6 +1,11 @@
 from enum import Enum, auto
 
 
+class Assoc(Enum):
+    LEFT = auto()
+    RIGHT = auto()
+
+
 class TokenTypes(Enum):
     ALL = auto()
     AND = auto()
@@ -10,13 +15,13 @@ class TokenTypes(Enum):
     BEGIN = auto()
     BREAK = auto()
     BREAKPOINT = auto()
+    COMPARE = auto()
     CYCLE = auto()
     DEFINE = auto()
     ELSE = auto()
     END = auto()
     EOF = auto()
     ERROR = auto()
-    EXPRESSION = auto()
     FROM = auto()
     GET = auto()
     GROUP = auto()
@@ -27,6 +32,7 @@ class TokenTypes(Enum):
     LOGICAL = auto()
     MARK = auto()
     NAME = auto()
+    NOT = auto()
     NULL = auto()
     NUMBER = auto()
     OFF = auto()
@@ -37,9 +43,10 @@ class TokenTypes(Enum):
     PRINTLN = auto()
     PAUSE = auto()
     RAW = auto()
-    RGB = auto()
     REGISTER = auto()
     REPEAT = auto()
+    RETURN = auto()
+    RGB = auto()
     SET = auto()
     SYNTAX_ERROR = auto()
     TIME_PATTERN = auto()
@@ -52,9 +59,9 @@ class TokenTypes(Enum):
     ZONE = auto()
 
     def has_string(self):
-        return self in (TokenTypes.EXPRESSION, TokenTypes.LITERAL_STRING,
-            TokenTypes.MARK, TokenTypes.NAME, TokenTypes.NUMBER,
-            TokenTypes.REGISTER, TokenTypes.TIME_PATTERN)
+        return self in (TokenTypes.LITERAL_STRING, TokenTypes.MARK,
+            TokenTypes.NAME, TokenTypes.NUMBER, TokenTypes.REGISTER,
+            TokenTypes.TIME_PATTERN)
 
     def is_executable(self):
         return self in (
@@ -65,19 +72,27 @@ class TokenTypes(Enum):
             TokenTypes.SET, TokenTypes.UNITS, TokenTypes.WHILE, TokenTypes.WAIT)
 
 class Token:
-    def __init__(self, token_type, content='', line_number=0, file_name=''):
-        self._content = content
+    def __init__(self,
+            token_type, content='', line_number=0, file_name=''):
         self._token_type = token_type
+        self._content = content
         self._line_number = line_number
         self._file_name = file_name
 
     def __eq__(self, other):
-        if not isinstance(other, Token):
-            return False
-        if self._token_type is not other._token_type:
-            return False
-        if not self._token_type.has_string():
-            return True
+        if isinstance(other, str):
+            if self._token_type.has_string():
+                return self._content == other
+            else:
+                return False
+        if isinstance(other, TokenTypes):
+            return (not self._token_type.has_string()
+                and self._token_type is other)
+        if isinstance(other, Token):
+            if self._token_type is not other._token_type:
+                return False
+            if not self._token_type.has_string():
+                return True
         return self._content == other._content
 
     def __repr__(self):
@@ -113,5 +128,36 @@ class Token:
         return self.file_name
 
     @property
+    def is_binop(self):
+        return (self.is_a(TokenTypes.COMPARE)
+                or self.content in '+-*/^'
+                or self.content in ('and', 'or'))
+
+    @property
     def line_number(self):
         return self._line_number
+
+    @property
+    def prec(self):
+        return {
+            'not': 1,
+            'or': 2,
+            'and': 3,
+            '==': 4,
+            '<=': 4,
+            '>=': 4,
+            '!=': 4,
+            '<': 4,
+            '>': 4,
+            '+': 5,
+            '-': 5,
+            '*': 6,
+            '/': 6,
+            '^': 7
+        }.get(self.content, -1)
+
+    @property
+    def assoc(self):
+        if self.content in ('not', '^'):
+            return Assoc.RIGHT
+        return Assoc.LEFT

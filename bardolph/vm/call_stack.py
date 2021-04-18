@@ -25,7 +25,7 @@ class LoopFrame(StackFrame):
 class CallStack:
     """
     As PARAM instructions are encountered, incoming parameters are saved in
-    _current but are out of scope. That instance StackFrame gets pushed when a
+    _current but are out of scope. That StackFrame instance gets pushed when a
     routine is called. The presence of that StackFram at the top of the stack
     brings the parameters into scope.
 

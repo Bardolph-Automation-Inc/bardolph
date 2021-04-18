@@ -74,14 +74,13 @@ class ParserTest(unittest.TestCase):
     def test_expr_space(self):
         input_string = 'assign x { 3 * 4 }'
         expected = [
-            Instruction(OpCode.PUSH, 3),
-            Instruction(OpCode.PUSH, 4),
+            Instruction(OpCode.PUSHQ, 3),
+            Instruction(OpCode.PUSHQ, 4),
             Instruction(OpCode.OP, Operator.MUL),
             Instruction(OpCode.POP, "x")
         ]
         actual = self.parser.parse(input_string)
-        self.assertEqual(expected, actual,
-                         "Error with space in expression.")
+        self.assertEqual(expected, actual, "Error with space in expression.")
 
 
 if __name__ == '__main__':

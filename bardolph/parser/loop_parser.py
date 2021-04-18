@@ -4,7 +4,6 @@ from bardolph.controller.units import UnitMode
 from bardolph.vm.vm_codes import LoopVar, OpCode, Operand, Operator, Register
 
 from .code_gen import CodeGen
-from .expr_parser import ExprParser
 from .sub_parser import SubParser
 from .token import TokenTypes
 
@@ -53,7 +52,7 @@ class LoopParser(SubParser):
             return False
         code_gen.jump_back(loop_top)
         code_gen.if_end(exit_loop_marker)
-        self._fix_break_addrs(code_gen, context_stack)
+        context_stack.fix_break_addrs(code_gen)
         code_gen.add_instruction(OpCode.END_LOOP)
         context_stack.exit_loop()
         return True
@@ -283,7 +282,7 @@ class LoopParser(SubParser):
             code_gen.add_instruction(OpCode.MOVEQ, True, Register.RESULT)
             return True
         if self._loop_type is _LoopType.WHILE:
-            return self.expr(Register.RESULT, code_gen)
+            return self.rvalue()
         else:
             code_gen.test_op(Operator.GT, LoopVar.COUNTER, 0)
         return True
@@ -301,16 +300,9 @@ class LoopParser(SubParser):
             code_gen.plus_equals(self._index_var, LoopVar.INCR)
         return True
 
-    @staticmethod
-    def _fix_break_addrs(code_gen, context_stack) -> None:
-        offset = code_gen.current_offset
-        for inst in context_stack.break_list():
-            inst.param1 = offset - inst.param1
-
     @property
     def _current_operand_token(self):
         return {
             TokenTypes.GROUP: Operand.GROUP,
             TokenTypes.LOCATION: Operand.LOCATION
         }.get(self.current_token.token_type)
-

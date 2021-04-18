@@ -16,6 +16,7 @@ class Context:
         self._loop_stack = deque()
         self._loop_depth = 0
         self._in_routine = False
+        self._return_list = []
 
     def __contains__(self, name) -> bool:
         return name in self._locals or name in self._globals
@@ -25,6 +26,7 @@ class Context:
         self._globals.clear()
         self._locals.clear()
         self._loop_stack.clear()
+        self._return_list.clear()
 
     def enter_routine(self) -> None:
         self._in_routine = True
@@ -35,6 +37,7 @@ class Context:
     def exit_routine(self) -> None:
         self._in_routine = False
         self._locals.clear()
+        self._return_list.clear()
 
     def enter_loop(self) -> None:
         self._loop_stack.append(_LoopContext())
@@ -46,10 +49,23 @@ class Context:
         self._loop_stack.pop()
 
     def add_break(self, inst) -> None:
-        self._loop_stack[-1].break_list.append(inst)
+        self._top_break_list().append(inst)
 
-    def break_list(self):
+    def _top_break_list(self):
         return self._loop_stack[-1].break_list
+
+    def fix_break_addrs(self, code_gen) -> None:
+        offset = code_gen.current_offset
+        for inst in self._top_break_list():
+            inst.param1 = offset - inst.param1
+
+    def add_return(self, inst) -> None:
+        self._return_list.append(inst)
+
+    def fix_return_addrs(self, code_gen) -> None:
+        offset = code_gen.current_offset
+        for inst in self._return_list:
+            inst.param1 = offset - inst.param1
 
     def add_routine(self, routine) -> None:
         self._globals.add_symbol(routine.name, SymbolType.ROUTINE, routine)

@@ -17,6 +17,10 @@ class SubParser:
         return self.parser._context
 
     @property
+    def current_float(self):
+        return self.parser._current_float()
+
+    @property
     def current_str(self):
         return self.parser._current_str()
 
@@ -36,9 +40,6 @@ class SubParser:
 
     def at_rvalue(self):
         return self.parser._at_rvalue()
-
-    def expr(self, dest, code_gen):
-        return self.parser._expr(dest, code_gen)
 
     def trigger_error(self, msg):
         return self.parser.trigger_error(msg)

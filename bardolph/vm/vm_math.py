@@ -9,7 +9,6 @@ from .vm_codes import LoopVar, Operand, Operator, Register
 class VmMath:
     _fn_table = { op_code: op_fn for op_code, op_fn in (
         (Operator.ADD, operator.add),
-        (Operator.AND, operator.and_),
         (Operator.DIV, operator.truediv),
         (Operator.EQ, operator.__eq__),
         (Operator.GT, operator.gt),
@@ -17,7 +16,6 @@ class VmMath:
         (Operator.LT, operator.lt),
         (Operator.LTE, operator.le),
         (Operator.NOTEQ, operator.ne),
-        (Operator.OR, operator.or_),
         (Operator.MOD, operator.mod),
         (Operator.MUL, operator.mul),
         (Operator.POW, operator.pow),
@@ -56,6 +54,8 @@ class VmMath:
     def op(self, operator) -> None:
         if operator in (Operator.UADD, Operator.USUB, Operator.NOT):
             self.unary_op(operator)
+        elif operator in (Operator.AND, Operator.OR):
+            self.logical_op(operator)
         else:
             self.bin_op(operator)
 
@@ -69,3 +69,9 @@ class VmMath:
         op2 = self._eval_stack.pop()
         op1 = self._eval_stack.pop()
         self._eval_stack.push(VmMath._fn_table[operator](op1, op2))
+
+    def logical_op(self, operator) -> None:
+        op2 = bool(self._eval_stack.pop())
+        op1 = bool(self._eval_stack.pop())
+        result = op1 and op2 if operator == Operator.AND else op1 or op2
+        self._eval_stack.push(result)

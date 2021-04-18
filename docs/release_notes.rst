@@ -19,6 +19,11 @@ backwards, but for now there's just the latest update.
 In all cases, you can also assume that there were some bug fixes and code
 clean-up, although I don't log most bugs on Github.
 
-December 13, 2020
+Next
+====
+Document and officially support putting routine calls inside square brackets.
+
+December 29, 2020
 =================
-Implement "break" for loops.
+Release: 0.1.3
+Implement "break" for loops. Refine print, println, and printf.

@@ -19,15 +19,15 @@ class LexTest(unittest.TestCase):
         self.assertEqual(token_num, 5)
 
     def test_all_tokens(self):
-        input_string = """[9] all and as at blue brightness
+        input_string = """(99) all and as at blue brightness
             define # comment \n duration green hue if in
-            off on or kelvin logical print printf println raw red rgb
-            saturation set time wait zone 12:*4 {3 * 4 + 5}
-            -1.0 01.234\n"Hello There" x _abc @ [ ]"""
+            off on or kelvin logical print printf println raw red return rgb
+            saturation set time wait zone 12:*4 {3 * 4} ^
+            -1.0 01.234\n"Hello There" x _abc @ [ ] < <= > >= == !="""
         expected = [
-            TokenTypes.MARK, '[',
-            TokenTypes.NUMBER,'9',
-            TokenTypes.MARK, ']',
+            TokenTypes.MARK, '(',
+            TokenTypes.NUMBER,'99',
+            TokenTypes.MARK, ')',
             TokenTypes.ALL, 'all',
             TokenTypes.AND, 'and',
             TokenTypes.AS, 'as',
@@ -50,6 +50,7 @@ class LexTest(unittest.TestCase):
             TokenTypes.PRINTLN,'println',
             TokenTypes.RAW, 'raw',
             TokenTypes.REGISTER, 'red',
+            TokenTypes.RETURN, 'return',
             TokenTypes.RGB,'rgb',
             TokenTypes.REGISTER, 'saturation',
             TokenTypes.SET, 'set',
@@ -57,15 +58,37 @@ class LexTest(unittest.TestCase):
             TokenTypes.WAIT, 'wait',
             TokenTypes.ZONE, 'zone',
             TokenTypes.TIME_PATTERN, '12:*4',
-            TokenTypes.EXPRESSION, '{3 * 4 + 5}',
-            TokenTypes.NUMBER,'-1.0',
+            TokenTypes.MARK, '{',
+            TokenTypes.NUMBER, '3',
+            TokenTypes.MARK, '*',
+            TokenTypes.NUMBER, '4',
+            TokenTypes.MARK, '}',
+            TokenTypes.MARK, '^',
+            TokenTypes.MARK, '-',
+            TokenTypes.NUMBER,'1.0',
             TokenTypes.NUMBER, '01.234',
             TokenTypes.LITERAL_STRING, 'Hello There',
             TokenTypes.NAME,'x',
             TokenTypes.NAME, '_abc',
             TokenTypes.ERROR, '@',
             TokenTypes.MARK, '[',
-            TokenTypes.MARK, ']']
+            TokenTypes.MARK, ']',
+            TokenTypes.COMPARE, '<',
+            TokenTypes.COMPARE, '<=',
+            TokenTypes.COMPARE, '>',
+            TokenTypes.COMPARE, '>=',
+            TokenTypes.COMPARE, '==',
+            TokenTypes.COMPARE, '!=' ]
+        self._lex_and_compare_pairs(input_string, expected)
+
+    def test_unary_ops(self):
+        input_string = "-2+34"
+        expected = [
+            TokenTypes.MARK, '-',
+            TokenTypes.NUMBER,'2',
+            TokenTypes.MARK, '+',
+            TokenTypes.NUMBER, '34',
+        ]
         self._lex_and_compare_pairs(input_string, expected)
 
     def test_abbreviations(self):
@@ -81,6 +104,13 @@ class LexTest(unittest.TestCase):
         expected = ('a_hue', 'saturation_z', '_brightness_', 'kelvinkelvin',
             'xblue','y_green', 'redred')
         self._lex_and_compare_same(input_string, TokenTypes.NAME, expected)
+
+    def test_comment(self):
+        input_string = 'a "b # c" # def "ghi" jkl'
+        expected = [
+            TokenTypes.NAME, 'a',
+            TokenTypes.LITERAL_STRING, 'b # c']
+        self._lex_and_compare_pairs(input_string, expected)
 
     def test_mixed_in_string(self):
         input_string = r'assign a "hello\"there" b'

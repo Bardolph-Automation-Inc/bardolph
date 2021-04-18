@@ -1,25 +1,24 @@
 import re
 
 from bardolph.lib.time_pattern import TimePattern
-from .token import Token
-from .token import TokenTypes
+
+from .token import Token, TokenTypes
 
 
 class Lex:
-    _EXPR_SPEC = '{.*?}'
+    _CMP = re.compile(r'==|<=|>=|!=|[<>]')
     _REG = 'hue saturation brightness kelvin red green blue duration time'
     _REG_LIST = _REG.split()
-    _MARK_LIST = r'[]{}+-*/#:'
-    _MARK_SPEC = r'[\[\]{}+\-*/#:]'
-    _NUMBER_SPEC = r'\-?[0-9]*\.?[0-9]+'
+    _NON_ALNUM_LIST = r'[]{}()+-*/#:^'
+    _NON_ALNUM_SPEC = r'==|<=|>=|[\[\]\(\){}+\-*<>/#:\^]'
+    _NUMBER_SPEC = r'[0-9]*\.?[0-9]+'
     _STRING_SPEC = r'"([^"]|(?<=\\)")*"'
     _WORD_SPEC = r'[^\s\[\]{}+\-*/#:]+'
 
-    _EXPR = re.compile(_EXPR_SPEC)
     _STRING = re.compile(_STRING_SPEC)
     _TOKEN = re.compile(
-        '|'.join((_EXPR_SPEC, TimePattern.REGEX_SPEC, _STRING_SPEC,
-                  _NUMBER_SPEC, _MARK_SPEC, _WORD_SPEC)))
+        '|'.join((TimePattern.REGEX_SPEC, _STRING_SPEC,
+                  _NUMBER_SPEC, _NON_ALNUM_SPEC, _WORD_SPEC)))
     _NAME = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
     _NUMBER = re.compile(_NUMBER_SPEC)
     _TIME_PATTERN = TimePattern.REGEX
@@ -30,10 +29,6 @@ class Lex:
         self._source = source
 
     def tokens(self):
-        '''
-        Each token is an experssion, time pattern, quoted string, number,
-        puncuation mark, or other sequence of non-space characters.
-        '''
         line_num = 0
         for line in self._lines:
             line_num += 1
@@ -42,7 +37,7 @@ class Lex:
                     match.string[match.start():match.end()])
                 if word == '#':
                     break
-                if word in self._MARK_LIST:
+                if word in self._NON_ALNUM_LIST:
                     token_type = TokenTypes.MARK
                 else:
                     token_type = self._token_type(word)
@@ -63,7 +58,7 @@ class Lex:
         if word in self._REG_LIST:
             return TokenTypes.REGISTER
         pairs = (
-            (self._EXPR, TokenTypes.EXPRESSION),
+            (self._CMP, TokenTypes.COMPARE),
             (self._TIME_PATTERN, TokenTypes.TIME_PATTERN),
             (self._STRING, TokenTypes.LITERAL_STRING),
             (self._NUMBER, TokenTypes.NUMBER),

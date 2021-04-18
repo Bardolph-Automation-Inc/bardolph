@@ -258,32 +258,5 @@ class DefineTest(unittest.TestCase):
         self._runner.check_call_list(('Top', 'Middle'),
             (Action.SET_COLOR, ([16384, 49151, 21843, 85], 100000)))
 
-    def test_paren_call(self):
-        script = """
-            units raw
-            hue 1 saturation 2 brightness 3 kelvin 4 duration 5
-            define no_params kelvin 75
-            define one_param with x kelvin x
-
-            define five_params with a b c d e begin
-                hue a
-                saturation b
-                brightness c
-                kelvin d
-                duration e
-            end
-
-            no_params
-            [no_params]
-            set all
-            [one_param 100]
-            set all
-            five_params 10 20 30 40 50
-            set all
-            [five_params 10 20 30 40 50]
-            set all
-        """
-        self._runner.run_script(script)
-
 if __name__ == '__main__':
     unittest.main()

@@ -7,12 +7,12 @@ from bardolph.controller.routine import Routine
 from bardolph.controller.units import UnitMode
 from bardolph.lib.symbol_table import SymbolType
 from bardolph.lib.time_pattern import TimePattern
-from bardolph.vm.vm_codes import (JumpCondition, LoopVar, OpCode, Operand,
+from bardolph.parser.expr_parser import ExpressionParser
+from bardolph.vm.vm_codes import (JumpCondition, OpCode, Operand, Operator,
                                   Register, SetOp)
 
-from .context import Context
 from .code_gen import CodeGen
-from .expr_parser import ExprParser
+from .context import Context
 from .io_parser import IoParser
 from .lex import Lex
 from .loop_parser import LoopParser
@@ -44,6 +44,7 @@ class Parser:
             TokenTypes.PRINT: self._print,
             TokenTypes.PRINTF: self._printf,
             TokenTypes.PRINTLN: self._println,
+            TokenTypes.RETURN: self._return,
             TokenTypes.REGISTER: self._set_reg,
             TokenTypes.REPEAT: self._repeat,
             TokenTypes.SET: self._set,
@@ -310,6 +311,8 @@ class Parser:
         it and to move the result into dest.
         """
         code_gen = code_gen or self._code_gen
+        if self._current_token.content == '{':
+            return self.next_token() and self._rvalue_curly(dest, code_gen)
         move_inst = OpCode.MOVE
         value = self._current_constant()
         if value is not None:
@@ -319,34 +322,47 @@ class Parser:
             if self._context.has_symbol_typed(name, SymbolType.VAR):
                 value = name
             else:
+                if self._context.has_symbol(name):
+                    return self.token_error('Not a value: "{}"')
                 return self.token_error('Unknown: "{}"')
-        elif self._current_token.is_a(TokenTypes.EXPRESSION):
-            return self._expr(dest, code_gen)
         elif self._current_token.is_a(TokenTypes.REGISTER):
             value = self._current_reg()
+        elif self._current_token.content == 'not':
+            return self._rvalue_not(dest, code_gen)
         else:
             return self.token_error('Cannot use {} as a value.')
 
-        code_gen.add_instruction(move_inst, value, dest)
+        if dest is OpCode.PUSH:
+            code_gen.push(value)
+        else:
+            code_gen.add_instruction(move_inst, value, dest)
+
         return self.next_token()
 
-    def _expr(self, dest, code_gen=None):
-        '''
-        Consumes the expression token and generates code to evaluate it. At
-        run-time, the generated code will place the result in dest.
-        '''
-        code_gen = code_gen or self._code_gen
-        body = str(self.current_token)[1:-1]
-        parser = ExprParser(body)
-        if not parser.generate_code(code_gen):
-            return self.token_error('Error parsing expression.')
-        code_gen.add_instruction(OpCode.POP, dest)
+    def _rvalue_curly(self, dest, code_gen):
+        if not self._rvalue_expr(dest, code_gen):
+            return False
+        if self.current_token != '}':
+            return self.token_error("Expected closing curly brace, got {}.")
         return self.next_token()
+
+    def _rvalue_not(self, dest, code_gen):
+        self.next_token()
+        if not ExpressionParser(self).expression():
+            return False
+        code_gen.add_instruction(OpCode.OP, Operator.NOT)
+        return True
+
+    def _rvalue_expr(self, dest, code_gen):
+        if not ExpressionParser(self).expression():
+            return False
+        code_gen.pop(dest)
+        return True
 
     def _at_rvalue(self) -> bool:
-        if self.current_token == '{':
+        if str(self.current_token) == '{':
             return True
-        if self._current_token.token_type in (TokenTypes.EXPRESSION,
+        if self._current_token.token_type in (
                 TokenTypes.LITERAL_STRING, TokenTypes.NUMBER):
             return True
         if self._current_token.is_a(TokenTypes.NAME):
@@ -410,8 +426,8 @@ class Parser:
             if not self._param_decl(routine):
                 return False
         result = self.command_seq()
+        self._context.fix_return_addrs(self._code_gen)
         self._add_instruction(OpCode.END, name)
-
         self._context.exit_routine()
         return result
 
@@ -450,6 +466,11 @@ class Parser:
         return self.next_token()
 
     def _call_routine(self) -> bool:
+        if str(self._current_token) == '[':
+            self.next_token()
+            bracketed = True
+        else:
+            bracketed = False
         routine = self._context.get_routine(str(self._current_token))
         if routine.undefined:
             return self.token_error('Unknown name: "{}"')
@@ -461,23 +482,38 @@ class Parser:
             self._add_instruction(OpCode.PARAM, param_name, Register.RESULT)
 
         self._add_instruction(OpCode.JSR, routine.name)
+        if bracketed:
+            if str(self.current_token) != ']':
+                return self.trigger_error(
+                    'No closing bracket for function call.')
+            self.next_token()
+        return True
+
+    def _call_fn(self, dest, code_gen) -> bool:
+        if not self._call_routine():
+            return False
+        if dest is not Register.RESULT:
+            code_gen.add_instruction(OpCode.MOVE, Register.RESULT, dest)
+        return True
+
+    def _return(self) -> bool:
+        self.next_token()
+        if not self._rvalue():
+            return False
+        inst = self._code_gen.add_instruction(
+            OpCode.JUMP, JumpCondition.ALWAYS, self._code_gen.current_offset)
+        self._context.add_return(inst)
         return True
 
     def _mark(self):
-        if str(self.current_token) != '[':
+        # In this context, the result of a freestanding expression is thrown away.
+        if str(self.current_token) != '{':
             return self.token_error("Unexpected character {}")
-        self.next_token()
-        if not self._call_routine():
-            return False
-        if str(self.current_token) != ']':
-            return self.trigger_error('No closing "]" in routine call.')
-        return self.next_token()
+        return self.next_token() and self._expr()
 
     def _if(self) -> bool:
         self.next_token()
-        if not self._current_token.is_a(TokenTypes.EXPRESSION):
-            return self.token_error('Missing expression for "if".')
-        if not self._expr(Register.RESULT):
+        if not self._rvalue():
             return False
         marker = self._code_gen.if_true_start()
         if not self.command_seq():

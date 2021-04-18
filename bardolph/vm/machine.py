@@ -1,5 +1,5 @@
+import copy
 import logging
-
 
 from bardolph.controller import units
 from bardolph.controller.get_key import getch
@@ -62,6 +62,12 @@ class Registers:
         return 65535 if self.power else 0
 
 
+class MachineState:
+    def __init__(self, reg, call_stack):
+        self.reg = reg
+        self.call_stack = call_stack
+
+
 class Machine:
     def __init__(self):
         self._cue_time = 0
@@ -121,6 +127,9 @@ class Machine:
     def stop(self) -> None:
         self._keep_running = False
         self._clock.stop()
+
+    def get_state(self) -> MachineState:
+        return MachineState(self._reg, self._call_stack)
 
     def color_to_reg(self, color) -> None:
         reg = self._reg
@@ -336,7 +345,11 @@ class Machine:
         self._vm_math.op(self.current_inst.param0)
 
     def _bin_op(self, operator) -> None:
-        self._vm_math.bin_op(operator)
+        try:
+            self._vm_math.bin_op(operator)
+        except ZeroDivisionError:
+            self._trigger_error("Division by zero. Halting execution.")
+            self.stop()
 
     def _unary_op(self, operator) -> None:
         self._vm_math.unary_op(operator)

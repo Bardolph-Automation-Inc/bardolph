@@ -9,11 +9,6 @@ class _JumpMarker:
         self.offset = offset
 
 
-class _JumpSet:
-    def __init__(self):
-        self.jumps = []
-
-
 class CodeGen:
     def __init__(self):
         self._code = []

@@ -1,7 +1,7 @@
 import logging
 
 from bardolph.lib.job_control import Job
-from bardolph.vm.machine import Machine
+from bardolph.vm.machine import Machine, MachineState, Registers
 from bardolph.parser.parse import Parser
 
 
@@ -40,6 +40,13 @@ class ScriptJob(Job):
     @property
     def program(self):
         return self._program
+
+    @property
+    def compile_errors(self):
+        return self._parser.get_errors()
+
+    def get_machine_state(self) -> MachineState:
+        return self._machine.get_state()
 
     def execute(self):
         if self._program is not None:

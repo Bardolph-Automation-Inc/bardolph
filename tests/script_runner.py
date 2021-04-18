@@ -1,3 +1,4 @@
+from bardolph.vm.machine import Registers
 import time
 
 from bardolph.controller import i_controller
@@ -8,6 +9,7 @@ from bardolph.lib.job_control import JobControl
 class ScriptRunner:
     def __init__(self, test_case):
         self._test_case = test_case
+        self._machine_state = None
 
     @staticmethod
     def assure_list(maybe_list):
@@ -15,13 +17,18 @@ class ScriptRunner:
 
     def run_script(self, script, max_waits=None):
         jobs = JobControl()
-        jobs.add_job(ScriptJob.from_string(script))
+        script_job = ScriptJob.from_string(script)
+        if script_job.program is None:
+            self._test_case.fail(
+                "Compile failed - {}".format(script_job.compile_errors))
+        jobs.add_job(script_job)
         while jobs.has_jobs():
             time.sleep(0.01)
             if max_waits is not None:
                 max_waits -= 1
                 if max_waits < 0:
                     self._test_case.fail("Jobs didn't finish.")
+            self._machine_state = script_job.get_machine_state()
 
     def check_call_list(self, light_names, expected):
         lifx = provide(i_controller.Lifx)
@@ -42,6 +49,18 @@ class ScriptRunner:
         expected = self.assure_list(expected)
         lifx = provide(i_controller.Lifx)
         self._test_case.assertListEqual(lifx.get_call_list(), expected)
+
+    def assert_reg_equal(self, reg, expected):
+        self._test_case.assertEqual(
+            self._machine_state.reg.get_by_enum(reg), expected)
+
+    def assert_var_equal(self, name, expected):
+        actual = self._machine_state.call_stack.get_variable(name)
+        self._test_case.assertIsNotNone(actual)
+        if issubclass(int, type(expected)):
+            self._test_case.assertEqual(actual, expected)
+        else:
+            self._test_case.assertAlmostEqual(actual, expected, 5)
 
     def test_code(self, script, lights, expected):
         self.run_script(script)
