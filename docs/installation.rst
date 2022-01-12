@@ -13,9 +13,9 @@ This page contains instructions for setting up only the interpreter and
 other command-line tools. This is a much simpler installation than setting
 up the web server, which is described in :ref:`web_install`.
 
-Note that Python 3.5 or higher is required in all cases. If your system
+Note that Python 3.7 or higher is required in all cases. If your system
 defaults to Python 2.x, you probably need to use
-pip3 instead of pip. Notable culprits here are Raspbian and Debian.
+pip3 instead of pip. Notable culprits here are Raspberry Pi OS and Debian.
 This is likely to be the problem if you get the message
 `Could not find a version that satisfies the requirement bardolph`.
 
@@ -130,7 +130,7 @@ to validate your copy of the source code and Python environment:
 
 .. code-block:: bash
 
-    python -m tests.all_tests
+    python -m tests.every_test
 
 When you get a newer release of the code, you can upgrade it with:
 

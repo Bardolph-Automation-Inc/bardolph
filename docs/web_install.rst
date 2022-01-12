@@ -45,9 +45,9 @@ the scope of this document:
 
 #. Install Raspberry Pi OS on your device. For more information, please refer
    to the software installation instructions at
-   https://www.raspberrypi.org/documentation/installation. If you're going to
-   run a headless server, any installation down to the "Lite" one is
-   sufficient.
+   https://www.raspberrypi.com/documentation/computers/getting-started.html.
+   If you're going to run a headless server, any installation including the
+   "Lite" one is sufficient.
 #. Enable WiFi and `ssh` on your device. The server will run without a monitor
    or keyboard attached. For more information, see the
    `Raspberry Pi remote access documentation
@@ -61,7 +61,7 @@ By default, RPi OS already has a Python interpreter, so you won't need to
 install it. However, if you desire more information on running Python code,
 please refer to the
 `Raspberry Pi Python documentation
-<https://www.raspberrypi.org/documentation/usage/python>`_.
+<https://www.raspberrypi.com/documentation/computers/os.html#python>`_.
 
 Dedicated User
 ==============
@@ -81,7 +81,7 @@ security.
 I also change the name of the server. In this example, my server will be
 "vanya", accessed on the command line and in my browser as
 "vanya.local". This can be done with
-`raspi-config <https://www.raspberrypi.org/documentation/configuration/raspi-config.md>`_.
+`raspi-config <https://www.raspberrypi.com/documentation/computers/configuration.html>`_.
 
 Download Source Tree
 ====================

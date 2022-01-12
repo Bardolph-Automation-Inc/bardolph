@@ -59,9 +59,9 @@ class TokenTypes(Enum):
     ZONE = auto()
 
     def has_string(self):
-        return self in (TokenTypes.LITERAL_STRING, TokenTypes.MARK,
-            TokenTypes.NAME, TokenTypes.NUMBER, TokenTypes.REGISTER,
-            TokenTypes.TIME_PATTERN)
+        return self in (TokenTypes.ERROR, TokenTypes.LITERAL_STRING,
+            TokenTypes.MARK, TokenTypes.NAME, TokenTypes.NUMBER,
+            TokenTypes.REGISTER, TokenTypes.TIME_PATTERN)
 
     def is_executable(self):
         return self in (

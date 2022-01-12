@@ -176,6 +176,14 @@ class EndToEndTest(unittest.TestCase):
             (Action.SET_COLOR, ([6000, 2000, 32768, 0], 1))
         ])
 
+    def test_parens_expr(self):
+        script = """
+            define last 1
+            define first 2
+            assign delta {(last - first)}
+        """
+        self._runner.run_script(script)
+
 
 if __name__ == '__main__':
     unittest.main()

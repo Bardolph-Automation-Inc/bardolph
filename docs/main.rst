@@ -231,9 +231,10 @@ haven't done any stress testing, I don't know the limits on
 script size. Note that the application loads the encoded script into memory
 before executing it.
 
-I've run the program on MacOS 10.15.5, Debian Linux 10 buster, and the
-August, 2020, release of Raspberry Pi OS. It works fine for me on a Raspberry Pi
-Zero W, controlling 5 bulbs. I haven't gotten my hands on a 4, yet.
+I've tested the program on MacOS Monterey 12.0.1, a Raspberry Pi Zero W
+controlling 6 devices, a Raspberry Pi 3 and Raspberry Pi 4. I haven't done much
+testing on Linux recently, but I expect it to run fine on any distribution that
+runs Python 3.7 or higher.
 
 Supported Devices
 =================

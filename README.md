@@ -88,17 +88,14 @@ ls_module.queue_script('time 5 off all on all')
 ```
 
 ## System Requirements
-The program has been tested on Python versions at or above 3.5.1. I
-haven't tried it, but I'm almost certain that it won't run on any 2.x
-version.
+The program has been tested on Python versions at or above 3.7.
 
 Because I haven't done any stress testing, I don't know the limits on
 script size. Note that the application loads the encoded script into memory
 before executing it.
 
-I've run the program on MacOS 10.14.5 & 10.15, Debian Linux Stretch, and the
-June, 2019, release of Raspbian. It works fine for me on a Raspberry Pi Zero W,
-controlling 5 bulbs.
+I've tested the program on MacOS Monterey 12.0.1, a Raspberry Pi Zero W
+controlling 6 devices, a Raspberry Pi 3 and Raspberry Pi 4.
 
 ## Go Try It
 For full documentation and download options, please see

@@ -112,6 +112,14 @@ class LexTest(unittest.TestCase):
             TokenTypes.LITERAL_STRING, 'b # c']
         self._lex_and_compare_pairs(input_string, expected)
 
+    def test_paren_name(self):
+        input_string = '(abc)'
+        expected = [
+            TokenTypes.MARK, '(',
+            TokenTypes.NAME, 'abc',
+            TokenTypes.MARK, ')']
+        self._lex_and_compare_pairs(input_string, expected)
+
     def test_mixed_in_string(self):
         input_string = r'assign a "hello\"there" b'
         expected = [
