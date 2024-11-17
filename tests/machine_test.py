@@ -4,13 +4,13 @@ import unittest
 
 from bardolph.controller import i_controller, light_set
 from bardolph.controller.units import UnitMode
-from bardolph.fakes import fake_lifx
+from bardolph.fakes import fake_light_api
 from bardolph.lib.injection import provide
 from bardolph.vm.instruction import Instruction
 from bardolph.vm.machine import Machine
 from bardolph.vm.vm_codes import OpCode, Operand, Register
+from tests import test_module
 
-from . import test_module
 
 class MachineTest(unittest.TestCase):
     def setUp(self):
@@ -29,7 +29,7 @@ class MachineTest(unittest.TestCase):
             "Test g1 l1", "Test g1 l2", "Test g2 l1", "Test g2 l2"
         ]
 
-        fake_lifx.using([
+        fake_light_api.using([
             (self._names[0], self._group0, self._location0, self._colors[0]),
             (self._names[1], self._group0, self._location1, self._colors[1]),
             (self._names[2], self._group1, self._location0, self._colors[2]),
@@ -62,7 +62,7 @@ class MachineTest(unittest.TestCase):
         program = MachineTest.code_for_get(self._names[0], Operand.LIGHT)
         machine = Machine()
         machine.run(program)
-        self.assertTrue(machine.color_from_reg(), self._colors[0])
+        self.assertTrue(machine._color_from_reg(), self._colors[0])
 
     def test_set_single_color(self):
         color = [1, 2, 3, 4]
@@ -71,9 +71,9 @@ class MachineTest(unittest.TestCase):
         program = MachineTest.code_for_set(name, Operand.LIGHT, color)
         machine = Machine()
         machine.run(program)
-        self.assertListEqual(machine.color_from_reg(), color)
+        self.assertListEqual(machine._color_from_reg(), color)
         light_set = provide(i_controller.LightSet)
-        light = light_set.get_light(name)._impl
+        light = light_set.get_light(name)
         self.assertTrue(light.was_set(color))
 
 if __name__ == '__main__':

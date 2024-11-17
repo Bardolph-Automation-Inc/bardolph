@@ -1,5 +1,6 @@
-Functions
-=========
+Functions (unimplemented)
+=========================
+
 A routine can return a value, effectively becoming a so-called function. The
 return value can be a variable, macro, constant, or expression.
 

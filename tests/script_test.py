@@ -15,7 +15,7 @@ class ScriptTest(unittest.TestCase):
     def test_script(self):
         script = 'if {1 and 2 < 3} set all'
         self._runner.run_script(script)
-        lifx = provide(i_controller.Lifx)
+        lifx = provide(i_controller.LightApi)
         for light in lifx.get_lights():
             print(light.get_label(), light.call_list())
 

@@ -42,20 +42,21 @@ class Loader:
                 inst = self._next_inst()
 
     def _load_routine(self, current_inst):
+        routine_name = current_inst.param0
         self._routine_segment.append(current_inst)
-        rtn = Routine(current_inst.param0)
-        rtn.set_address(len(self._routine_segment) + 1)
+        new_routine = Routine(routine_name)
+        new_routine.set_address(len(self._routine_segment) + 1)
 
         inst = self._next_inst()
-        while inst is not None and inst.op_code is not OpCode.END:
+        while inst is not None and not (
+                inst.op_code is OpCode.END and inst.param0 == routine_name):
             self._routine_segment.append(inst)
             inst = self._next_inst()
         if inst is not None:
             self._routine_segment.append(inst)
-        return rtn
+        return new_routine
 
-    @property
-    def code(self):
+    def get_code(self):
         if len(self._routine_segment) == 0:
             return self._main_segment
         ret_value = [Instruction(
@@ -79,9 +80,9 @@ def main():
     loader = Loader()
     routines = {}
     loader.load(parser_code, routines)
-    if loader.code is not None:
+    if loader.get_code() is not None:
         inst_num = 0
-        for inst in loader.code:
+        for inst in loader.get_code():
             print('{:5d}: {}'.format(inst_num, inst))
             inst_num += 1
     else:

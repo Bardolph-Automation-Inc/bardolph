@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from flup.server.fcgi import WSGIServer
+from waitress import serve
 from web.flask_module import create_app
 
 if __name__ == '__main__':
-    WSGIServer(create_app()).run()
+    serve(create_app(), listen='127.0.0.1')
+

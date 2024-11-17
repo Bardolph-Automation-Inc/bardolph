@@ -67,9 +67,11 @@ development mode. To do that, first:
 
 .. code-block:: bash
 
-  pip install Flask flup lifxlan
+  pip install Flask lifxlan
 
-This installs the Python libraries that the Bardolph code relies on.
+This installs the Python libraries that the Bardolph code relies on. However,
+unless you make firewall changes, you probably won't be able to access the
+app except on localhost.
 
 .. index::
    single: development server
@@ -91,9 +93,7 @@ http://localhost:5000.
 
 To stop the server,  press Ctrl-C.
 
-
-.. index::
-   single: manifest
+.. index:: manifest
 
 Manifest
 ========
@@ -197,44 +197,9 @@ lists the status of all the known lights in a very plain output with no CSS.
 
 LIFX Apps
 =========
-Bardolph does nothing to directly interfere with the operation of the apps provided
-by LIFX. However, a running script will continue to send commands to the bulbs.
-Therefore, if you want to use the LIFX app or any other software, such as HomeKit
-or Alexa, you should hit the "Stop" button on the Bardolph web site. Alternatively,
-if you shut down the web server, that will also prevent it from sending any
-more commands to the lights.
-
-System Structure
-################
-This section gives a quick overview of the system architecture,
-provided here for informational purposes.
-
-The server stack has the following arrangement:
-
-* The core Bardolph code that parses and runs scripts.
-* An application server implemented in Python uses Flask to generate
-  HTML pages. In the process of satisfying each page request, the server
-  typically launches a lightbulb script.
-* A WSGI layer, implemented by flup, which is part of the Python code.
-  The Flask framework feeds generated web pages into this layer, which
-  then makes them available via the WSGI protocol.
-* A FastCGI (FCGI) process, created by spawn-fcgi, which connects to the
-  WSGI layer and provides a FCGI interface. As part of its startup, spawn-fcgi
-  launches the Python interpreter, runing the code for the Bardolph web server.
-* An HTTP server, lighttpd, which is a separate process. It connects to the
-  FCGI process and accepts connections over port 80. The HTTP server
-  passes requests for web pages to the FCGI process, which gets the
-  response from the Python code. While generating that response, the Python
-  code will usually either launch or stop a lightbulb script.
-
-That response is then passed up the chain to the user's browser.
-
-HTTP Considerations
-===================
-You can use  a different WSGI container and/or FastCGI integration.
-For an example, see the integration with flup as implemented in
-`wsgy.py`, in the root of the source distribution.
-
-The files included in the bardolph source tree under `web/server` are
-specific to lighttpd, but may be helpful for other containers. This just
-happens to be how my own server at home is configured.
+Bardolph does nothing to directly interfere with the operation of the apps
+provided by LIFX. However, a running script will continue to send commands to
+the bulbs. Therefore, if you want to use the LIFX app or any other software,
+such as HomeKit or Alexa, you should hit the "Stop" button on the Bardolph web
+site. Alternatively, if you shut down the web server, that will also prevent it
+from sending any more commands to the lights.

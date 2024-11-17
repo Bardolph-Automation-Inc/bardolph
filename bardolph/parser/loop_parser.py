@@ -274,10 +274,10 @@ class LoopParser(SubParser):
         return True
 
     def _loop_test(self, code_gen) -> bool:
-        '''
+        """
         Generate code to leave True or False in the result register,
         depending on whether the loop should continue.
-        '''
+        """
         if self._loop_type is _LoopType.INFINITE:
             code_gen.add_instruction(OpCode.MOVEQ, True, Register.RESULT)
             return True

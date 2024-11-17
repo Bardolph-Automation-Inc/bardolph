@@ -2,6 +2,7 @@
 
 import logging
 import unittest
+from bardolph.parser.code_gen import CodeGen
 
 from bardolph.parser.parse import Parser
 from bardolph.vm.instruction import Instruction
@@ -43,42 +44,53 @@ class ParserTest(unittest.TestCase):
         self.assertFalse(self.parser.parse(input_string))
         self.assertIn('Unknown: "x"', self.parser.get_errors())
 
+    def test_overwrite_constant(self):
+        input_string = 'define x 5 assign x 6'
+        self.assertFalse(self.parser.parse(input_string))
+        self.assertIn('Attempt to assign to constant', self.parser.get_errors())
+
     def test_single_zone(self):
         input_string = 'set "Strip" zone 7'
-        expected = [
-            Instruction(OpCode.WAIT),
-            Instruction(OpCode.MOVEQ, "Strip", Register.NAME),
-            Instruction(OpCode.MOVEQ, 7, Register.FIRST_ZONE),
-            Instruction(OpCode.MOVEQ, None, Register.LAST_ZONE),
-            Instruction(OpCode.MOVEQ, Operand.MZ_LIGHT, Register.OPERAND),
-            Instruction(OpCode.COLOR)
-        ]
+        code_gen = CodeGen()
+        code_gen.add_list(
+            OpCode.WAIT,
+            (OpCode.MOVEQ, "Strip", Register.NAME),
+            (OpCode.MOVEQ, 7, Register.FIRST_ZONE),
+            (OpCode.MOVEQ, None, Register.LAST_ZONE),
+            (OpCode.MOVEQ, Operand.MZ_LIGHT, Register.OPERAND),
+            (OpCode.COLOR)
+        )
+        expected = code_gen.program
         actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual,
                          "Single zone failed: {} {}".format(expected, actual))
 
     def test_multi_zone(self):
         input_string = 'set "Strip" zone 3 5'
-        expected = [
-            Instruction(OpCode.WAIT),
-            Instruction(OpCode.MOVEQ, "Strip", Register.NAME),
-            Instruction(OpCode.MOVEQ, 3, Register.FIRST_ZONE),
-            Instruction(OpCode.MOVEQ, 5, Register.LAST_ZONE),
-            Instruction(OpCode.MOVEQ, Operand.MZ_LIGHT, Register.OPERAND),
-            Instruction(OpCode.COLOR)
-        ]
+        code_gen = CodeGen()
+        code_gen.add_list(
+            OpCode.WAIT,
+            (OpCode.MOVEQ, "Strip", Register.NAME),
+            (OpCode.MOVEQ, 3, Register.FIRST_ZONE),
+            (OpCode.MOVEQ, 5, Register.LAST_ZONE),
+            (OpCode.MOVEQ, Operand.MZ_LIGHT, Register.OPERAND),
+            (OpCode.COLOR)
+        )
+        expected = code_gen.program
         actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual,
                          "Multi-zone failed: {} {}".format(expected, actual))
 
     def test_expr_space(self):
         input_string = 'assign x { 3 * 4 }'
-        expected = [
-            Instruction(OpCode.PUSHQ, 3),
-            Instruction(OpCode.PUSHQ, 4),
-            Instruction(OpCode.OP, Operator.MUL),
-            Instruction(OpCode.POP, "x")
-        ]
+        code_gen = CodeGen()
+        code_gen.add_list(
+            (OpCode.PUSHQ, 3),
+            (OpCode.PUSHQ, 4),
+            (OpCode.OP, Operator.MUL),
+            (OpCode.POP, "x")
+        )
+        expected = code_gen.program
         actual = self.parser.parse(input_string)
         self.assertEqual(expected, actual, "Error with space in expression.")
 

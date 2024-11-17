@@ -2,16 +2,15 @@
 
 import argparse
 import logging
-import os
 
-from ..lib import injection
-from ..lib import job_control
-from ..lib import settings
+from bardolph.lib import injection
+from bardolph.lib import job_control
+from bardolph.lib import settings
 
-from . import arg_helper
-from . import light_module
-from . import config_values
-from .script_job import ScriptJob
+from bardolph.controller import arg_helper
+from bardolph.controller import light_module
+from bardolph.controller import config_values
+from bardolph.controller.script_job import ScriptJob
 
 _epilog = """The -n parameter is optional, but if you don't specify it,
 discovery of the lights will take several seconds, and there will

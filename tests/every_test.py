@@ -1,65 +1,51 @@
 #!/usr/bin/env python
 
+import importlib
 import unittest
 
-from tests.activity_log_test import ActivityLogTest
-from tests.context_test import ContextTest
-from tests.call_stack_test import CallStackTest
-from tests.clock_test import ClockTest
-from tests.code_gen_test import CodeGenTest
-from tests.define_test import DefineTest
-from tests.end_to_end_test import EndToEndTest
-from tests.example_test import ExampleTest
-from tests.expr_test import ExprTest
-from tests.injection_test import InjectionTest
-from tests.io_parser_test import IoParserTest
-from tests.job_control_test import JobControlTest
-from tests.lex_test import LexTest
-from tests.light_set_test import LightSetTest
-from tests.log_config_test import LogConfigTest
-from tests.loop_test import LoopTest
-from tests.ls_module_test import LsModuleTest
-from tests.machine_test import MachineTest
-from tests.parser_test import ParserTest
-from tests.print_test import PrintTest
-from tests.retry_test import RetryTest
-from tests.settings_test import SettingsTest
-from tests.sorted_list_test import SortedListTest
-from tests.time_pattern_test import TimePatternTest
-from tests.units_test import UnitsTest
-from tests.vm_math_test import VmMathTest
-from tests.web_app_test import WebAppTest
+module_names = (
+    'activity_log_test',
+    'call_stack_test',
+    'candle_color_matrix_test',
+    'candle_test',
+    'clock_test',
+    'code_gen_test',
+    'color_matrix_test',
+    'context_test',
+    'define_test',
+    'end_to_end_test',
+    'example_test',
+    'expr_test',
+    'fake_light_module_test',
+    'injection_test',
+    'io_parser_test',
+    'job_control_test',
+    'lex_test',
+    'light_set_test',
+    'log_config_test',
+    'loop_test',
+    'ls_module_test',
+    'machine_test',
+    'param_helper_test',
+    'parser_test',
+    'print_test',
+    'retry_test',
+    'settings_test',
+    'sorted_list_test',
+    'time_pattern_test',
+    'units_test',
+    'vm_discover_test',
+    'vm_math_test',
+    'web_app_test'
+)
 
-tests = unittest.TestSuite()
+modules = (importlib.import_module('tests.' + module_name)
+            for module_name in module_names)
 
-for test_class in (
-    ActivityLogTest,
-    CallStackTest,
-    ContextTest,
-    ClockTest,
-    CodeGenTest,
-    DefineTest,
-    EndToEndTest,
-    ExampleTest,
-    ExprTest,
-    InjectionTest,
-    IoParserTest,
-    JobControlTest,
-    LexTest,
-    LightSetTest,
-    LogConfigTest,
-    LoopTest,
-    LsModuleTest,
-    MachineTest,
-    ParserTest,
-    PrintTest,
-    RetryTest,
-    SettingsTest,
-    SortedListTest,
-    TimePatternTest,
-    UnitsTest,
-    VmMathTest,
-    WebAppTest
-): tests.addTest(unittest.makeSuite(test_class))
+loader = unittest.TestLoader()
+suite = unittest.TestSuite()
 
-unittest.TextTestRunner(verbosity=2).run(tests)
+for module in modules:
+    suite.addTests(loader.loadTestsFromModule(module))
+
+unittest.TextTestRunner(verbosity=2).run(suite)

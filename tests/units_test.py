@@ -3,10 +3,9 @@
 import unittest
 
 from bardolph.controller import units
-from bardolph.fakes.fake_lifx import Action
-
-from . import test_module
-from .script_runner import ScriptRunner
+from bardolph.fakes.activity_monitor import Action
+from tests import test_module
+from tests.script_runner import ScriptRunner
 
 
 class UnitsTest(unittest.TestCase):
@@ -65,15 +64,15 @@ class UnitsTest(unittest.TestCase):
         runner = ScriptRunner(self)
         runner.run_script(script)
         runner.check_call_list(
-            'Top', (Action.SET_COLOR, ([21855, 2000, 32788, 4000], 0)))
+            'Top', (Action.SET_COLOR, [21855, 2000, 32788, 4000], 0))
         runner.check_call_list(
             'Middle', [
-                (Action.SET_COLOR, ([0, 65535, 65535, 0], 0)),
-                (Action.SET_COLOR, ([10922, 65535, 65535, 0], 0)),
-                (Action.SET_COLOR, ([0, 0, 32768, 1000], 0))
+                (Action.SET_COLOR, [0, 65535, 65535, 0], 0),
+                (Action.SET_COLOR, [10922, 65535, 65535, 0], 0),
+                (Action.SET_COLOR, [0, 0, 32768, 1000], 0)
             ])
         runner.check_call_list(
-            'Bottom', (Action.SET_COLOR, ([38329, 43890, 49451, 2400], 0)))
+            'Bottom', (Action.SET_COLOR, [38329, 43890, 49451, 2400], 0))
 
     def test_flip(self):
         script = """
@@ -89,8 +88,8 @@ class UnitsTest(unittest.TestCase):
         runner.run_script(script)
         runner.check_call_list(
             'Top', [
-                (Action.SET_COLOR, ([21845, 65535, 65535, 2000], 0)),
-                (Action.SET_COLOR, ([21845, 65535, 32768, 2000], 0))
+                (Action.SET_COLOR, [21845, 65535, 65535, 2000], 0),
+                (Action.SET_COLOR, [21845, 65535, 32768, 2000], 0)
             ])
 
 

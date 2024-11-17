@@ -15,6 +15,7 @@ class TokenTypes(Enum):
     BEGIN = auto()
     BREAK = auto()
     BREAKPOINT = auto()
+    COLUMN = auto()
     COMPARE = auto()
     CYCLE = auto()
     DEFINE = auto()
@@ -43,6 +44,7 @@ class TokenTypes(Enum):
     PRINTLN = auto()
     PAUSE = auto()
     RAW = auto()
+    ROW = auto()
     REGISTER = auto()
     REPEAT = auto()
     RETURN = auto()
@@ -50,7 +52,9 @@ class TokenTypes(Enum):
     SET = auto()
     SYNTAX_ERROR = auto()
     TIME_PATTERN = auto()
+    TIP = auto()
     TO = auto()
+    TOP = auto()
     UNITS = auto()
     UNKNOWN = auto()
     WHILE = auto()
@@ -114,6 +118,9 @@ class Token:
 
     def is_a(self, token_type) -> bool:
         return self._token_type is token_type
+
+    def is_any(self, *token_types) -> bool:
+        return self._token_type in (token_types)
 
     @property
     def token_type(self):

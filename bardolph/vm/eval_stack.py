@@ -18,7 +18,7 @@ class EvalStack:
         self._stack.append(value)
 
     def pop(self):
-        assert len(self._stack) > 0
+        assert len(self._stack) > 0, "eval stack underflow"
         return self._stack.pop()
 
     def replace_top(self, value):

@@ -2,7 +2,7 @@
 
 import unittest
 
-from bardolph.fakes.fake_lifx import Action
+from bardolph.fakes.activity_monitor import Action
 from tests.script_runner import ScriptRunner
 from tests import test_module
 
@@ -20,8 +20,8 @@ class DefineTest(unittest.TestCase):
             on light_name
         """
         self._runner.test_code(script, 'Top', [
-            (Action.SET_COLOR, ([1, 2, 3, 4], 5)),
-            (Action.SET_POWER, (65535, 5.0))])
+            (Action.SET_COLOR, [1, 2, 3, 4], 5),
+            (Action.SET_POWER, 1, 5)])
 
     def test_define_value(self):
         script = """
@@ -30,7 +30,7 @@ class DefineTest(unittest.TestCase):
             set "Top"
         """
         self._runner.test_code(
-            script, 'Top', [(Action.SET_COLOR, ([1, 2, 3, 4], 500))])
+            script, 'Top', [(Action.SET_COLOR, [1, 2, 3, 4], 500)])
 
     def test_assign_registers(self):
         script = """
@@ -44,8 +44,8 @@ class DefineTest(unittest.TestCase):
         """
         self._runner.test_code(
             script, 'Top', [
-                (Action.SET_COLOR, ([1820, 0, 0, 0], 0)),
-                (Action.SET_COLOR, ([18204, 0, 13107, 0], 0))
+                (Action.SET_COLOR, [1820, 0, 0, 0], 0),
+                (Action.SET_COLOR, [18204, 0, 13107, 0], 0)
             ])
 
     def test_nested_define(self):
@@ -55,7 +55,7 @@ class DefineTest(unittest.TestCase):
             set "Top"
         """
         self._runner.test_code(
-            script, 'Top', (Action.SET_COLOR, ([1, 2, 3, 4], 500)))
+            script, 'Top', (Action.SET_COLOR, [1, 2, 3, 4], 500))
 
     def test_routine_get_zone(self):
         script = """
@@ -63,7 +63,7 @@ class DefineTest(unittest.TestCase):
             get_z "Strip" 5
         """
         self._runner.test_code(
-            script, 'Strip', (Action.GET_ZONE_COLOR, (5, 6)))
+            script, 'Strip', (Action.GET_ZONE_COLOR, 5, 6))
 
     def test_define_zones(self):
         script = """
@@ -74,8 +74,8 @@ class DefineTest(unittest.TestCase):
             set light zone z2
         """
         self._runner.test_code(script, 'Strip', [
-            (Action.SET_ZONE_COLOR, (0, 6, [50, 100, 150, 200], 789)),
-            (Action.SET_ZONE_COLOR, (5, 6, [50, 100, 150, 200], 789))])
+            (Action.SET_ZONE_COLOR, 0, 6, [50, 100, 150, 200], 789),
+            (Action.SET_ZONE_COLOR, 5, 6, [50, 100, 150, 200], 789)])
 
     def test_simple_routine(self):
         script = """
@@ -85,7 +85,7 @@ class DefineTest(unittest.TestCase):
             do_set "Table"
         """
         self._runner.test_code(
-            script, 'Table', (Action.SET_COLOR, ([100, 10, 1, 1000], 0)))
+            script, 'Table', (Action.SET_COLOR, [100, 10, 1, 1000], 0))
 
     def test_compound_routine(self):
         script = """
@@ -99,7 +99,7 @@ class DefineTest(unittest.TestCase):
             units logical
         """
         self._runner.test_code(script, ('Table', 'Bottom'),
-                               (Action.SET_COLOR, ([600, 50, 5, 5000], 0)))
+                               (Action.SET_COLOR, [600, 50, 5, 5000], 0))
 
     def test_nested_param(self):
         script = """
@@ -175,8 +175,8 @@ class DefineTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_call_list('Top', [
-            (Action.SET_COLOR, ([100, 0, 0, 0], 0)),
-            (Action.SET_COLOR, ([50, 0, 0, 0], 0))
+            (Action.SET_COLOR, [100, 0, 0, 0], 0),
+            (Action.SET_COLOR, [50, 0, 0, 0], 0)
         ])
 
     def test_simple_routines(self):
@@ -197,11 +197,11 @@ class DefineTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_global_call_list([
-            (Action.SET_COLOR, ([32768, 32768, 32768, 50], 100000)),
-            (Action.SET_COLOR, ([32768, 32768, 32768, 1000], 100000))
+            (Action.SET_COLOR, [32768, 32768, 32768, 50], 100000),
+            (Action.SET_COLOR, [32768, 32768, 32768, 1000], 100000)
         ])
         self._runner.check_call_list(('Top', 'Middle', 'Bottom'),
-            (Action.SET_COLOR, ([0, 16384, 49151, 100], 100000)))
+            (Action.SET_COLOR, [0, 16384, 49151, 100], 100000))
 
     def test_complex_routines(self):
         script = """
@@ -230,11 +230,11 @@ class DefineTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_global_call_list([
-            (Action.SET_COLOR, ([32768, 32768, 65535, 75], 100000)),
-            (Action.SET_COLOR, ([32768, 32768, 65535, 85], 100000))
+            (Action.SET_COLOR, [32768, 32768, 65535, 75], 100000),
+            (Action.SET_COLOR, [32768, 32768, 65535, 85], 100000)
         ])
         self._runner.check_call_list(('Top', 'Middle', 'Bottom'),
-            (Action.SET_COLOR, ([16384, 49151, 21843, 85], 100000)))
+            (Action.SET_COLOR, [16384, 49151, 21843, 85], 100000))
 
     def test_routine_namespace(self):
         script = """
@@ -254,9 +254,9 @@ class DefineTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_global_call_list(
-            (Action.SET_COLOR, ([32768, 32768, 49151, 90], 100000)))
+            (Action.SET_COLOR, [32768, 32768, 49151, 90], 100000))
         self._runner.check_call_list(('Top', 'Middle'),
-            (Action.SET_COLOR, ([16384, 49151, 21843, 85], 100000)))
+            (Action.SET_COLOR, [16384, 49151, 21843, 85], 100000))
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bardolph"
+version = "0.2.0"
+description="Simple scripting language for LIFX lights"
+readme = "README.md"
+authors = [{name  = "Al Fontes", email="barolph@fontes.org"}]
+license = {file = "LICENSE.md"}
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta"
+]
+dependencies = [
+    "lifxlan >= 1.2.8"
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+web = [
+    "Flask",
+    "waitress"
+]
+
+[tool.setuptools.packages.find]
+where = [""]
+include = [
+    "bardolph",
+    "web"
+]
+namespaces = false
+
+[project.urls]
+Homepage = "https://www.bardolph.org"
+Repository = "https://github.com/al-fontes-jr/bardolph"
+
+[project.scripts]
+lsc = "bardolph.controller:lsc.main"
+lscap = "bardolph.controller:snapshot.main"
+lsrun = "bardolph.controller:run.main"
+lsparse = "bardolph.parser:parse.main"

@@ -1,9 +1,8 @@
-import sys
 import re
+import sys
 
 from bardolph.lib.time_pattern import TimePattern
-
-from .token import Token, TokenTypes
+from bardolph.parser.token import Token, TokenTypes
 
 
 class Lex:

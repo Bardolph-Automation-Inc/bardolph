@@ -38,7 +38,7 @@ class VmMath:
             value = srce
         elif isinstance(srce, (str, LoopVar)):
             value = self._call_stack.get_variable(srce)
-        assert value is not None
+        assert value is not None, "pushing None onto eval stack"
         self._eval_stack.push(value)
 
     def pushq(self, srce) -> None:

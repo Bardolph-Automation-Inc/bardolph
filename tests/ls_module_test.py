@@ -4,7 +4,7 @@ import time
 import unittest
 
 from bardolph.controller import i_controller, ls_module
-from bardolph.fakes.fake_lifx import Action
+from bardolph.fakes.activity_monitor import Action
 from bardolph.lib.injection import provide
 
 from . import test_module
@@ -21,9 +21,9 @@ class LsModuleTest(unittest.TestCase):
             time.sleep(0.1)
             tries_left -= 1
             self.assertGreater(tries_left, 0)
-        lifx = provide(i_controller.Lifx)
+        lifx = provide(i_controller.LightApi)
         self.assertListEqual(lifx.get_call_list(),
-            [(Action.SET_POWER, (65535, 0)), (Action.SET_POWER, (0, 0))])
+            [(Action.SET_POWER, 1, 0), (Action.SET_POWER, 0, 0)])
 
     def test_stop(self):
         agent = ls_module.queue_script("time 5 repeat on all")

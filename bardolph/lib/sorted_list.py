@@ -23,6 +23,7 @@ class SortedList(list):
             bisect.insort(self, value)
 
     def remove(self, value) -> None:
+        # It's ok to remove a value that's not present.
         pos = self._index_of(value)
         if pos is not None:
             del self[pos]

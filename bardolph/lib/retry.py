@@ -2,7 +2,7 @@ import functools
 import logging
 
 
-def tries(num_tries, ex_type, fail_value=False):
+def tries(num_tries, ex_type, fail_value=None):
     '''Decorator for retrying a function if a specific type of Exception is
     raised.
 

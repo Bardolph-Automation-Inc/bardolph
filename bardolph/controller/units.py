@@ -43,8 +43,8 @@ def raw_to_logical(raw_color):
 def rgb_to_raw(rgb_color):
     r, g, b = [rgb_color[i] / 100.0 for i in range(0, 3)]
     h, s, v = colorsys.rgb_to_hsv(r, g, b)
-    make_raw = lambda x: min(round(x * 65535.0), 65535)
-    return [make_raw(h), make_raw(s), make_raw(v), rgb_color[3]]
+    make_raw = lambda x: round(max(0, min((x * 65535.0), 65535)))
+    return [make_raw(h), make_raw(s), make_raw(v), round(rgb_color[3])]
 
 def rgb_to_logical(rgb_color):
     r, g, b = [rgb_color[i] / 100.0 for i in range(0, 3)]
@@ -62,3 +62,26 @@ def logical_to_rgb(logical_color):
     v = logical_color[2] / 100.0
     r, g, b = colorsys.hsv_to_rgb(h, s, v)
     return [r * 100.0, g * 100.0, b * 100.0, logical_color[3]]
+
+def nop(color):
+    return color
+
+def convert_fn(srce_type, dest_type):
+    return {
+        UnitMode.LOGICAL: {
+            UnitMode.LOGICAL: None,
+            UnitMode.RAW: logical_to_raw,
+            UnitMode.RGB: logical_to_rgb },
+        UnitMode.RAW: {
+            UnitMode.LOGICAL: raw_to_logical,
+            UnitMode.RAW: None,
+            UnitMode.RGB: raw_to_rgb },
+        UnitMode.RGB: {
+            UnitMode.LOGICAL: rgb_to_logical,
+            UnitMode.RAW: rgb_to_raw,
+            UnitMode.RGB: None }
+    }[srce_type][dest_type]
+
+def convert(srce, srce_type, dest_type):
+    fn = convert_fn(srce_type, dest_type)
+    return srce if fn is None else fn(srce)

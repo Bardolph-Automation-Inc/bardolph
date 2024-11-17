@@ -1,59 +1,47 @@
-#!/usr/bin/env python
-
 import logging
 import threading
 import time
 
-import lifxlan
-
+from bardolph.controller import i_controller
 from bardolph.lib.color import rounded_color
-from bardolph.lib.injection import bind_instance, inject
+from bardolph.lib import i_lib
+from bardolph.lib.injection import bind_instance, inject, provide
+from bardolph.lib.param_helper import param_bool, param_color, param_32
 from bardolph.lib.sorted_list import SortedList
-from bardolph.lib.i_lib import Settings
 
-from .i_controller import Lifx
-from . import i_controller
-from .light import Light
 
 class LightSet(i_controller.LightSet):
     """
-    The lights are stored in _light_dict, keyed on light name. Locations and
-    groups are stored in _location_dict and _group_dict as lists of strings
-    containing light names.
-    """
-    the_instance = None
+    All lights (inistances of i_controller.Light) are stored in _light_dict,
+    keyed on the light's name.
 
+    Locations and groups are stored in _location_dict (key is location name)
+    and _group_dict (key is group name). Each value in the location or group
+    dict is a list of strings containing light names.
+    """
     def __init__(self):
-        self._light_dict = {}
-        self._group_dict = {}
-        self._location_dict = {}
+        self._lights = {}
         self._light_names = SortedList()
+        self._groups = {}
+        self._locations = {}
         self._num_successful_discovers = 0
         self._num_failed_discovers = 0
 
-    @staticmethod
-    def configure():
-        LightSet.the_instance = LightSet()
-
-    @staticmethod
-    def get_instance():
-        return LightSet.the_instance
-
-    @inject(Lifx)
-    def discover(self, lifx):
+    @inject(i_controller.LightApi)
+    def discover(self, light_api):
         logging.debug('start discover. so far, successes = {}, fails = {}'
                       .format(self._num_successful_discovers,
                               self._num_failed_discovers))
         try:
-            for lifx_light in lifx.get_lights():
-                light = Light(lifx_light)
-                self._light_dict[light.name] = light
-                self._light_names.add(light.name)
+            for light in light_api.get_lights():
+                light_name = light.get_name()
+                self._light_names.add(light_name)
+                self._lights[light_name] = light
                 LightSet._update_memberships(
-                    light, light.group, self._group_dict)
+                    light, light.get_group(), self._groups)
                 LightSet._update_memberships(
-                    light, light.location, self._location_dict)
-        except lifxlan.errors.WorkflowException as ex:
+                    light, light.get_location(), self._locations)
+        except i_controller.LightException as ex:
             self._num_failed_discovers += 1
             logging.warning("In discover():\n{}".format(ex))
             return False
@@ -66,101 +54,117 @@ class LightSet(i_controller.LightSet):
         self._garbage_collect()
 
     @staticmethod
-    def _update_memberships(light, current_set_name, set_dict):
-        LightSet._remove_memberships(light, set_dict)
-        if current_set_name not in set_dict:
-            set_dict[current_set_name] = SortedList(light.name)
+    def _update_memberships(light, name, target_dict):
+        """
+        Update the group and location dictionaries with a light's current group
+        and location.
+
+        light : i_controller.Light
+            The light to be updated in the group and location dictionaries.
+        name : str
+            The name of the group or location the light belongs to.
+        target_dict : dict
+            The dictionary, either groups or locations, that is to hold a
+            reference to the light.
+        """
+        LightSet._remove_memberships(light, target_dict)
+        if name not in target_dict:
+            target_dict[name] = SortedList(light.get_name())
         else:
-            set_dict[current_set_name].add(light.name)
+            target_dict[name].add(light.get_name())
 
     @staticmethod
-    def _remove_memberships(light, set_dict):
-        # Remove the light from every set in set_dict that it belongs to.
-        target_set_names = []
-        for list_name in set_dict.keys():
-            the_list = set_dict[list_name]
-            the_list.remove(light.name)
-            if len(the_list) == 0:
-                target_set_names.append(list_name)
-        for set_name in target_set_names:
-            del set_dict[set_name]
+    def _remove_memberships(light, target_dict):
+        # Remove the light from from the set_dict (groups or locations) that
+        # it belongs to.
+        to_be_deleted = []
 
-    @inject(Settings)
+        # From each group or location within the dict, remove the light.
+        # Delete the group or location if it gets down to zero members.
+        for list_name, light_list in target_dict.items():
+            light_list.remove(light.get_name())
+            if len(light_list) == 0:
+                to_be_deleted.append(list_name)
+        for list_name in to_be_deleted:
+            del target_dict[list_name]
+
+    @inject(i_lib.Settings)
     def _garbage_collect(self, settings):
         # Get rid of a light's proxy if it hasn't responded for a while.
         logging.debug("garbage collect, currently have {} lights"
-                      .format(len(self._light_dict)))
+                      .format(len(self._lights)))
         max_age = int(settings.get_value('light_gc_time', 20 * 60))
         target_lights = []
-        for light in self._light_dict.values():
+        for light in self._lights.values():
             if light.get_age() > max_age:
-                LightSet._remove_memberships(light, self._group_dict)
-                LightSet._remove_memberships(light, self._location_dict)
-                target_lights.append(light.name)
+                LightSet._remove_memberships(light, self._groups)
+                LightSet._remove_memberships(light, self._locations)
+                target_lights.append(light.get_name())
         for light_name in target_lights:
             logging.debug("_garbage_collect() deleting {}".format(light_name))
             self._light_names.remove(light_name)
-            self._light_dict[light_name] = None
-            del self._light_dict[light_name]
+            self._lights[light_name] = None
+            del self._lights[light_name]
 
-    @property
-    def light_names(self) -> SortedList:
-        """ list of strings """
+    def get_lights(self):
+        return list(self._lights.values())
+
+    def get_light_count(self) -> int:
+        return len(self._lights)
+
+    def get_light_names(self) -> SortedList:
+        """ SortedList of strings """
         return self._light_names
 
-    @property
-    def group_names(self):
+    def get_light(self, light_name):
+        """ instance of i_controller.Light or None """
+        return self._lights.get(light_name)
+
+    def get_group_names(self) -> SortedList:
         """ list of strings """
-        return SortedList(self._group_dict.keys())
+        return SortedList(self._groups.keys())
 
-    @property
-    def location_names(self):
-        """ list of strings """
-        return SortedList(self._location_dict.keys())
+    def get_group_lights(self, group_name):
+        """ list of light names or None """
+        return self._groups.get(group_name)
 
-    @property
-    def count(self):
-        return len(self._light_list)
+    def get_location_names(self) -> SortedList:
+        """ list of strings, each containing a location name """
+        return SortedList(self._locations.keys())
 
-    @property
-    def successful_discovers(self):
+    def get_location_lights(self, loc_name):
+        """ list of light names or None """
+        return self._locations.get(loc_name)
+
+    @inject(i_controller.LightApi)
+    def set_color_all_lights(self, color, duration, light_api):
+        color = param_color(color)
+        duration = param_32(duration)
+        light_api.set_color_all_lights(rounded_color(color), duration)
+        return True
+
+    @inject(i_controller.LightApi)
+    def set_power_all_lights(self, power_level, duration, light_api):
+        power_level = param_bool(power_level)
+        duration = param_32(duration)
+        light_api.set_power_all_lights(power_level, duration)
+        return True
+
+    def get_successful_discovers(self):
         return self._num_successful_discovers
 
-    @property
-    def failed_discovers(self):
+    def get_failed_discovers(self):
         return self._num_failed_discovers
 
-    def get_light(self, name):
-        """ returns an instance of i_lib.Light, or None if it's not there """
-        return self._light_dict.get(name)
 
-    def get_group(self, name):
-        """ list of light names """
-        return self._group_dict.get(name)
-
-    def get_location(self, name):
-        """ list of light names. """
-        return self._location_dict.get(name)
-
-    @inject(Lifx)
-    def set_color(self, color, duration, lifx):
-        lifx.set_color_all_lights(rounded_color(color), duration)
-        return True
-
-    @inject(Lifx)
-    def set_power(self, power_level, duration, lifx):
-        lifx.set_power_all_lights(round(power_level), duration)
-        return True
-
-
-def start_light_refresh():
+def _start_light_refresh():
     logging.debug("Starting refresh thread.")
     threading.Thread(
-        target=light_refresh, name='rediscover', daemon=True).start()
+        target=_light_refresh, name='discovery', daemon=True).start()
 
 
-@inject(Settings)
-def light_refresh(settings):
+def _light_refresh():
+    settings = provide(i_lib.Settings)
     success_sleep_time = float(
         settings.get_value('refresh_sleep_time', 600))
     failure_sleep_time = float(
@@ -170,20 +174,18 @@ def light_refresh(settings):
     while True:
         time.sleep(
             success_sleep_time if complete_success else failure_sleep_time)
-        lights = LightSet.get_instance()
+        light_set = provide(i_controller.LightSet)
         try:
-            complete_success = lights.refresh()
-        except lifxlan.errors.WorkflowException as ex:
+            complete_success = light_set.refresh()
+        except i_controller.LightException as ex:
             logging.warning("Error during discovery {}".format(ex))
 
 
-@inject(Settings)
+@inject(i_lib.Settings)
 def configure(settings):
-    LightSet.configure()
-    lights = LightSet.get_instance()
-    bind_instance(lights).to(i_controller.LightSet)
-    lights.discover()
+    light_set = LightSet()
+    light_set.discover()
+    if not bool(settings.get_value('single_light_discover', False)):
+        _start_light_refresh()
 
-    single = bool(settings.get_value('single_light_discover', False))
-    if not single:
-        start_light_refresh()
+    bind_instance(light_set).to(i_controller.LightSet)

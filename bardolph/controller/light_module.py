@@ -6,16 +6,16 @@ from bardolph.lib.injection import provide
 from . import light_set
 
 def configure():
-    """ Assumes injection and settings are already initialized. """
+    # Assumes injection and settings are already initialized.
     log_config.configure()
     clock.configure()
 
     settings = provide(Settings)
     if settings.get_value('use_fakes'):
-        from ..fakes import fake_lifx
-        fake_lifx.configure()
+        from bardolph.fakes import fake_light_api
+        fake_light_api.configure()
     else:
-        from . import lifx
-        lifx.configure()
+        from bardolph.controller import lifx_lan_api
+        lifx_lan_api.configure()
 
     light_set.configure()

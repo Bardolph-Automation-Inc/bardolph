@@ -3,30 +3,17 @@ import time
 
 from lifxlan.errors import WorkflowException
 
-from bardolph.lib.color import rounded_color
-from bardolph.lib.retry import tries
+from bardolph.controller import i_controller
 
 
 _MAX_TRIES = 3
 
 
-class LightException(Exception):
-    def __init__(self, cause):
-        super().__init__('Exception from light API {}'.format(cause))
-        self._cause = cause
-
-    @property
-    def cause(self):
-        return self._cause
-
-
-class Light:
-    def __init__(self, lifx_light):
-        self._impl = lifx_light
-        self._name = lifx_light.get_label()
-        self._group = lifx_light.get_group()
-        self._location = lifx_light.get_location()
-        self._multizone = lifx_light.supports_multizone()
+class Light(i_controller.Light):
+    def __init__(self, name=None, group=None, location=None):
+        self._name = name
+        self._group = group
+        self._location = location
         self._birth = time.time()
 
     def __repr__(self):
@@ -37,57 +24,30 @@ class Light:
             self._birth)
         return rep
 
-    @property
-    def group(self):
-        return self._group
-
-    @property
-    def location(self):
-        return self._location
-
-    @property
-    def name(self):
+    def get_name(self):
         return self._name
 
-    @property
-    def multizone(self):
-        return self._multizone
+    def get_group(self):
+        return self._group
 
-    def get_age(self):
+    def get_location(self):
+        return self._location
+
+    def get_age(self) -> float:
         #seconds
         return time.time() - self._birth
 
-    def set_color(self, color, duration, rapid=True):
-        try:
-            self._impl.set_color(rounded_color(color), duration, rapid)
-        except WorkflowException as ex:
-            logging.warning(ex)
-
     def get_color(self):
-        try:
-            return self._impl.get_color()
-        except WorkflowException as ex:
-            logging.warning(ex)
-        return [-1] * 4
+        logging.warning("controller.Light: get_color() not implemented.")
+        return None
 
-    @tries(_MAX_TRIES, WorkflowException)
-    def set_zone_color(self, first_zone, last_zone, color, duration) -> None:
-        # Unknown why this happens.
-        if not hasattr(self._impl, 'set_zone_color'):
-            logging.error(
-                'No set_zone_color for light of type', type(self._impl))
-        else:
-            self._impl.set_zone_color(
-                first_zone, last_zone, rounded_color(color), duration)
+    def set_color(self, *_):
+        logging.warning("controller.Light: set_color() not implemented.")
 
-    @tries(_MAX_TRIES, WorkflowException)
-    def get_color_zones(self, first_zone=None, last_zone=None):
-        return self._impl.get_color_zones(first_zone, last_zone)
-
-    @tries(_MAX_TRIES, WorkflowException)
-    def set_power(self, power, duration, rapid=True):
-        return self._impl.set_power(round(power), duration, rapid)
-
-    @tries(_MAX_TRIES, WorkflowException)
     def get_power(self):
-        return self._impl.get_power()
+        logging.warning("controller.Light: get_power() not implemented.")
+        return None
+
+    def set_power(self, *_):
+        logging.warning("controller.Light: set_power() not implemented.")
+

@@ -92,8 +92,8 @@ you will need to edit some Python code. Specificlly, you'll need to modify
 `LightSet.discover` in `tests/fake_light_set.py`.
 
 Use of the -s option requires the use of ticks or quotation marks
-to contain the script, which will always contain more than one word. For example to
-turn on all the lights, wait 60 seconds, and turn them
+to contain the script, which will always contain more than one word. For
+example, to turn on all the lights, wait 60 seconds, and turn them
 off again, you can do the following from the command line:
 
 .. code-block:: bash

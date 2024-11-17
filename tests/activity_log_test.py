@@ -2,7 +2,7 @@
 
 import unittest
 
-from bardolph.fakes.fake_lifx import ActivityMonitor
+from bardolph.fakes.activity_monitor import ActivityMonitor
 
 class ActivityLogTest(unittest.TestCase):
     def setUp(self): pass

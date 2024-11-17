@@ -26,7 +26,7 @@ class CallStack:
     """
     As PARAM instructions are encountered, incoming parameters are saved in
     _current but are out of scope. That StackFrame instance gets pushed when a
-    routine is called. The presence of that StackFram at the top of the stack
+    routine is called. The presence of that StackFrame at the top of the stack
     brings the parameters into scope.
 
     Variables are immediately put into the StackFrame referenced by self.top.
@@ -67,7 +67,7 @@ class CallStack:
 
     def put_variable(self, index, value) -> None:
         if isinstance(index, LoopVar):
-            assert isinstance(self.top, LoopFrame)
+            assert isinstance(self.top, LoopFrame), "stack top has wrong type"
             return self.top.set_loop_var(index, value)
         dest = self._root_frame if index in self._root_frame.vars else self.top
         dest.vars[index] = value
@@ -99,7 +99,7 @@ class CallStack:
         self._stack.append(LoopFrame(self.top.vars))
 
     def exit_loop(self) -> None:
-        assert len(self._stack) > 1
+        assert len(self._stack) > 1, "stack underflow in loop"
         self._stack.pop()
 
     def unwind_loops(self) -> None:
@@ -107,6 +107,6 @@ class CallStack:
             self._stack.pop()
 
     def pop_current(self) -> None:
-        assert len(self._stack) > 1
+        assert len(self._stack) > 1, "stack underflow"
         self._current = self._stack.pop()
         self._current.clear()

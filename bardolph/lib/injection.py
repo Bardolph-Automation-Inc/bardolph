@@ -1,12 +1,22 @@
 import functools
 
 _providers = {}
-injected = None
 
 
 class UnboundException(Exception):
     def __init__(self, intf):
         super().__init__('No implementation for {}'.format(intf))
+
+
+class InjectionProxy:
+    @staticmethod
+    def _report_error(*_):
+        raise UnboundException('unbound interface')
+
+    def __getattr__(self, name):
+        return self._report_error(name)
+
+injected = InjectionProxy()
 
 
 class Binder:

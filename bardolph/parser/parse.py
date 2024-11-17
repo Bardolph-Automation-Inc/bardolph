@@ -7,16 +7,17 @@ from bardolph.controller.routine import Routine
 from bardolph.controller.units import UnitMode
 from bardolph.lib.symbol_table import SymbolType
 from bardolph.lib.time_pattern import TimePattern
+from bardolph.parser.code_gen import CodeGen
+from bardolph.parser.context import Context
 from bardolph.parser.expr_parser import ExpressionParser
+from bardolph.parser.io_parser import IoParser
+from bardolph.parser.lex import Lex
+from bardolph.parser.loop_parser import LoopParser
+from bardolph.parser.matrix_parser import MatrixParser
+from bardolph.parser.token import Token, TokenTypes
+from bardolph.vm.loader import Loader
 from bardolph.vm.vm_codes import (JumpCondition, OpCode, Operand, Operator,
                                   Register, SetOp)
-
-from .code_gen import CodeGen
-from .context import Context
-from .io_parser import IoParser
-from .lex import Lex
-from .loop_parser import LoopParser
-from .token import Token, TokenTypes
 
 
 class Parser:
@@ -64,7 +65,7 @@ class Parser:
         return self._code_gen.program if success else None
 
     def load(self, file_name):
-        logging.debug('File name: {}'.format(file_name))
+        logging.debug('"{}"'.format(file_name))
         try:
             srce = open(file_name, 'r')
             input_string = srce.read()
@@ -131,14 +132,14 @@ class Parser:
 
     def _action(self, op_code) -> bool:
         self._op_code = op_code
-        self._add_instruction(OpCode.WAIT)
+        if not self._context.in_matrix():
+            self._add_instruction(OpCode.WAIT)
         self.next_token()
         if self._current_token.is_a(TokenTypes.ALL):
             return self._all_operand()
         return self._operand_list()
 
     def _all_operand(self) -> bool:
-        self._add_instruction(OpCode.MOVEQ, None, Register.NAME)
         self._add_instruction(OpCode.MOVEQ, Operand.ALL, Register.OPERAND)
         self._add_instruction(self._op_code)
         return self.next_token()
@@ -162,8 +163,11 @@ class Parser:
     def _operand(self) -> bool:
         """
         Process a group, location, or light with an optional set of
-        zones. Do this by populating the NAME and OPERAND registers.
+        zones or rows/columns.
         """
+        if self._context.in_matrix():
+            return MatrixParser(self).operand()
+
         if self._current_token.is_a(TokenTypes.GROUP):
             operand = Operand.GROUP
             self.next_token()
@@ -187,17 +191,17 @@ class Parser:
             if not self._zone_range():
                 return False
             operand = Operand.MZ_LIGHT
+        elif self._current_token.is_any(TokenTypes.ROW, TokenTypes.COLUMN,
+                                        TokenTypes.TOP, TokenTypes.BEGIN):
+            if operand is not Operand.LIGHT:
+                return self.token_error(
+                    '"{} not allowed with with groups or locations.')
+            if not MatrixParser(self).matrix_spec():
+                return False
+            operand = Operand.MATRIX_LIGHT
 
         self._add_instruction(OpCode.MOVEQ, operand, Register.OPERAND)
         return True
-
-    def _var_operand(self) -> bool:
-        name = str(self._current_token)
-        if not self._context.has_symbol_typed(
-                name, SymbolType.MACRO, SymbolType.VAR):
-            return self.token_error('Neither variable nor macro: "{}"')
-        self._add_instruction(OpCode.MOVE, name, Register.NAME)
-        return self.next_token()
 
     def _zone_range(self) -> bool:
         if self._op_code is not OpCode.COLOR:
@@ -207,20 +211,26 @@ class Parser:
         return self._set_zones()
 
     def _set_zones(self, only_one=False):
-        """
-        Parses out one or two zone numbers. Generates instructions
-        that populate the FIRST_ZONE and LAST_ZONE registers. If only one
-        parameter is present, put None into LAST_ZONE.
-        """
         if not self._at_rvalue():
             return self.token_error('Expected zone, got "{}"')
-        if not self._rvalue(Register.FIRST_ZONE):
+        return self._range(Register.FIRST_ZONE, Register.LAST_ZONE, only_one)
+
+    def _range(self, first, last, only_one=False):
+        if not self._rvalue(first):
             return False
         if not only_one and self._at_rvalue():
-            return self._rvalue(Register.LAST_ZONE)
+            return self._rvalue(last)
 
-        self._add_instruction(OpCode.MOVEQ, None, Register.LAST_ZONE)
+        self._add_instruction(OpCode.MOVEQ, None, last)
         return True
+
+    def _var_operand(self) -> bool:
+        name = str(self._current_token)
+        if not self._context.has_symbol_typed(
+                name, SymbolType.MACRO, SymbolType.VAR):
+            return self.token_error('Undefined: {}')
+        self._add_instruction(OpCode.MOVE, name, Register.NAME)
+        return self.next_token()
 
     def _set_units(self) -> bool:
         self.next_token()
@@ -237,6 +247,11 @@ class Parser:
 
     def _get(self) -> bool:
         self.next_token()
+        if (self._context.in_matrix() or
+            self.current_token.is_any(TokenTypes.ROW,
+                                      TokenTypes.COLUMN, TokenTypes.TOP)):
+            return self._matrix_get()
+
         if not self._at_rvalue():
             return self.token_error('Needed light for get, got "{}".')
         if not self._rvalue(Register.NAME):
@@ -251,6 +266,17 @@ class Parser:
             operand = Operand.LIGHT
 
         self._add_instruction(OpCode.MOVEQ, operand, Register.OPERAND)
+        self._add_instruction(OpCode.GET_COLOR)
+        return True
+
+    def _matrix_get(self) -> bool:
+        if not self._context.in_matrix():
+            return self.token_error("Can't get {} in this context.")
+        mat_parser = MatrixParser(self)
+        if self.current_token.is_a(TokenTypes.ALL):
+            return mat_parser.get_all()
+        if not mat_parser.operand():
+            return False
         self._add_instruction(OpCode.GET_COLOR)
         return True
 
@@ -299,6 +325,8 @@ class Parser:
         if not self._current_token.is_a(TokenTypes.NAME):
             return self.token_error('Expected name for assignment, got "{}"')
         dest_name = str(self._current_token)
+        if self._context.has_symbol_typed(dest_name, SymbolType.MACRO):
+            return self.token_error('Attempt to assign to constant "{}"')
         self.next_token()
         if not self._rvalue(dest_name):
             return False
@@ -392,8 +420,7 @@ class Parser:
             return True
         if self._current_token.token_type.is_executable():
             return True
-        return self._current_token.token_type in (
-            TokenTypes.BEGIN, TokenTypes.WITH)
+        return self._current_token.is_any(TokenTypes.BEGIN, TokenTypes.WITH)
 
     def _macro_definition(self, name):
         """
@@ -645,6 +672,8 @@ class Parser:
 def main():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('file', help='name of the script file')
+    arg_parser.add_argument(
+        '-l', '--load', help="use Loader", action='store_true')
     args = arg_parser.parse_args()
 
     logging.basicConfig(
@@ -652,13 +681,18 @@ def main():
         format='%(filename)s(%(lineno)d) %(funcName)s(): %(message)s')
     parser = Parser()
     output_code = parser.load(args.file)
+    if args.load:
+        routines = {}
+        loader = Loader()
+        loader.load(output_code, routines)
+        output_code = loader.get_code()
     if output_code:
         inst_num = 0
         for inst in output_code:
             print('{:5d} {}'.format(inst_num, inst))
             inst_num += 1
     else:
-        print("Error parsing: {}".format(parser.get_errors()))
+        print("Error compiling: {}".format(parser.get_errors()))
 
 
 if __name__ == '__main__':

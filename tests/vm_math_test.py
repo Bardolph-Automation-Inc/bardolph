@@ -5,8 +5,8 @@ import unittest
 from bardolph.vm.instruction import Instruction
 from bardolph.vm.machine import Machine
 from bardolph.vm.vm_codes import OpCode, Operator
+from tests import test_module
 
-from . import test_module
 
 class VmMathTest(unittest.TestCase):
     def setUp(self):

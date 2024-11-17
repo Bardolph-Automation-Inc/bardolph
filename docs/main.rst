@@ -18,9 +18,10 @@ through a simple scripting language. It can be used
 to control lights in an automated way with a minimal
 syntax. The intended audience is people who are pretty good with command-line
 tools and have some kind of experience with scripting and/or software
-development.
+development. It can also be used as an embedded low-level language for
+communicating with the devices.
 
-The program does not use the Internet to access the bulbs, and no login is
+The program does not use the internet to access the bulbs, and no login is
 required; all of its communication occurs over the local WiFi network. You
 can edit a script with a basic text editor and run it from the command
 line.
@@ -28,30 +29,29 @@ line.
 This project relies on the
 `lifxlan <https://pypi.org/project/lifxlan>`_
 Python library to access the bulbs. You need to have it installed for the code
-in this project to run. If you run the web server, you will also need
-`flup <https://www.saddi.com/software/flup>`_ and
-`Flask <https://palletsprojects.com/p/flask>`_.
+in this project to run. If you run the web server, you will also need a couple
+of other libraries from `PyPi <https://pypi.org>`_.
 
-It may be missing some of what you might expect of a scripting language,
-as it's still under development. However, it is also very simple, and
+It probably lacks some of what you might expect of a scripting language,
+but it's still under development. However, it is also very simple, and
 should be usable by non-programmers.
 
 .. index:: quick examples
 
 Quick Examples
 ==============
-The source distribution contains some sample scripts in the `scripts` directory.
-They should work with whatever lights may be on the network.  For a more complete
-description of the scripting langage, please see
+The source distribution contains some samples in the `scripts` directory.
+They should work with whatever lights are on the network.  For a more
+complete description of the scripting langage, please see
 :ref:`language`.
 
-Here is a script, named `all_on.ls`, that will turn on all your lights
+Here is a script, named `all_on.ls`, that will turn on all your lights:
 
 .. code-block:: lightbulb
 
   duration 1.5 on all
 
-The `duration` parameter causes the lights to power up over a period 1.5
+The ``duration`` parameter causes the lights to power up over a period 1.5
 seconds, which is a much nicer experience than abruptly turning them on
 with no ramp-up.
 
@@ -61,7 +61,7 @@ This file is in the "scripts" directory, and you can run it with:
 
   lsrun scripts/all_on.ls
 
-In this case, `lsrun` is a small Python program that becomes available after you
+In this case, `lsrun` is a shell script that becomes available after you
 install Bardolph. It is a thin layer that executes the `run.py` module.
 
 Another example, `on5.ls`, turns on all the lights, waits for 5 minutes, and
@@ -70,7 +70,7 @@ then turns them all off again
 .. code-block:: lightbulb
 
   duration 1.5 on all
-  time 300 off all
+  time {5 * 60} off all
 
 To run it:
 
@@ -82,7 +82,8 @@ The application executes in the foreground as long as a script is running. In
 this example, the application will run for 5 minutes. However, it will spend
 most of its time inside a `sleep()` call and won't burden the CPU. In my
 experience, execution for the application takes up about 10% of the CPU
-cycles on a Raspberry Pi Zero.
+cycles on a Raspberry Pi Zero, depending on how active the running scripts
+are.
 
 You can kill the script and quit by pressing Ctrl-C. You may want to run the
 program as a background job, which will terminate when the script is done.
@@ -113,13 +114,9 @@ For example, if have a machine with the hostname
 The benefit here is the ability to launch a script using a simple
 browser bookmark or desktop shortcut.
 
-This is currently a somewhat experimental feature, as getting it to
-run can be a bit of a chore. I describe the process for setting up a server
+This is currently a somewhat advanced feature I. describe the process for
+setting up a server
 in :ref:`web_install`.
-
-The theory of operation for the web server can be found in :ref:`web_server`.
-
-.. index:: Python interface; overview
 
 Python Interface
 ================
@@ -154,17 +151,17 @@ Python 2.x, there's a good chance that you'll need to use `pip3` instead of
 
 .. code-block:: bash
 
-  pip install bardolph
-  export PATH=~/.local/bin:${PATH}
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install bardolph
 
 After this intallation, the `lsc`, `lsrun`, and `lscap` commands should be
 available. In addition, if you're planning on using scripts in your Python
 code, the Bardolph modules should be importable.
 
-To be able to use these commands later on, I would recommend that you modify
-your `.bash_profile` (or equivalent, depending on your shell) to
-add `~/.local/bin` to your path. If you're running on a Raspberry Pi,
-the default `.profile` may already take care of this.
+To be able to use these commands later on, you will always need make sure
+the virtual environment is activated using the `activate` command. For more
+information, including virtual environments, please see :ref:`installation`.
 
 To get a copy of the sample scripts, you still need to download the source:
 
@@ -195,7 +192,9 @@ For example:
 
 .. code-block:: bash
 
-  lsrun scripts/on-all.ls
+    lsrun scripts/on-all.ls
+
+or:
 
 For a more colorful demonstration:
 
@@ -226,15 +225,14 @@ Uninstall
 
 System Requirements
 ###################
-The program has been tested on Python versions at or above 3.7. Because I
+The program should work on any systems with a recent enoug version of
+Python, as listed on `PyPi <https://pypi.org/project/bardolph>_.` Because I
 haven't done any stress testing, I don't know the limits on
 script size. Note that the application loads the encoded script into memory
 before executing it.
 
-I've tested the program on MacOS Monterey 12.0.1, a Raspberry Pi Zero W
-controlling 6 devices, a Raspberry Pi 3 and Raspberry Pi 4. I haven't done much
-testing on Linux recently, but I expect it to run fine on any distribution that
-runs Python 3.7 or higher.
+I've tested the program on a Raspberry Pi Zero W controlling 14 devices, a
+Raspberry Pi Zero-W, 3 Model B+, and 4.
 
 Supported Devices
 =================
@@ -249,5 +247,5 @@ work well. I would expect it to work with other multizone lights.
 
 Project Name Source
 ###################
-`Bardolph <https://en.wikipedia.org/wiki/Bardolph_(Shakespeare_character)>`_ was
-known for his bulbous nose.
+`Bardolph <https://en.wikipedia.org/wiki/Bardolph_(Shakespeare_character)>`_
+was known for his bulbous nose.

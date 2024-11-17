@@ -15,6 +15,7 @@ class Context:
         self._locals = SymbolTable()
         self._loop_stack = deque()
         self._loop_depth = 0
+        self._in_matrix = False
         self._in_routine = False
         self._return_list = []
 
@@ -22,6 +23,8 @@ class Context:
         return name in self._locals or name in self._globals
 
     def clear(self) -> None:
+        # Locals don't need to be in a stack because nested routines aren't
+        # allowed.
         self._in_routine = False
         self._globals.clear()
         self._locals.clear()
@@ -36,6 +39,17 @@ class Context:
 
     def exit_routine(self) -> None:
         self._in_routine = False
+        self._locals.clear()
+        self._return_list.clear()
+
+    def enter_matrix(self) -> None:
+        self._in_matrix = True
+
+    def in_matrix(self) -> bool:
+        return self._in_matrix
+
+    def exit_matrix(self) -> None:
+        self._in_matrix = False
         self._locals.clear()
         self._return_list.clear()
 

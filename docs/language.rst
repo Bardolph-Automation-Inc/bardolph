@@ -18,8 +18,9 @@ language. For information on how to run a script, please see
 
 Internally, launching a script is a two-step process. First, a parser reads the
 source file and compiles it into a sequence of encoded instructions. Next, a
-simple virtual machine executes those instructions. A job-control facility
-maintains a queue, allowing execution of a sequence of compiled scripts.
+simple virtual machine (`VM`) executes those instructions. A job-control
+facility maintains a queue, allowing execution of a sequence of compiled
+scripts.
 
 .. index:: color; set for all
 
@@ -31,7 +32,7 @@ Comments begin with the '#' character and continue to the end of the line. All
 keywords are in lower-case text. By convention, script file names have the
 ".ls" extension, meaning "lightbulb script".
 
-Here's an example, showing some comments
+Here's an example, showing a comment
 
 .. code-block:: lightbulb
 
@@ -43,15 +44,21 @@ Here's an example, showing some comments
 
     set all
 
+If you were to save this in a file called `red.ls`, you would then run it with:
+
+.. code-block:: bash
+
+    lsrun red.ls
+
 This script sets the colors of all known lights to a bright shade of red.
 Note that the ``set`` command is what actually causes the lights to adopt the
 new settings and change their colors. The ``all`` parameter causes the given
 settings to be applied to all of the lights found on the network.
 
-A script sets the color and brightness of the lights by specifying
-5 numbers: ``hue``, ``saturation``, ``brightness``, ``kelvin``, and ``duration``.
-During execution, the Bardolph virtual machine sends these settings
-to the lights.
+A script sets the color and brightness of the lights, over a given interval,
+by specifying 5 numbers: ``hue``, ``saturation``, ``brightness``, ``kelvin``,
+and ``duration``. During execution, the Bardolph virtual machine sends these
+settings to the lights.
 
 The value you supply for ``hue`` is an angle expressed in
 in degrees, normally between 0 and 360. The values for ``saturation``
@@ -67,7 +74,8 @@ greater than or equal to 360 are normalized to a number less
 than 360 by modulo arithmetic.
 
 One easy way to see what colors correspond to these numbers is to use
-the color wheel in the LIFX mobile app. In that app, you can see values for hue,
+the color wheel in the `LIFX mobile app <https://app.lifx.com>`_.
+In that app, you can see values for hue,
 saturation, and brightness in real time. If you wanted to reproduce a color, you
 could put the values displayed by the app into a script.
 
@@ -76,9 +84,9 @@ could put the values displayed by the app into a script.
 .. note:: The term *color* is somewhat ambiguous. Intuitively, you may
   consider brightness (intensity) to be separate from a bulb's color.
   However, for simplicity here, "color" always refers
-  to the tone of the light and its intensity. Therefore,
+  to both the tone of the light and its intensity. Therefore,
   in this documentation, "setting the color" of a light means that
-  you are specifying both the frequency and the brightness of the
+  you are specifying the frequency as well as the brightness of the
   light that the device produces.
 
   Throughout this documentation, *color setting* is defined as any of
@@ -156,7 +164,7 @@ Multi-Zone Lights
 With multiple-zone lights, the ``set`` command works the same,
 but you can limit which zones it affects. It can set all of
 them to the same color, set the color of a single zone, or set
-it for a range of them. For example, I have a Z LED strip, which
+it for a range of them. For example, at home I have a Z LED strip, which
 I named "Strip". I can set the entire device to one color with:
 
 .. code-block:: lightbulb
@@ -208,19 +216,6 @@ can set the brightness to zero).
 
 .. index:: abbreviations
 
-Abbreviations
-=============
-Scripts can be much terser with shorthand color setting names: ``h`` (hue),
-``s`` (saturation), ``b`` (brightness), and ``k`` (kelvin). The following two
-lines do the same thing:
-
-.. code-block:: lightbulb
-
-  hue 180 saturation 100 brightness 50 kelvin 2700 set all
-  h 180 s 100 b 50 k 2700 set all
-
-.. index:: timing
-
 Timing Color Changes
 ====================
 Scripts can contain time delays and durations, both of which are are expressed
@@ -248,8 +243,8 @@ This will:
 The underlying API has a precision down to milliseconds. For example, all
 digits are significant in a ``time`` parameter of `1.234`.
 
-As mentioned above, the existing values for ``time`` and ``duration`` are re-used
-with each command. In this example, ``time`` is set only
+As mentioned above, the existing values for ``time`` and ``duration`` are
+re-used with each command. In this example, ``time`` is set only
 once, but there will be the same delay between every action.
 
 Multiple Lights Using `and`
@@ -259,7 +254,8 @@ If you want to set multiple lights at the same time, you can chain them using
 
 .. code-block:: lightbulb
 
-  time 2 on "Table" and "Chair Side"  # Uses "and".
+    # Uses "and": both go on at the same time after 2 seconds.
+    time 2 on "Table" and "Chair Side"
 
 This script will:
 
@@ -270,7 +266,8 @@ This contrasts with:
 
 .. code-block:: lightbulb
 
-  time 2 on "Table" on "Chair Side"   # Does not use "and".
+    # Does not use "and": 2-second delay before the second light is turned on.
+    time 2 on "Table" on "Chair Side"
 
 This script will:
 

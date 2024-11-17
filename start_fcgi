@@ -1,9 +1,0 @@
-#!/bin/bash
-
-if [ $(uname) == "Linux" ]; then
-  spawn-fcgi -s /dev/shm/lights.sock -- wsgi.py
-elif [ $(uname) == "Darwin" ]; then
-  spawn-fcgi -s /Volumes/rdisk/lights.sock -- wsgi.py
-else
-  echo "Unsupported platform."
-fi

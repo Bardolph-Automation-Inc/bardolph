@@ -13,15 +13,31 @@ This page contains instructions for setting up only the interpreter and
 other command-line tools. This is a much simpler installation than setting
 up the web server, which is described in :ref:`web_install`.
 
-Note that Python 3.7 or higher is required in all cases. If your system
-defaults to Python 2.x, you probably need to use
-pip3 instead of pip. Notable culprits here are Raspberry Pi OS and Debian.
-This is likely to be the problem if you get the message
-`Could not find a version that satisfies the requirement bardolph`.
-
 Because the Bardolph wheel designates
 `lifxlan <https://pypi.org/project/lifxlan>`_ as a dependency,
 it may also be downloaded and installed.
+
+In order to do the installation on a Raspberry Pi, you should probably first
+create a Python virtual environment. This is necessary because that version of
+Linux is what's known as an "externally managed environment". For example:
+
+.. code-block:: bash
+
+  python -m venv bardolph-venv
+  source bardolph-venv/bin/activate
+
+After the activation, your shell prompt will change and have "(bardolph-venv)"
+automatically prepended to it. Note that you will need to activate the virtual
+environment with `source bardolph-venv/bin/activate` every time you log in.
+Note that "bardolph-venv" is just a suggestion; you may name the the
+virtual environment any way you see fit.
+
+For more information about virtual envronments, please see the `official Python
+documentation <https://docs.python.org/3/library/venv.html>`_. They are a
+complex subject, and an extensive discussion of them is outside the scope of
+this document.
+
+With the virtual environment activated, you can install the Bardolph package:
 
 .. code-block:: bash
 
@@ -41,21 +57,6 @@ source tree.
 
 Testing the Installation
 ========================
-.. note:: The `lsrun`, `lscap`, and `lsc` commands are small Python
-  programs that are installed in `.local/bin` in your home directory,
-  such as::
-
-    ~/.local/bin/lscap
-
-  because of this, you'll probably want to add `~/.local/bin` to
-  your `PATH`.
-
-  A more brute-force method is to use `sudo pip` when installing,
-  which makes the commands available to every user with no changes
-  to the path. However, that has a system-wide effect that you
-  probably want to avoid. Another alternative is to use
-  `virtualenv <https://virtualenv.pypa.io>`_.
-
 To do a quick sanity check:
 
 .. code-block:: bash
@@ -113,13 +114,13 @@ With `setuptools` on your system:
 
 .. code-block:: bash
 
-    pip install lifxlan
+    pip install lifxlan setuptools build
     git clone https://github.com/al-fontes-jr/bardolph
     cd bardolph
-    python setup.py sdist bdist_wheel
+    python -m build
     pip install --no-index --find-links ./dist bardolph
 
-Note that the invocation of `setup.py` creates the `dist` directory. Within
+Note that the invocation `python -m build` creates the `dist` directory. Within
 that directory, it creates a `.whl` file containing the new package. When
 you run `pip`, it finds that file and installs it. You need to install
 `lifxlan` manually because the installation of bardolph is limited to
@@ -136,10 +137,11 @@ When you get a newer release of the code, you can upgrade it with:
 
 .. code-block:: bash
 
-    python setup.py bdist
+    python -m build
     pip install --upgrade --no-index --find-links ./dist bardolph
 
-.. index:: uninstall
+.. index::
+    single: uninstall Bardolph
 
 Uninstalling
 ============
@@ -150,4 +152,5 @@ Uninstall with:
     pip uninstall bardolph
 
 This will work whether you installed a downloaded package, or built and
-installed a package locally.
+installed a package locally. If you are using a virtual environment, you need
+to activate it before runnning the uninstall command.

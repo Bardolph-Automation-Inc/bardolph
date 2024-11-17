@@ -13,6 +13,7 @@ from . import light_module
 from .i_controller import LightSet
 from . import lsc
 from . import units
+from bardolph.controller import i_controller
 
 
 def _quote_if_string(param):
@@ -23,11 +24,14 @@ class Snapshot:
     def start_light(self, light): pass
     def record_setting(self, name, value): pass
     def handle_power(self, power): pass
-    def end_light(self): pass
+    def end_light(self, light): pass
     def end_snapshot(self): pass
     def start_multizone(self, light): pass
     def handle_zone(self, light, number, color): pass
     def end_multizone(self, light): pass
+    def start_candle(self, light): pass
+    def handle_candle(self, light, number, color): pass
+    def end_candle(self, light): pass
 
     def handle_color(self, color):
         self.record_setting(Register.HUE, color[0])
@@ -36,23 +40,27 @@ class Snapshot:
         self.record_setting(Register.KELVIN, color[3])
 
     def handle_zones(self, light):
-        for number, color in enumerate(light.get_color_zones()):
+        for number, color in enumerate(light.get_zone_colors()):
             self.handle_zone(light, number, color)
 
     @injection.inject(LightSet)
     def generate(self, light_set):
         self.start_snapshot()
-        for name in light_set.light_names:
+        for name in light_set.get_light_names():
             light = light_set.get_light(name)
-            if light.multizone:
+            if isinstance(light, i_controller.MultizoneLight):
                 self.start_multizone(light)
                 self.handle_zones(light)
                 self.end_multizone(light)
+            elif isinstance(light, i_controller.MatrixLight):
+                self.start_candle(light)
+                self.handle_candle(light)
+                self.end_candle(light)
             else:
                 self.start_light(light)
                 self.handle_color(light.get_color())
                 self.handle_power(light.get_power())
-                self.end_light()
+                self.end_light(light)
         self.end_snapshot()
         return self
 
@@ -68,7 +76,7 @@ class ScriptSnapshot(Snapshot):
         self._script = 'time 0 duration 1.5\n'
 
     def start_light(self, light):
-        self._light_name = light.name
+        self._light_name = light.get_name()
 
     def record_setting(self, reg, value):
         self._script += '{} {} '.format(reg, value)
@@ -87,18 +95,18 @@ class ScriptSnapshot(Snapshot):
     def handle_power(self, power):
         self._power = power
 
-    def end_light(self):
+    def end_light(self, _):
         self._script += 'set "{}"\n'.format(self._light_name)
         fmt = 'on "{}"\n' if self._power else 'off "{}"\n'
         self._script += fmt.format(self._light_name)
 
     def start_multizone(self, light):
-        self._light_name = light.name
+        self._light_name = light.get_name()
         self._power = light.get_power()
 
     def handle_zone(self, light, number, color):
         self.handle_color(color)
-        self._script += 'set "{}" zone {}\n'.format(light.name, number)
+        self._script += 'set "{}" zone {}\n'.format(light.get_name(), number)
 
     @property
     def text(self):
@@ -116,7 +124,7 @@ class InstructionSnapshot(Snapshot):
         self._snapshot = ''
 
     def start_light(self, light):
-        self._light_name = light.name
+        self._light_name = light.get_name()
 
     def record_setting(self, reg, value):
         self._snapshot += '    OpCode.MOVEQ, {}, {},\n'.format(
@@ -125,7 +133,7 @@ class InstructionSnapshot(Snapshot):
     def handle_power(self, power):
         self._power = power
 
-    def end_light(self):
+    def end_light(self, _):
         self._snapshot += '    OpCode.MOVEQ, "{}", Register.NAME,\n'.format(
             self._light_name)
         self._snapshot += '    OpCode.MOVEQ, Operand.LIGHT, Register.OPERAND,\n'
@@ -142,7 +150,7 @@ class InstructionSnapshot(Snapshot):
 class TextSnapshot(Snapshot):
     """ Generate plain text. """
     def __init__(self):
-        self._field_width = 10
+        self._field_width = 15
         self._text = ''
         self._add_field('name ')._add_field(' hue')
         self._add_field(' sat')._add_field(' brt')
@@ -155,16 +163,22 @@ class TextSnapshot(Snapshot):
         self._text += str(data).ljust(self._field_width)
         return self
 
+    def _nl(self):
+        self._text += '\n'
+
     @injection.inject(LightSet)
-    def _add_sets(self, lights):
-        self._add_set('Groups', lights.group_names, lights.get_group)
+    def _add_sets(self, light_set):
         self._add_set(
-            'Locations', lights.location_names, lights.get_location)
+            'Groups', light_set.get_group_names(),
+            light_set.get_group_lights)
+        self._add_set(
+            'Locations', light_set.get_location_names(),
+            light_set.get_location_lights)
 
     def _add_set(self, heading, names, get_fn):
         self._text += '\n{}\n'.format(heading)
         self._text += '-' * 15
-        self._text += '\n'
+        self._nl()
         for name in names:
             self._text += '{}\n'.format(name)
             for light in get_fn(name):
@@ -176,20 +190,40 @@ class TextSnapshot(Snapshot):
         return self
 
     def start_light(self, light):
-        self._add_field(light.name)
+        self._add_field(light.get_name())
 
     def start_multizone(self, light):
         self.start_light(light)
-        self._text += '{:>45}'.format(light.get_power())
+        layout = '{:>' + str(self._field_width * 4 + 1) + '}'
+        self._text += layout.format(light.get_power())
         self._text += '\n   Zone\n'
 
     def handle_zone(self, _, number, color):
         self._add_field('{:>5d}'.format(number))
         self.handle_color(color)
-        self._text += '\n'
+        self._nl()
 
     def end_zones(self, _):
-        self._text += '\n'
+        self._nl()
+
+    def start_candle(self, light):
+        self.start_light(light)
+        for spacer in range(0, 4):
+            self._add_field(' ')
+        self.handle_power(light.get_power())
+        self._nl()
+
+    def handle_candle(self, light):
+        self._add_field('   top')
+        mat = light.get_matrix()
+        self.handle_color(mat.get_top())
+        self._nl()
+        mat = mat.get_body()
+        for row in range(0, 5):
+            for col in range(0, 5):
+                self._add_field('   {:1d} {:1d}'.format(row, col))
+                self.handle_color(mat[row][col])
+                self._nl()
 
     def handle_color(self, raw_color):
         logical_color = units.raw_to_logical(raw_color)
@@ -199,8 +233,8 @@ class TextSnapshot(Snapshot):
     def handle_power(self, power):
         self._add_field('{:d}'.format(power))
 
-    def end_light(self):
-        self._text += '\n'
+    def end_light(self, _):
+        self._nl()
 
     @property
     def text(self):
@@ -218,7 +252,7 @@ class DictSnapshot(Snapshot):
         self._current_dict = {}
 
     def start_light(self, light):
-        self._current_dict = {'_name': light.name}
+        self._current_dict = {'_name': light.get_name()}
 
     def record_setting(self, name, value):
         self._current_dict[name] = value
@@ -262,16 +296,16 @@ def main():
     do_text = args.text or (not (do_py or do_script or do_dict or do_list))
 
     injection.configure()
-    settings_init = settings.using(
+    settings_conf = settings.using(
         config_values.functional).add_overrides({'single_light_discover': True})
-    settings_init.apply_env()
+    settings_conf.apply_env()
 
     if args.use_fakes:
-        settings_init.add_overrides({'use_fakes': True})
+        settings_conf.add_overrides({'use_fakes': True})
     n_arg = arg_helper.get_overrides(args)
     if n_arg is not None:
-        settings_init.add_overrides(n_arg)
-    settings_init.configure()
+        settings_conf.add_overrides(n_arg)
+    settings_conf.configure()
     light_module.configure()
 
     if do_dict:

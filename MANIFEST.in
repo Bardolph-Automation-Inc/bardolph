@@ -1,3 +1,4 @@
+include bardolph.toml
 include *.md
 include docs/*.md
 include docs/*.png

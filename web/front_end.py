@@ -2,8 +2,8 @@
 from flask import Blueprint, render_template, request
 
 from bardolph.lib.injection import inject, injected, provide
+from web.i_web import WebApp
 
-from .i_web import WebApp
 
 class FrontEnd:
     def index(self, title='Lights'):

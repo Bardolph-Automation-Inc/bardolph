@@ -4,12 +4,20 @@ import logging
 class Register(Enum):
     BLUE = auto()
     BRIGHTNESS = auto()
+    DISC_FORWARD = auto()
     DURATION = auto()
+    FIRST_COLUMN = auto()
+    FIRST_ROW = auto()
     FIRST_ZONE = auto()
     GREEN = auto()
     HUE = auto()
+    LAST_COLUMN = auto()
+    LAST_ROW = auto()
     LAST_ZONE = auto()
     KELVIN = auto()
+    MATRIX = auto()
+    MAT_BODY = auto()
+    MAT_TOP = auto()
     NAME = auto()
     OPERAND = auto()
     PC = auto()
@@ -39,6 +47,7 @@ class OpCode(Enum):
     JSR = auto()
     JUMP = auto()
     LOOP = auto()
+    MATRIX = auto()
     MOVE = auto()
     MOVEQ = auto()
     NOP = auto()
@@ -88,11 +97,14 @@ class Operator(Enum):
     UADD = auto()
     USUB = auto()
 
+
 class Operand(Enum):
     ALL = auto()
     LIGHT = auto()
     GROUP = auto()
     LOCATION = auto()
+    MATRIX = auto()
+    MATRIX_LIGHT = auto()
     MZ_LIGHT = auto()
     NULL = auto()
 

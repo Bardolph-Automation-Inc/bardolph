@@ -51,6 +51,10 @@ class InjectionTest(unittest.TestCase):
         injection.bind(Impl1).to(Interface)
         self.assertEqual(1, call_impl_provided())
 
+    def test_injected_default(self):
+        self.assertRaises(
+            injection.UnboundException, lambda: injection.injected.f(None))
+
 
 if __name__ == '__main__':
     unittest.main()
