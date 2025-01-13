@@ -5,7 +5,7 @@ from bardolph.controller import units
 from bardolph.controller.candle_color_matrix import CandleColorMatrix
 from bardolph.controller.color_matrix import Rect
 from bardolph.controller.get_key import getch
-from bardolph.controller.i_controller import LightSet, MultizoneLight
+from bardolph.controller.i_controller import LightSet, MatrixLight, MultizoneLight
 from bardolph.controller.units import UnitMode
 from bardolph.lib.i_lib import Clock, TimePattern
 from bardolph.lib.injection import inject, provide
@@ -23,6 +23,7 @@ class Registers:
     def __init__(self):
         self.blue = 0.0
         self.brightness = 0.0
+        self.default = None
         self.disc_forward = False
         self.duration = 0.0
         self.first_column = None
@@ -35,7 +36,7 @@ class Registers:
         self.last_row = None
         self.last_zone = 0
         self.mat_body = False
-        self.mat_top = False
+        self.mat_tip = False
         self.matrix = None
         self.name = None
         self.operand = Operand.NULL
@@ -81,29 +82,32 @@ class Machine:
     def __init__(self):
         self._cue_time = 0
         self._clock = provide(Clock)
+        self._constants = {}
+        self._globals = {}
         self._routines = {}
         self._program = []
         self._reg = Registers()
-        self._call_stack = CallStack()
+        self._call_stack = CallStack(self._constants)
         self._vm_io = VmIo(self._call_stack, self._reg)
         self._vm_math = VmMath(self._call_stack, self._reg)
         self._vm_discover = VmDiscover(self._call_stack, self._reg)
         self._enable_pause = True
         self._keep_running = True
         excluded = (OpCode.STOP, OpCode.ROUTINE)
-        op_codes = [code for code in OpCode
-                    if not str(code.name).startswith('_')
-                    and code not in excluded]
+        op_codes = [code for code in OpCode if code not in excluded]
         self._fn_table = {
             op_code: getattr(self, '_' + op_code.name.lower())
-            for op_code in (op_codes)}
+            for op_code in (op_codes)
+        }
         self._fn_table[OpCode.STOP] = self.stop
 
     def reset(self) -> None:
         self._reg.reset()
+        self._constants.clear()
+        self._globals.clear()
         self._routines.clear()
         self._cue_time = 0
-        self._call_stack.reset()
+        self._call_stack.reset(self._constants)
         self._vm_math.reset()
         self._keep_running = True
         self._enable_pause = True
@@ -127,6 +131,7 @@ class Machine:
                 if inst.op_code not in (OpCode.END, OpCode.JSR, OpCode.JUMP):
                     self._reg.pc += 1
             self._clock.stop()
+            self._vm_io.flush()
             logging.debug(
                 'Stopped, _keep_running = {}, _pc = {}, program_len = {}'
                 .format(
@@ -162,6 +167,7 @@ class Machine:
     def _color(self) -> None:
         fn_map = {operand: fn for operand, fn in (
             (Operand.ALL, self._color_all),
+            (Operand.DEFAULT, self._color_default),
             (Operand.LIGHT, self._color_light),
             (Operand.GROUP, self._color_group),
             (Operand.LOCATION, self._color_location),
@@ -198,13 +204,15 @@ class Machine:
                 self._reg.first_row, self._reg.last_row,
                 self._reg.first_column, self._reg.last_column)
             mat.overlay_color(rect, color)
-        if self._reg.mat_top:
-            mat.set_top(color)
+        if self._reg.mat_tip:
+            mat.set_tip(color)
 
     def _color_matrix_light(self) -> None:
         light = self._get_named_light()
         if light is not None:
-            matrix = self._as_raw_matrix(self._reg.matrix)
+            matrix = self._reg.matrix
+            matrix = self._as_raw_matrix(matrix)
+            matrix.find_replace(None, self._reg.default or [0, 0, 0, 0])
             duration = self._as_raw_time(self._reg.duration)
             light.set_matrix(matrix, duration)
 
@@ -244,7 +252,12 @@ class Machine:
         for light in lights:
             light.set_color(color, duration)
 
-    def _power(self) -> None: {
+    def _color_default(self) -> None:
+        # The "default" register must always contain raw values.
+        self._reg.default = self._as_raw_color(self._reg.get_color())
+
+    def _power(self) -> None:
+        {
             Operand.ALL: self._power_all,
             Operand.LIGHT: self._power_light,
             Operand.GROUP: self._power_group,
@@ -292,34 +305,24 @@ class Machine:
 
     @inject(LightSet)
     def _get_color(self, light_set) -> None:
-        light = light_set.get_light(self._reg.name)
+        name = self._reg.name
+        light = light_set.get_light(name)
         if light is None:
-            Machine._report_missing(self._reg.name)
+            Machine._report_missing(name)
         else:
-            if self._reg.operand is Operand.MZ_LIGHT:
-                if self._zone_check(light):
-                    zone = self._reg.first_zone
-                    color = light.get_zone_colors(zone, zone + 1)[0]
-                    self._color_to_reg(self._assure_units(color))
-            elif self._reg.operand is Operand.MATRIX:
-                self._get_color_matrix(light)
+            if isinstance(light, (MultizoneLight, MatrixLight)):
+                fmt = 'Unable to retrieve color from multi-color light "{}".'
+                logging.warning(fmt.format(name))
             else:
                 color = light.get_color()
                 self._color_to_reg(self._assure_units(color))
 
-    def _get_color_matrix(self, light) -> None:
-        mat_from_light = self._assure_units_matrix(light.get_matrix())
-        if self._reg.first_row is None and self._reg.first_column is None:
-            self._reg.matrix = mat_from_light
-        else:
-            mat = self._reg.matrix
-            mat.overlay_section(self._reg_to_corners(), mat_from_light)
-            if self._reg.mat_top:
-                mat.set_top(mat_from_light.top)
+    def _ctx(self) -> None:
+        self._call_stack.new_frame()
 
-    def _reg_to_corners(self):
-        return (self._reg.first_row, self._reg.last_row,
-                self._reg.first_column, self._reg.last_column)
+    def _end_ctx(self) -> None:
+        pass
+        # self._call_stack.pop_frame()
 
     def _param(self) -> None:
         """
@@ -336,25 +339,27 @@ class Machine:
         self._call_stack.put_param(inst.param0, value)
 
     def _jsr(self) -> None:
+        self._call_stack.enter_routine()
         inst = self.current_inst
         self._call_stack.set_return(self._reg.pc + 1)
-        self._call_stack.push_current()
         routine_name = inst.param0
         rtn = self._routines.get(routine_name, None)
         self._reg.pc = rtn.get_address()
 
     def _end(self) -> None:
-        if self.current_inst.param0 is OpCode.MATRIX:
+        if self.current_inst.param0 is Operand.MATRIX:
             self._reg.pc += 1
         else:
-            self._call_stack.unwind_loops()
-            ret_addr = self._call_stack.get_return()
-            self._call_stack.pop_current()
-            self._reg.pc = ret_addr
+            self._return()
+
+    def _return(self) -> None:
+        self._call_stack.unwind_loops()
+        self._reg.pc = self._call_stack.get_return()
+        self._call_stack.exit_routine()
 
     def _jump(self) -> None:
-        # In the current instruction, param0 contains the condition, and
-        # param1 contains the offset.
+        # In the current instruction, param0 contains the condition, and param1
+        # contains the offset.
         inst = self.current_inst
         if inst.param0 is JumpCondition.INDIRECT:
             address = self._call_stack.get_variable(inst.param1)
@@ -377,7 +382,7 @@ class Machine:
         self._call_stack.exit_loop()
 
     def _matrix(self) -> None:
-        self._reg.matrix = CandleColorMatrix()
+        self._reg.matrix = CandleColorMatrix.new_from_constant()
 
     def _nop(self) -> None: pass
 
@@ -434,7 +439,7 @@ class Machine:
     def _constant(self) -> None:
         name = self.current_inst.param0
         value = self.current_inst.param1
-        self._call_stack.put_constant(name, value)
+        self._constants[name] = value
 
     def _wait(self) -> None:
         time = self._reg.time
@@ -506,19 +511,11 @@ class Machine:
         else:
             self._do_put_value(dest, value)
 
-    @staticmethod
-    def _convert_units_fn(from_mode, to_mode):
-        def key(mode0, mode1): return str(mode0) + str(mode1)
-        converters = (
-            (UnitMode.LOGICAL, UnitMode.RAW, units.logical_to_raw),
-            (UnitMode.LOGICAL, UnitMode.RGB, units.logical_to_rgb),
-            (UnitMode.RGB, UnitMode.RAW, units.rgb_to_raw),
-            (UnitMode.RGB, UnitMode.LOGICAL, units.rgb_to_logical),
-            (UnitMode.RAW, UnitMode.RGB, units.raw_to_rgb),
-            (UnitMode.RAW, UnitMode.LOGICAL, units.raw_to_logical))
-        convert_dict = {key(from_mode, to_mode): fn
-                        for from_mode, to_mode, fn in converters}
-        return convert_dict[key(from_mode, to_mode)]
+    def _do_put_value(self, dest, value) -> None:
+        if isinstance(dest, Register):
+            self._reg.set_by_enum(dest, value)
+        else:
+            self._call_stack.put_variable(dest, value)
 
     def _switch_unit_mode(self, to_mode) -> None:
         from_mode = self._reg.unit_mode
@@ -537,11 +534,19 @@ class Machine:
             self._reg.duration = units.time_logical(self._reg.duration)
             self._reg.time = units.time_logical(self._reg.time)
 
-    def _do_put_value(self, dest, value) -> None:
-        if isinstance(dest, Register):
-            self._reg.set_by_enum(dest, value)
-        else:
-            self._call_stack.put_variable(dest, value)
+    @staticmethod
+    def _convert_units_fn(from_mode, to_mode):
+        def key(mode0, mode1): return str(mode0) + str(mode1)
+        converters = (
+            (UnitMode.LOGICAL, UnitMode.RAW, units.logical_to_raw),
+            (UnitMode.LOGICAL, UnitMode.RGB, units.logical_to_rgb),
+            (UnitMode.RGB, UnitMode.RAW, units.rgb_to_raw),
+            (UnitMode.RGB, UnitMode.LOGICAL, units.rgb_to_logical),
+            (UnitMode.RAW, UnitMode.RGB, units.raw_to_rgb),
+            (UnitMode.RAW, UnitMode.LOGICAL, units.raw_to_logical))
+        convert_dict = {key(from_mode, to_mode): fn
+                        for from_mode, to_mode, fn in converters}
+        return convert_dict[key(from_mode, to_mode)]
 
     def _time_pattern(self) -> None:
         inst = self.current_inst

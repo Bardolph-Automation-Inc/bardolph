@@ -1,8 +1,7 @@
 import configparser
 import os
 
-from . import i_lib
-from . import injection
+from bardolph.lib import i_lib, injection
 
 
 class Settings:

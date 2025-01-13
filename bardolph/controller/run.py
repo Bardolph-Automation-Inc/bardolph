@@ -65,8 +65,9 @@ def main():
     jobs = job_control.JobControl()
     if args.script is not None:
         jobs.add_job(ScriptJob.from_string(args.script))
-    for file_name in args.file:
-        jobs.add_job(ScriptJob.from_file(file_name))
+    else:
+        for file_name in args.file:
+            jobs.add_job(ScriptJob.from_file(file_name))
 
 
 if __name__ == "__main__":

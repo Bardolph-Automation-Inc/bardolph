@@ -1,10 +1,10 @@
-from numbers import Number
 import operator
+from numbers import Number
 
 from bardolph.controller.units import UnitMode
+from bardolph.vm.eval_stack import EvalStack
+from bardolph.vm.vm_codes import LoopVar, Operand, Operator, Register
 
-from .eval_stack import EvalStack
-from .vm_codes import LoopVar, Operand, Operator, Register
 
 class VmMath:
     _fn_table = { op_code: op_fn for op_code, op_fn in (
@@ -32,10 +32,11 @@ class VmMath:
 
     def push(self, srce) -> None:
         value = None
-        if isinstance(srce, Register):
-            value = self._reg.get_by_enum(srce)
-        elif isinstance(srce, (Number, UnitMode)) or srce is Operand.NULL:
+        if (isinstance(srce, Number) or
+                srce in (Register.UNIT_MODE, Operand.NULL)):
             value = srce
+        elif isinstance(srce, Register):
+            value = self._reg.get_by_enum(srce)
         elif isinstance(srce, (str, LoopVar)):
             value = self._call_stack.get_variable(srce)
         assert value is not None, "pushing None onto eval stack"

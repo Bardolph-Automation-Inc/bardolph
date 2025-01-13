@@ -34,7 +34,7 @@ class Parser:
             TokenTypes.BREAK: self._break,
             TokenTypes.BREAKPOINT: self._breakpoint,
             TokenTypes.DEFINE: self._definition,
-            TokenTypes.GET: self._get,
+            TokenTypes.GET: self._get_color,
             TokenTypes.IF: self._if,
             TokenTypes.MARK: self._mark,
             TokenTypes.NAME: self._call_routine,
@@ -49,6 +49,7 @@ class Parser:
             TokenTypes.REGISTER: self._set_reg,
             TokenTypes.REPEAT: self._repeat,
             TokenTypes.SET: self._set,
+            TokenTypes.STAGE: self._stage,
             TokenTypes.UNITS: self._set_units,
             TokenTypes.WAIT: self._wait,
             None: self._syntax_error
@@ -64,7 +65,7 @@ class Parser:
         success = self._script()
         return self._code_gen.program if success else None
 
-    def load(self, file_name):
+    def parse_file(self, file_name):
         logging.debug('"{}"'.format(file_name))
         try:
             srce = open(file_name, 'r')
@@ -107,6 +108,9 @@ class Parser:
             return self.token_error('Expected register, got "{}"')
         if reg is Register.TIME:
             return self._time()
+        if self._current_token.is_a(TokenTypes.DEFAULT):
+            self._add_instruction(OpCode.DEFAULT)
+            return self.next_token()
 
         self.next_token()
         if self._current_token.is_a(TokenTypes.LITERAL_STRING):
@@ -122,6 +126,12 @@ class Parser:
     def _set(self):
         return self._action(OpCode.COLOR)
 
+    def _stage(self):
+        if self._context.in_matrix() or self._context.in_routine():
+            return self._action(OpCode.COLOR)
+        return self.trigger_error(
+            'Use of "stage" is not allowed in this context.')
+
     def _power_on(self):
         self._add_instruction(OpCode.MOVEQ, True, Register.POWER)
         return self._action(OpCode.POWER)
@@ -131,24 +141,42 @@ class Parser:
         return self._action(OpCode.POWER)
 
     def _action(self, op_code) -> bool:
+        action_token = self._current_token.token_type
         self._op_code = op_code
-        if not self._context.in_matrix():
+        if not (self._context.in_matrix() or action_token is TokenTypes.STAGE):
             self._add_instruction(OpCode.WAIT)
+
         self.next_token()
         if self._current_token.is_a(TokenTypes.ALL):
             return self._all_operand()
-        return self._operand_list()
+        if self._current_token.is_a(TokenTypes.DEFAULT):
+            return self._default_operand()
+        return self._operand_list(action_token)
 
     def _all_operand(self) -> bool:
+        if self._context.in_matrix():
+            return self.trigger_error(
+                'Use of "all" is not allowed in this context.')
         self._add_instruction(OpCode.MOVEQ, Operand.ALL, Register.OPERAND)
         self._add_instruction(self._op_code)
         return self.next_token()
 
-    def _operand_list(self) -> bool:
+    def _default_operand(self) -> bool:
+        self._add_instruction(OpCode.MOVEQ, Operand.DEFAULT, Register.OPERAND)
+        self._add_instruction(self._op_code)
+        return self.next_token()
+
+    def _operand_list(self, action_token) -> bool:
         """
         For every operand in the list, issue the instruction in
         self._op_code.
         """
+        if action_token is TokenTypes.STAGE:
+            if not MatrixParser(self).operand_list():
+                return False
+            self._add_instruction(OpCode.COLOR)
+            return True
+
         if not self._operand():
             return False
         self._add_instruction(self._op_code)
@@ -165,9 +193,6 @@ class Parser:
         Process a group, location, or light with an optional set of
         zones or rows/columns.
         """
-        if self._context.in_matrix():
-            return MatrixParser(self).operand()
-
         if self._current_token.is_a(TokenTypes.GROUP):
             operand = Operand.GROUP
             self.next_token()
@@ -185,17 +210,21 @@ class Parser:
             if not self._var_operand():
                 return False
         else:
-            return self.token_error('Needed a light, got "{}".')
+            if self._context.in_matrix():
+                return self.trigger_error(
+                    'Use of "set" not allowed in this context. Try "stage".')
+            return self.token_error(
+                'Needed a device, location, or group, got "{}".')
 
         if self._current_token.is_a(TokenTypes.ZONE):
             if not self._zone_range():
                 return False
             operand = Operand.MZ_LIGHT
-        elif self._current_token.is_any(TokenTypes.ROW, TokenTypes.COLUMN,
-                                        TokenTypes.TOP, TokenTypes.BEGIN):
+        elif self._current_token.is_any(TokenTypes.BEGIN, TokenTypes.COLUMN,
+                                        TokenTypes.ROW, TokenTypes.TIP):
             if operand is not Operand.LIGHT:
                 return self.token_error(
-                    '"{} not allowed with with groups or locations.')
+                    '"{} not allowed with groups or locations.')
             if not MatrixParser(self).matrix_spec():
                 return False
             operand = Operand.MATRIX_LIGHT
@@ -211,14 +240,14 @@ class Parser:
         return self._set_zones()
 
     def _set_zones(self, only_one=False):
-        if not self._at_rvalue():
-            return self.token_error('Expected zone, got "{}"')
+        if not self._at_rvalue(False):
+            return self.token_error('Expected zone number, got "{}"')
         return self._range(Register.FIRST_ZONE, Register.LAST_ZONE, only_one)
 
     def _range(self, first, last, only_one=False):
         if not self._rvalue(first):
             return False
-        if not only_one and self._at_rvalue():
+        if not only_one and self._at_rvalue(False):
             return self._rvalue(last)
 
         self._add_instruction(OpCode.MOVEQ, None, last)
@@ -245,27 +274,13 @@ class Parser:
         self._add_instruction(OpCode.WAIT)
         return self.next_token()
 
-    def _get(self) -> bool:
+    def _get_color(self) -> bool:
         self.next_token()
-        if (self._context.in_matrix() or
-            self.current_token.is_any(TokenTypes.ROW,
-                                      TokenTypes.COLUMN, TokenTypes.TOP)):
-            return self._matrix_get()
-
-        if not self._at_rvalue():
-            return self.token_error('Needed light for get, got "{}".')
-        if not self._rvalue(Register.NAME):
+        if not self._at_rvalue(False):
+            return self.token_error('Needed light name, got {}')
+        if not self._rvalue():
             return False
-
-        if self._current_token.is_a(TokenTypes.ZONE):
-            self.next_token()
-            if not self._set_zones(True):
-                return False
-            operand = Operand.MZ_LIGHT
-        else:
-            operand = Operand.LIGHT
-
-        self._add_instruction(OpCode.MOVEQ, operand, Register.OPERAND)
+        self._add_instruction(OpCode.MOVE, Register.RESULT, Register.NAME)
         self._add_instruction(OpCode.GET_COLOR)
         return True
 
@@ -275,7 +290,7 @@ class Parser:
         mat_parser = MatrixParser(self)
         if self.current_token.is_a(TokenTypes.ALL):
             return mat_parser.get_all()
-        if not mat_parser.operand():
+        if not mat_parser.operand_list():
             return False
         self._add_instruction(OpCode.GET_COLOR)
         return True
@@ -333,7 +348,10 @@ class Parser:
         self._context.add_variable(dest_name)
         return True
 
-    def _rvalue(self, dest=Register.RESULT, code_gen=None) -> bool:
+    def _rvalue(
+            self,
+            dest=Register.RESULT,
+            code_gen=None) -> bool:
         """
         Consume the current token as an rvalue, generating the code to evaluate
         it and to move the result into dest.
@@ -341,10 +359,20 @@ class Parser:
         code_gen = code_gen or self._code_gen
         if self._current_token.content == '{':
             return self.next_token() and self._rvalue_curly(dest, code_gen)
+        if self._current_token.content == '[':
+            return self._rvalue_fn_call(dest, code_gen)
         move_inst = OpCode.MOVE
+        uminus = self._current_token.content == '-'
+        if uminus:
+            self.next_token()
         value = self._current_constant()
+        if value is None and uminus:
+            return self.token_error(
+                'Outside expressions, a minus is allowed only for numbers.')
         if value is not None:
             move_inst = OpCode.MOVEQ
+            if uminus:
+                value *= -1
         elif self._current_token.is_a(TokenTypes.NAME):
             name = str(self._current_token)
             if self._context.has_symbol_typed(name, SymbolType.VAR):
@@ -362,7 +390,7 @@ class Parser:
 
         if dest is OpCode.PUSH:
             code_gen.push(value)
-        else:
+        elif value is not dest:
             code_gen.add_instruction(move_inst, value, dest)
 
         return self.next_token()
@@ -373,6 +401,15 @@ class Parser:
         if self.current_token != '}':
             return self.token_error("Expected closing curly brace, got {}.")
         return self.next_token()
+
+    def _rvalue_fn_call(self, dest, code_gen):
+        if not self._call_routine():
+            return False
+        if dest is OpCode.PUSH:
+            code_gen.push(Register.RESULT)
+        elif dest is not Register.RESULT:
+            code_gen.add_instruction(OpCode.MOVE, Register.RESULT, dest)
+        return True
 
     def _rvalue_not(self, dest, code_gen):
         self.next_token()
@@ -387,12 +424,16 @@ class Parser:
         code_gen.pop(dest)
         return True
 
-    def _at_rvalue(self) -> bool:
-        if str(self.current_token) == '{':
+    def _at_rvalue(self, include_reg=True) -> bool:
+        token = self.current_token
+        if str(token) in '{[':
             return True
-        if self._current_token.token_type in (
-                TokenTypes.LITERAL_STRING, TokenTypes.NUMBER):
+        if token.token_type in (
+                TokenTypes.LITERAL_STRING,
+                TokenTypes.NUMBER):
             return True
+        if token.token_type is TokenTypes.REGISTER:
+            return include_reg
         if self._current_token.is_a(TokenTypes.NAME):
             return not self._context.has_routine(str(self.current_token))
         return False
@@ -453,7 +494,6 @@ class Parser:
             if not self._param_decl(routine):
                 return False
         result = self.command_seq()
-        self._context.fix_return_addrs(self._code_gen)
         self._add_instruction(OpCode.END, name)
         self._context.exit_routine()
         return result
@@ -502,41 +542,47 @@ class Parser:
         if routine.undefined:
             return self.token_error('Unknown name: "{}"')
 
+        self._add_instruction(OpCode.CTX)
         self.next_token()
         for param_name in routine.value.params:
             if not self._rvalue():
                 return False
             self._add_instruction(OpCode.PARAM, param_name, Register.RESULT)
-
         self._add_instruction(OpCode.JSR, routine.name)
         if bracketed:
             if str(self.current_token) != ']':
                 return self.trigger_error(
                     'No closing bracket for function call.')
             self.next_token()
-        return True
+        self._add_instruction(OpCode.END_CTX)
 
-    def _call_fn(self, dest, code_gen) -> bool:
-        if not self._call_routine():
-            return False
-        if dest is not Register.RESULT:
-            code_gen.add_instruction(OpCode.MOVE, Register.RESULT, dest)
         return True
 
     def _return(self) -> bool:
+        """
+        The return value is put into the RESULT register. If there is no rvalue
+        after the "return" keyword, the routine is just exiting, so put None
+        into the register.
+        """
         self.next_token()
-        if not self._rvalue():
-            return False
-        inst = self._code_gen.add_instruction(
-            OpCode.JUMP, JumpCondition.ALWAYS, self._code_gen.current_offset)
-        self._context.add_return(inst)
+        if self._at_rvalue():
+            if not self._rvalue(Register.RESULT):
+                return False
+        else:
+            self._code_gen.add_instruction(OpCode.MOVEQ, None, Register.RESULT)
+        self._code_gen.add_instruction(OpCode.RETURN)
         return True
 
     def _mark(self):
-        # In this context, the result of a freestanding expression is thrown away.
-        if str(self.current_token) != '{':
-            return self.token_error("Unexpected character {}")
-        return self.next_token() and self._expr()
+        # In this context, not inside an rvalue, a freestanding expression is
+        # an error. A routine that returns a value is still called, but the
+        # return value is thrown away.
+        if str(self.current_token) == '{':
+            return self.token_error(
+                "A mathematical expression is not allowed here.")
+        if str(self.current_token == '['):
+            return self._call_routine()
+        return self.token_error("Unexpected character {}")
 
     def _if(self) -> bool:
         self.next_token()
@@ -669,28 +715,46 @@ class Parser:
         return self.token_error('Invalid time specification: "{}"')
 
 
+def dump_routines(routines):
+    print('\n\nRoutines\n========')
+    for routine_name, routine in routines.items():
+        print(routine_name)
+        print('Start address: ', routine.get_address())
+        print('Return address:', routine.get_return(), '\n')
+
+
 def main():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('file', help='name of the script file')
     arg_parser.add_argument(
+        '-a', '--assembly', help='output assembly', action='store_true')
+    arg_parser.add_argument(
         '-l', '--load', help="use Loader", action='store_true')
+    arg_parser.add_argument(
+        '-v', '--verbose', help='list routine offsets', action='store_true')
     args = arg_parser.parse_args()
 
     logging.basicConfig(
         level=logging.DEBUG,
         format='%(filename)s(%(lineno)d) %(funcName)s(): %(message)s')
     parser = Parser()
-    output_code = parser.load(args.file)
+    output_code = parser.parse_file(args.file)
     if args.load:
         routines = {}
         loader = Loader()
         loader.load(output_code, routines)
         output_code = loader.get_code()
     if output_code:
+        print('\nInstructions\n============')
         inst_num = 0
         for inst in output_code:
-            print('{:5d} {}'.format(inst_num, inst))
+            if args.assembly:
+                print(inst.as_list_text())
+            else:
+                print('{:5d} {}'.format(inst_num, inst))
             inst_num += 1
+        if args.verbose and args.load:
+            dump_routines(routines)
     else:
         print("Error compiling: {}".format(parser.get_errors()))
 

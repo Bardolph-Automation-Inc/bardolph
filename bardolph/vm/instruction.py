@@ -50,6 +50,8 @@ class Instruction:
 
     @staticmethod
     def quote_if_string(obj):
+        if obj == '\n':
+            obj = r'\n'
         return ('"{}"' if isinstance(obj, str) else '{}').format(obj)
 
     @staticmethod

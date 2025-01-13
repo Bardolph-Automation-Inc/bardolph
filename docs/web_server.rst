@@ -48,7 +48,7 @@ Raspberry Pi W that sits in a corner of my apartment.
    This is my server.
 
 Running the Server
-##################
+==================
 The server executes within the
 `Flask framework <https://flask.palletsprojects.com>`_. If you run it,
 you probably should become familiar with Flask.

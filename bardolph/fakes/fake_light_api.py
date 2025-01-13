@@ -45,13 +45,14 @@ class FakeLightApi(i_controller.LightApi):
     def _build_light(self, spec):
         match spec:
             case name, group, location:
-                return fake_light.Light(name, group, location, [-1] * 4)
+                return fake_light.Light(name, group, location, [0] * 4)
             case name, group, location, color:
                 return fake_light.Light(name, group, location, color)
-            case name, group, location, color, LightType.MULTI_ZONE:
-                return fake_light.MultizoneLight(name, group, location, color)
             case name, group, location, color, LightType.MATRIX:
                 return fake_light.MatrixLight(name, group, location, color)
+            case name, group, location, color, LightType.MULTI_ZONE, zones:
+                return fake_light.MultizoneLight(
+                    name, group, location, color, zones)
 
         logging.warning(
             "FakeLightApi._build_light(), no match: {}".format(spec))
@@ -69,15 +70,16 @@ class _Reinit:
 
 def using_large_set():
     settings = injection.provide(i_lib.Settings)
-    default_color = settings.get_value('matrix_init_color', [-1] * 4)
+    default_color = settings.get_value('matrix_init_color', [0] * 4)
 
     specs = (
         ('Top', 'Pole', 'Home', [10, 20, 30, 40]),
         ('Middle', 'Pole', 'Home', [100, 200, 300, 400]),
         ('Bottom', 'Pole', 'Home', [1000, 2000, 3000, 4000]),
 
-        ('Strip', 'Furniture', 'Home', default_color, LightType.MULTI_ZONE),
-        ('Candle', 'Furniture', 'Home', default_color, LightType.MATRIX),
+        ('Strip', 'Furniture', 'Home', default_color, LightType.MULTI_ZONE, 16),
+        ('Balcony', 'Windows', 'Home', default_color, LightType.MULTI_ZONE, 32),
+        ('Candle', 'Furniture', 'Home', [0] * 4, LightType.MATRIX),
 
         ('Lamp', 'Furniture', 'Living Room', [10000, 20000, 30000, 4004]),
 

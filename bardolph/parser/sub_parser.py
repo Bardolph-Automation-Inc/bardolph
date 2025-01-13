@@ -38,8 +38,8 @@ class SubParser:
     def rvalue(self, dest=Register.RESULT, code_gen=None):
         return self.parser._rvalue(dest, code_gen)
 
-    def at_rvalue(self):
-        return self.parser._at_rvalue()
+    def at_rvalue(self, include_reg=True):
+        return self.parser._at_rvalue(include_reg)
 
     def trigger_error(self, msg):
         return self.parser.trigger_error(msg)

@@ -24,7 +24,7 @@ def program_code(instructions):
 
 def instruction_text(file_name):
     parser = Parser()
-    program = parser.load(file_name)
+    program = parser.parse_file(file_name)
     if program is None:
         print("Error compiling {}".format(file_name))
         print(parser.get_errors())

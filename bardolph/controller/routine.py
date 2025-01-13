@@ -2,6 +2,7 @@ class Routine:
     def __init__(self, name, address=0):
         self._name = name
         self._address = address
+        self._return = address
         self._params = []
 
     @property
@@ -23,3 +24,10 @@ class Routine:
 
     def get_address(self):
         return self._address
+
+    def set_return(self, address):
+        self._return = address
+
+    def get_return(self):
+        return self._return
+

@@ -20,9 +20,9 @@ class LexTest(unittest.TestCase):
 
     def test_all_tokens(self):
         input_string = """(99) all and as at blue brightness
-            define # comment \n column duration green hue if in
+            define # comment \n column default duration green hue if in
             off on or kelvin logical print printf println raw red return rgb
-            row saturation set time top wait zone 12:*4 {3 * 4} ^
+            row saturation set stage time tip wait zone 12:*4 {3 * 4} ^
             -1.0 01.234\n"Hello There" x _abc @ [ ] < <= > >= == !="""
         expected = [
             TokenTypes.MARK, '(',
@@ -36,6 +36,7 @@ class LexTest(unittest.TestCase):
             TokenTypes.REGISTER, 'brightness',
             TokenTypes.DEFINE,'define',
             TokenTypes.COLUMN, 'column',
+            TokenTypes.DEFAULT, 'default',
             TokenTypes.REGISTER, 'duration',
             TokenTypes.REGISTER, 'green',
             TokenTypes.REGISTER,'hue',
@@ -56,8 +57,9 @@ class LexTest(unittest.TestCase):
             TokenTypes.ROW, 'row',
             TokenTypes.REGISTER, 'saturation',
             TokenTypes.SET, 'set',
+            TokenTypes.STAGE, 'stage',
             TokenTypes.REGISTER, 'time',
-            TokenTypes.TOP, 'top',
+            TokenTypes.TIP, 'tip',
             TokenTypes.WAIT, 'wait',
             TokenTypes.ZONE, 'zone',
             TokenTypes.TIME_PATTERN, '12:*4',

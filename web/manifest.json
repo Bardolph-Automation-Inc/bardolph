@@ -1,34 +1,34 @@
 [
     {
-      "file_name": "off-all.ls",
-      "path": "off",
-      "background": "#222",
-      "color": "Linen"
+        "file_name": "off-all.ls",
+        "path": "off",
+        "background": "#222",
+        "color": "Linen"
     },
     {
-      "file_name": "on-all.ls",
-      "path": "on",
-      "background": "Linen",
-      "color": "#222"
+        "file_name": "on-all.ls",
+        "path": "on",
+        "background": "Linen",
+        "color": "#222"
     },
     {
-      "file_name": "incandescent.ls",
-      "title": "Incandescent",
-      "background": "LightYellow",
-      "color": "#222"
+        "file_name": "incandescent.ls",
+        "title": "Incandescent",
+        "background": "LightYellow",
+        "color": "#222"
     },
     {
-      "file_name": "on5.ls",
-      "title": "On 5 Min.",
-      "background": "rgb(21, 139, 168)",
-      "color": "white"
+        "file_name": "on5.ls",
+        "title": "On 5 Min.",
+        "background": "rgb(21, 139, 168)",
+        "color": "white"
     },
     {
-      "file_name": "cycle-color-slow.ls",
-      "repeat": true,
-      "title": "Slow Cycle",
-      "background": "rgb(32, 192, 192)",
-      "color": "#222"
+        "file_name": "cycle-color-slow.ls",
+        "repeat": true,
+        "title": "Slow Cycle",
+        "background": "rgb(32, 192, 192)",
+        "color": "#222"
     },
     {
         "file_name": "fade-to-dark.ls",
@@ -38,11 +38,11 @@
         "color": "White"
     },
     {
-      "file_name": "darker.ls",
-      "repeat": true,
-      "title": "All 33% Darker",
-      "background": "rgb(64, 64, 64)",
-      "color": "rgb(208, 208, 208)"
+        "file_name": "darker.ls",
+        "repeat": true,
+        "title": "All 33% Darker",
+        "background": "rgb(64, 64, 64)",
+        "color": "rgb(208, 208, 208)"
     },
     {
         "file_name": "lighter.ls",
@@ -51,28 +51,28 @@
         "color": "rgb(32, 32, 32)"
     },
     {
-      "file_name": "",
-      "path": "capture",
-      "title": "Capture",
-      "background": "SlateGray",
-      "color": "White"
+        "file_name": "",
+        "path": "capture",
+        "title": "Capture",
+        "background": "SlateGray",
+        "color": "White"
     },
     {
-      "file_name": "snapshot.ls",
-      "path": "retrieve",
-      "background": "rgb(64, 64, 128)",
-      "color": "rgb(128, 192, 192)"
+        "file_name": "snapshot.ls",
+        "path": "retrieve",
+        "background": "rgb(64, 64, 128)",
+        "color": "rgb(128, 192, 192)"
     },
     {
-      "file_name": "night-light.ls",
-      "background": "rgb(64, 128, 64)",
-      "color": "Linen"
+        "file_name": "night-light.ls",
+        "background": "rgb(64, 128, 64)",
+        "color": "Linen"
     },
     {
-      "file_name": "",
-      "path": "stop",
-      "title": "Stop",
-      "background": "Maroon",
-      "color": "White"
+        "file_name": "",
+        "path": "stop",
+        "title": "Stop",
+        "background": "Maroon",
+        "color": "White"
     }
 ]

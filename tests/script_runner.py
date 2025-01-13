@@ -93,9 +93,14 @@ class ScriptRunner:
         light = light_set.get_light(light_name)
         self._test_case.assertIsNotNone(light)
         self._test_case.assertIsInstance(light, i_controller.MatrixLight)
-        expected = CandleColorMatrix.new_from_iterable(expected)
+
+        actual_mat = light.get_matrix()
+        expected_mat = CandleColorMatrix.new_from_iterable(expected)
+
         self._test_case.assertListEqual(
-            light.get_matrix().get_colors(), expected.get_colors())
+            expected_mat.get_colors(), actual_mat.get_colors(),
+            '\nActual:\n{}\nExpected:\n{}'.format(
+                str(actual_mat), str(expected_mat)))
 
     @staticmethod
     def print_all_call_lists():

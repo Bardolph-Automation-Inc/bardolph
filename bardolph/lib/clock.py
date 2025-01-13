@@ -1,9 +1,9 @@
-from datetime import datetime
 import threading
 import time
+from datetime import datetime
 
-from . import injection
-from . import i_lib
+from bardolph.lib import i_lib, injection
+
 
 def now():
     # seconds

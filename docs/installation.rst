@@ -44,12 +44,12 @@ With the virtual environment activated, you can install the Bardolph package:
   pip install bardolph
 
 After this intallation, the `lsc`, `lsrun`, and `lscap` commands will be
-available in your `.local/bin` directory. In addition, if you're planning
-on embedding scripts in your own Python program, the Bardolph support code
-will be importable.
+available whenever your virtual environment is activated. In addition, if
+you're planning on embedding scripts in your own Python program, the Bardolph
+support code will be importable.
 
 To get a copy of the sample script files, you should get the full
-source tree.
+source tree with:
 
 .. code-block:: bash
 

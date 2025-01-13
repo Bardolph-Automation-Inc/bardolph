@@ -182,6 +182,7 @@ Command Line Options
 Command-line options control the operation of the command and the type of
 output it produces. If no option is provided, it defaults to `-t`.
 
+* `-b` or `--brief`: list only the light names and nothing else.
 * `-s` or `--script`: outputs a lightbulb script to `stdout`. If you redirect
   that output to a file and run it as a script, it will restore the lights to
   the same state, including color and power.
@@ -190,9 +191,26 @@ output it produces. If no option is provided, it defaults to `-t`.
 * `-p` or `--py`: generates Python code based on the current state of
   all discovered bulbs. If you save that output in a Python file,
   you can run it later to restore those setttings.
+* `-r` or `--regex`: treat the light name
 * `-n` or `--num-lights`: Specify the number of lights that are on the network.
   If you know how many lights are connected, using this option can make a
   noticable reduction in initialization time.
+
+If you want to take a snapshot of a single light, you can specify it in the
+the command. For example:
+
+.. code-block:: bash
+
+    lscap Top
+
+If you want to take a snapshot of multiple lights with similar names, you can
+use the ``-r`` option:
+
+.. code-block:: bash
+
+    lscap -r Table*
+
+In this case, you would see all the lights with names that start with "Table".
 
 .. index:: configuration file
 

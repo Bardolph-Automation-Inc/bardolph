@@ -5,7 +5,7 @@ from os.path import join
 import platform
 
 from bardolph.lib.i_lib import Settings
-from bardolph.lib.injection import inject, injected
+from bardolph.lib.injection import inject
 from bardolph.lib.job_control import JobControl
 
 from bardolph.controller.script_job import ScriptJob
@@ -35,7 +35,7 @@ class WebApp:
         self._load_manifest()
 
     @inject(Settings)
-    def _load_manifest(self, settings=injected):
+    def _load_manifest(self, settings):
         # If manifest_name is explicitly None, don't attempt to load a file.
         basename = settings.get_value('manifest_file_name', 'manifest.json')
         if basename is None:
@@ -56,7 +56,7 @@ class WebApp:
             self._scripts[path] = new_script
 
     @inject(Settings)
-    def queue_script(self, script_control, settings=injected):
+    def queue_script(self, script_control, settings):
         fname = join(
             settings.get_value("script_path", "."), script_control.file_name)
         job = ScriptJob.from_file(fname)
@@ -78,7 +78,7 @@ class WebApp:
             script_control.running = self._jobs.is_running(script_control.path)
         return script_control
 
-    def get_script_list(self) -> [ScriptControl]:
+    def get_script_list(self):
         result = []
         for script in self._scripts.values():
             script = copy.copy(script)
@@ -97,7 +97,7 @@ class WebApp:
         return status
 
     @inject(Settings)
-    def get_path_root(self, settings=injected):
+    def get_path_root(self, settings):
         return settings.get_value('path_root', '/')
 
     def get_script_title(self, script_config):
@@ -129,7 +129,7 @@ class WebApp:
         return result1 and result2
 
     @inject(Settings)
-    def snapshot(self, settings=injected):
+    def snapshot(self, settings):
         output_name = join(
             settings.get_value('script_path', '.'), '__snapshot__.ls')
         out_file = open(output_name, 'w')

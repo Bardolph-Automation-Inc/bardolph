@@ -5,6 +5,7 @@ import unittest
 
 module_names = (
     'activity_log_test',
+    'block_candle_test',
     'call_stack_test',
     'candle_color_matrix_test',
     'candle_test',
@@ -17,6 +18,7 @@ module_names = (
     'example_test',
     'expr_test',
     'fake_light_module_test',
+    'function_test',
     'injection_test',
     'io_parser_test',
     'job_control_test',
@@ -26,6 +28,7 @@ module_names = (
     'loop_test',
     'ls_module_test',
     'machine_test',
+    'noneable_test',
     'param_helper_test',
     'parser_test',
     'print_test',

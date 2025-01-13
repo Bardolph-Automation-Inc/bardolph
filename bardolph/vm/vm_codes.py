@@ -1,9 +1,10 @@
 from enum import Enum, auto
-import logging
+
 
 class Register(Enum):
     BLUE = auto()
     BRIGHTNESS = auto()
+    DEFAULT = auto()
     DISC_FORWARD = auto()
     DURATION = auto()
     FIRST_COLUMN = auto()
@@ -17,7 +18,7 @@ class Register(Enum):
     KELVIN = auto()
     MATRIX = auto()
     MAT_BODY = auto()
-    MAT_TOP = auto()
+    MAT_TIP = auto()
     NAME = auto()
     OPERAND = auto()
     PC = auto()
@@ -37,11 +38,13 @@ class OpCode(Enum):
     BREAKPOINT = auto()
     COLOR = auto()
     CONSTANT = auto()
+    CTX = auto()
     DISC = auto()
     DISCM = auto()
     DNEXT = auto()
     DNEXTM = auto()
     END = auto()
+    END_CTX = auto()
     END_LOOP = auto()
     GET_COLOR = auto()
     JSR = auto()
@@ -59,6 +62,7 @@ class OpCode(Enum):
     POWER = auto()
     PUSH = auto()
     PUSHQ = auto()
+    RETURN = auto()
     ROUTINE = auto()
     STOP = auto()
     TIME_PATTERN = auto()
@@ -71,6 +75,7 @@ class JumpCondition(Enum):
     INDIRECT = auto()
 
 class LoopVar(Enum):
+    # These variables are internal and invisible to the script code.
     COUNTER = auto()
     CURRENT = auto()
     EXIT_JMP = auto()
@@ -104,12 +109,15 @@ class Operand(Enum):
     GROUP = auto()
     LOCATION = auto()
     MATRIX = auto()
+    DEFAULT = auto()
     MATRIX_LIGHT = auto()
     MZ_LIGHT = auto()
     NULL = auto()
 
 class IoOp(Enum):
+    LITERAL = auto()
     PRINT = auto()
+    PRINT_END = auto()
     PRINTF = auto()
     REGISTER = auto()
 

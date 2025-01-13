@@ -51,14 +51,6 @@ class EndToEndTest(unittest.TestCase):
         self._runner.test_code(script, ('Top', 'Middle', 'Bottom', 'Table'),
                                (Action.SET_COLOR, [10, 20, 30, 40], 50))
 
-    def test_routine_get_zone(self):
-        script = """
-            units raw
-            define get_z with x z get x zone z
-            get_z "Strip" 5
-        """
-        self._runner.test_code(script, 'Strip', (Action.GET_ZONE_COLOR, 5, 6))
-
     def test_group(self):
         script = """
             units raw

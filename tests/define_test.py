@@ -57,14 +57,6 @@ class DefineTest(unittest.TestCase):
         self._runner.test_code(
             script, 'Top', (Action.SET_COLOR, [1, 2, 3, 4], 500))
 
-    def test_routine_get_zone(self):
-        script = """
-            units raw define get_z with x z get x zone z
-            get_z "Strip" 5
-        """
-        self._runner.test_code(
-            script, 'Strip', (Action.GET_ZONE_COLOR, 5, 6))
-
     def test_define_zones(self):
         script = """
             units raw
@@ -118,7 +110,8 @@ class DefineTest(unittest.TestCase):
 
     def test_variables(self):
         script = """
-            units raw saturation 1 brightness 2 kelvin 3
+            units raw
+            saturation 1 brightness 2 kelvin 3
             assign x 5 hue x set "Table"
 
             assign name "Chair" set name
@@ -145,7 +138,8 @@ class DefineTest(unittest.TestCase):
 
     def test_nested_variables(self):
         script = """
-            units raw hue 1 saturation 2 brightness 3 kelvin 4
+            units raw
+            hue 1 saturation 2 brightness 3 kelvin 4
             assign n 50
 
             define inner1 with x begin kelvin x set "Chair" end
@@ -205,6 +199,7 @@ class DefineTest(unittest.TestCase):
 
     def test_complex_routines(self):
         script = """
+            units raw
             hue 180 saturation 50 brightness 50 duration 100 time 0 kelvin 0
 
             define complex_no_params begin
@@ -220,7 +215,7 @@ class DefineTest(unittest.TestCase):
             complex_one_param 85
             set all
 
-            hue 90 saturation 75 brightness 33.33
+            hue 90 saturation 75 brightness 33
             define complex_three_params with x y z begin
                 set x
                 set y
@@ -230,33 +225,62 @@ class DefineTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_global_call_list([
-            (Action.SET_COLOR, [32768, 32768, 65535, 75], 100000),
-            (Action.SET_COLOR, [32768, 32768, 65535, 85], 100000)
+            (Action.SET_COLOR, [180, 50, 100, 75], 100),
+            (Action.SET_COLOR, [180, 50, 100, 85], 100)
         ])
         self._runner.check_call_list(('Top', 'Middle', 'Bottom'),
-            (Action.SET_COLOR, [16384, 49151, 21843, 85], 100000))
+            (Action.SET_COLOR, [90, 75, 33, 85], 100))
 
-    def test_routine_namespace(self):
+    def test_namespace_visible(self):
         script = """
-            hue 180 saturation 50 brightness 75 duration 100 time 0 kelvin 0
+            units raw
+            hue 100 saturation 200 brightness 300 kelvin 400
 
-            define simple_no_params kelvin 75
-            define simple_1_param with x kelvin x
-            define use_1_param with x simple_1_param x
-            use_1_param 90
-            set all
+            assign x 600
+            define offset_hue with delta begin
+                hue {x + delta}
+                assign x 700
+            end
 
-            define set_2 with x y set x and y
-            hue 90 saturation 75 brightness 33.33 kelvin 85
-            define simple_2_params with x y set_2 x y
-            define use_2_params simple_2_params "Top" "Middle"
-            use_2_params
+            offset_hue 1
+            set "Top"
+
+            # x should have changed.
+            hue x
+            set "Top"
         """
         self._runner.run_script(script)
-        self._runner.check_global_call_list(
-            (Action.SET_COLOR, [32768, 32768, 49151, 90], 100000))
-        self._runner.check_call_list(('Top', 'Middle'),
-            (Action.SET_COLOR, [16384, 49151, 21843, 85], 100000))
+        self._runner.check_call_list('Top', [
+            (Action.SET_COLOR, [601, 200, 300, 400], 0),
+            (Action.SET_COLOR, [700, 200, 300, 400], 0)
+        ])
+
+    def test_global_hiding(self):
+        script = """
+            units raw
+            hue 100 saturation 0 brightness 0 kelvin 0
+
+            assign x 500
+
+            # Hide the global instance of x.
+            define offset_hue with x begin
+                hue {x + 10}
+                assign x 900
+            end
+
+            offset_hue 1000 # Set hue to 1010
+            set "Middle"
+
+            # x should be unchanged at 500.
+            hue x
+            set "Middle"
+        """
+        self._runner.run_script(script)
+        self._runner.check_call_list('Middle', [
+            (Action.SET_COLOR, [1010, 0, 0, 0], 0),
+            (Action.SET_COLOR, [500, 0, 0, 0], 0)
+        ])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -21,13 +21,30 @@ class ColorMatrix:
         """ Set all cells to zero. """
         self._width = width
         self._height = height
-        self._mat = [[0] * self._width] * self._height
+        self._mat = [[0] * width] * height
+
+    def __str__(self):
+        ret_value = ''
+        for row in range(0, self._height):
+            ret_value += 'Row {:1d}:\n'.format(row)
+            for column in range(0, self._width):
+                color = self._mat[row][column]
+                if color is None:
+                    ret_value += 'None '
+                else:
+                    ret_value += '{:1d}: '.format(column)
+                    for x in color:
+                        ret_value += ('{:8d} '.format(int(x)))
+                ret_value += '\n'
+        return ret_value
 
     @staticmethod
     def new_from_iterable(srce, height, width):
-        inst = ColorMatrix(height, width)
-        inst.set_from_iterable(srce)
-        return inst
+        return ColorMatrix(height, width).set_from_iterable(srce)
+
+    @staticmethod
+    def new_from_constant(height, width, init_value=None):
+        return ColorMatrix(height, width).set_from_constant(init_value)
 
     @property
     def height(self) -> int:
@@ -50,11 +67,33 @@ class ColorMatrix:
             for column_count in range(0, self.width):
                 row.append(next(it))
             self._mat.append(row)
+        return self
+
+    def set_from_constant(self, value):
+        """ Set every elmement to the same color. """
+        self._mat.clear()
+        for _ in range(0, self.height):
+            self._mat.append([value] * self.width)
+        return self
 
     def set_from_matrix(self, srce):
         self._width = srce.width
         self._height = srce.height
         self._mat = copy.deepcopy(srce.matrix)
+        return self
+
+    def find_replace(self, to_find, replacement):
+        for row in range(0, self.height):
+            for column in range(0, self.width):
+                if self._mat[row][column] == to_find:
+                    self._mat[row][column] = replacement.copy()
+
+    def apply_transform(self, fn):
+        for row in range(0, self.height):
+            for column in range(0, self.width):
+                value = self._mat[row][column]
+                if value is not None:
+                    self._mat[row][column] = fn(value)
 
     def as_list(self):
         return [self._mat[row][column]

@@ -18,6 +18,7 @@ class TokenTypes(Enum):
     COLUMN = auto()
     COMPARE = auto()
     CYCLE = auto()
+    DEFAULT = auto()
     DEFINE = auto()
     ELSE = auto()
     END = auto()
@@ -50,11 +51,11 @@ class TokenTypes(Enum):
     RETURN = auto()
     RGB = auto()
     SET = auto()
+    STAGE = auto()
     SYNTAX_ERROR = auto()
     TIME_PATTERN = auto()
     TIP = auto()
     TO = auto()
-    TOP = auto()
     UNITS = auto()
     UNKNOWN = auto()
     WHILE = auto()
@@ -73,7 +74,8 @@ class TokenTypes(Enum):
             TokenTypes.GET, TokenTypes.IF, TokenTypes.OFF, TokenTypes.ON,
             TokenTypes.PRINT, TokenTypes.PRINTF, TokenTypes.PRINTLN,
             TokenTypes.PAUSE, TokenTypes.REGISTER, TokenTypes.REPEAT,
-            TokenTypes.SET, TokenTypes.UNITS, TokenTypes.WHILE, TokenTypes.WAIT)
+            TokenTypes.SET, TokenTypes.STAGE, TokenTypes.UNITS,
+            TokenTypes.WHILE, TokenTypes.WAIT)
 
 class Token:
     def __init__(self,
@@ -137,7 +139,7 @@ class Token:
     @property
     def is_binop(self):
         return (self.is_a(TokenTypes.COMPARE)
-                or self.content in '+-*/^'
+                or self.content in '+-*/%^'
                 or self.content in ('and', 'or'))
 
     @property
@@ -160,6 +162,7 @@ class Token:
             '-': 5,
             '*': 6,
             '/': 6,
+            '%': 6,
             '^': 7
         }.get(self.content, -1)
 

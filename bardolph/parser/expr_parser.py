@@ -1,10 +1,10 @@
-from bardolph.vm.vm_codes import OpCode, Operator, Register
-from bardolph.parser.token import Assoc, TokenTypes
 from bardolph.parser.sub_parser import SubParser
+from bardolph.parser.token import Assoc
+from bardolph.vm.vm_codes import OpCode, Operator
 
 
 class ExpressionParser(SubParser):
-    def expression(self):
+    def expression(self) -> bool:
         return self._atom() and self._expression(0)
 
     def _expression(self, min_prec) -> bool:
@@ -55,6 +55,7 @@ class ExpressionParser(SubParser):
             '-': Operator.SUB,
             '*': Operator.MUL,
             '/': Operator.DIV,
+            '%': Operator.MOD,
             '^': Operator.POW,
             'and': Operator.AND,
             'or': Operator.OR,

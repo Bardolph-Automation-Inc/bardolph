@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bardolph"
-version = "0.2.0"
+version = "0.2.1"
 description="Simple scripting language for LIFX lights"
 readme = "README.md"
 authors = [{name  = "Al Fontes", email="barolph@fontes.org"}]

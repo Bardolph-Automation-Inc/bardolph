@@ -15,7 +15,7 @@ f = [51000, 52000, 53000, 54000]
 x = [123, 456, 789, 1011]
 
 
-def test_mat():
+def create_test_mat():
     return copy.deepcopy([
         a, b, c, d, e,
         b, c, d, e, f,
@@ -28,10 +28,10 @@ def test_mat():
 
 class ColorMatrixTest(unittest.TestCase):
     def test_round_trip(self):
-        srce = test_mat()
+        srce = create_test_mat()
         mat = ColorMatrix.new_from_iterable(srce, 6, 5)
         returned = mat.as_list()
-        self.assertListEqual(srce, returned, "ColorMatrix round trip")
+        self.assertListEqual(srce, returned, "test_round_trip")
 
     def test_overlay(self):
         expected = [
@@ -42,11 +42,57 @@ class ColorMatrixTest(unittest.TestCase):
             e, f, a, b, c,
             f, a, b, c, d
         ]
-
-        mat = ColorMatrix.new_from_iterable(test_mat(), 6, 5)
+        mat = ColorMatrix.new_from_iterable(create_test_mat(), 6, 5)
         mat.overlay_color(Rect(1, 3, 1, 4), x)
         actual = mat.as_list()
-        self.assertListEqual(expected, actual, "ColorMatrix overlay")
+        self.assertListEqual(expected, actual, "test_overlay")
+
+    def test_new_from_constant(self):
+        expected = [
+            a, a, a, a, a,
+            a, a, a, a, a,
+            a, a, a, a, a,
+            a, a, a, a, a,
+            a, a, a, a, a,
+            a, a, a, a, a
+        ]
+        mat = ColorMatrix.new_from_constant(6, 5, a)
+        actual = mat.as_list()
+        self.assertListEqual(expected, actual, 'test_new_from_constant')
+
+    def test_apply_transform(self):
+        test_data = [
+            a, a, a, a, a,
+            a, a, a, a, a,
+            a, a, None, a, a,
+            a, a, a, a, a,
+            a, a, a, a, a,
+            a, a, a, a, a
+        ]
+        expected = [
+            d, d, d, d, d,
+            d, d, d, d, d,
+            d, d, None, d, d,
+            d, d, d, d, d,
+            d, d, d, d, d,
+            d, d, d, d, d
+        ]
+        mat = ColorMatrix.new_from_iterable(test_data, 6, 5)
+        mat.apply_transform(lambda color: [x * 1000 for x in color])
+        actual = mat.as_list()
+        self.assertListEqual(expected, actual, 'test_apply_transform')
+
+    def test_str(self):
+        test_data = [
+            a, a, a, a, a,
+            a, a, a, a, a,
+            a, a, None, a, a,
+            a, a, a, a, a,
+            a, a, a, a, a,
+            a, a, a, a, a
+        ]
+        mat = ColorMatrix.new_from_iterable(test_data, 6, 5)
+        self.assertIsNotNone(str(mat))
 
 
 if __name__ == '__main__':

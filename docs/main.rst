@@ -26,26 +26,29 @@ required; all of its communication occurs over the local WiFi network. You
 can edit a script with a basic text editor and run it from the command
 line.
 
-This project relies on the
-`lifxlan <https://pypi.org/project/lifxlan>`_
-Python library to access the bulbs. You need to have it installed for the code
-in this project to run. If you run the web server, you will also need a couple
-of other libraries from `PyPi <https://pypi.org>`_.
-
 It probably lacks some of what you might expect of a scripting language,
 but it's still under development. However, it is also very simple, and
 should be usable by non-programmers.
 
+To run it, you will need Python 3.10 or later.
+
 .. index:: quick examples
 
-Quick Examples
+Short Examples
 ==============
 The source distribution contains some samples in the `scripts` directory.
 They should work with whatever lights are on the network.  For a more
 complete description of the scripting langage, please see
 :ref:`language`.
 
-Here is a script, named `all_on.ls`, that will turn on all your lights:
+To get a copy of the sample scripts, download the source with:
+
+.. code-block:: bash
+
+  git clone https://github.com/al-fontes-jr/bardolph
+
+Here is one from the `scripts` directory, named `all_on.ls`, that will turn on
+all your lights:
 
 .. code-block:: lightbulb
 
@@ -151,6 +154,8 @@ Python 2.x, there's a good chance that you'll need to use `pip3` instead of
 
 .. code-block:: bash
 
+    mkdir bardolph
+    cd bardolph
     python -m venv .venv
     source .venv/bin/activate
     pip install bardolph
@@ -163,29 +168,14 @@ To be able to use these commands later on, you will always need make sure
 the virtual environment is activated using the `activate` command. For more
 information, including virtual environments, please see :ref:`installation`.
 
-To get a copy of the sample scripts, you still need to download the source:
-
-.. code-block:: bash
-
-  git clone https://github.com/al-fontes-jr/bardolph
-
 Testing the Installation
 ========================
-To do a quick sanity check:
+To do a quick sanity check, you can try to list whatever lights are on your
+network with:
 
 .. code-block:: bash
 
-  lsrun -h
-
-This should display a help message. To make sure Bardolph is able to access
-your actual bulbs:
-
-.. code-block:: bash
-
-  lscap
-
-This should give you a human-friendly listing of your bulbs, their state, and
-which groups/locations they belong to.
+    lscap -b
 
 The source distribution includes some examples in a directory named `scripts`.
 For example:
@@ -216,36 +206,49 @@ For full documentation on the command-line tools, please see
 :ref:`command_line`.
 
 Uninstall
-=========
+#########
 .. code-block:: bash
 
-  pip uninstall bardolph
+    cd bardolph
+    source .venv/bin/activate
+    pip uninstall bardolph
 
 .. index:: system requirements
 
 System Requirements
-###################
-The program should work on any systems with a recent enoug version of
-Python, as listed on `PyPi <https://pypi.org/project/bardolph>_.` Because I
-haven't done any stress testing, I don't know the limits on
+===================
+The program should work on any systems with a recent enough version of
+Python, as listed on the project's
+`PyPi page <https://pypi.org/project/bardolph>`_, currently 3.10 or later.
+Because I haven't done any stress testing, I don't know the limits on
 script size. Note that the application loads the encoded script into memory
 before executing it.
 
 I've tested the program on a Raspberry Pi Zero W controlling 14 devices, a
-Raspberry Pi Zero-W, 3 Model B+, and 4.
+Raspberry Pi Zero-W, 3 Model B+, 4, and 5. The Raspberry Pi 5 I tested on has
+2 GB of RAM, so it should be fine with any of the memory configurations.
 
-Supported Devices
-=================
-I have tested with the devices that I own, which includes the 1100-Lumen A19
-light with the disk-shaped lens, and the 800-Lumen A19 "Mini" globe-shaped
-bulb. All the bulbs I own are multi-colored, which means that I haven't done
-any testing with "Day and Dusk" or "White" bulbs. I would expect them to
-work ok, although I don't really know.
+Scripts that access candel-type bulbs are be more CPU-intensive than the
+others.
 
-For multizone, I've done some testing with the Z LED strip, and it seems to
-work well. I would expect it to work with other multizone lights.
+.. index:: tested devices, supported devices
+
+Tested Devices
+--------------
+I have tested with the devices that I own, which includes:
+
+    * 800-lumen "Mini C"
+    * 1100-lumen "A19" with the disk-shaped lens
+    * Candle E12 "Polychrome"
+    * Candle E12 "White to Warm"
+    * Color 800 "A19 Smart Light" globe-shaped bulb
+    * Z "Lightstrip" (tested with 16 and 32 zones)
+
+In general, you should be able to use any of the standard bulbs and strips.
+LIFX has released several interesting "Polychrome" lights, and as long as they
+support the LAN API, I will attempt to test and integrate them as time allows.
 
 Project Name Source
-###################
+===================
 `Bardolph <https://en.wikipedia.org/wiki/Bardolph_(Shakespeare_character)>`_
 was known for his bulbous nose.

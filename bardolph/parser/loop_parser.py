@@ -1,11 +1,10 @@
 from enum import Enum, auto
 
 from bardolph.controller.units import UnitMode
+from bardolph.parser.code_gen import CodeGen
+from bardolph.parser.sub_parser import SubParser
+from bardolph.parser.token import TokenTypes
 from bardolph.vm.vm_codes import LoopVar, OpCode, Operand, Operator, Register
-
-from .code_gen import CodeGen
-from .sub_parser import SubParser
-from .token import TokenTypes
 
 
 class _LoopType(Enum):
@@ -25,7 +24,7 @@ class _LoopType(Enum):
     def is_iter(self):
         # Iteration that pushes names onto the stack.
         return self in (_LoopType.ALL, _LoopType.GROUPS, _LoopType.LIST,
-            _LoopType.LOCATIONS)
+                        _LoopType.LOCATIONS)
 
 
 class LoopParser(SubParser):
@@ -186,7 +185,7 @@ class LoopParser(SubParser):
 
     def _pre_loop_as(self, context_stack) -> bool:
         if not self.current_token.is_a(TokenTypes.AS):
-            return self.token_error('Expected "as", got "{}"')
+            return self.token_error('Expected "as" or "and", got "{}"')
         self.next_token()
         if not self.current_token.is_a(TokenTypes.NAME):
             return self.token_error('Expected name for lights, got "{}"')

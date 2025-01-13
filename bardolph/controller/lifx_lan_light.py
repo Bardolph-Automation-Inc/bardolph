@@ -64,9 +64,16 @@ class MultizoneLight(Light, i_controller.MultizoneLight):
 
 
 class CandleLight(Light, i_controller.MatrixLight):
+    """
+    The size of the matrix is fixed at 5x6. There is no control over what area
+    is affected; only the entire matrix can be set or retrieved.
+
+    The "x", "y", and "tile_index" parameters in the payload are intended only
+    for so-called tile devices and have no purpose in this context.
+    """
+
     @tries(_MAX_TRIES, WorkflowException)
     def set_matrix(self, matrix, duration=0) -> None:
-        """ Assign colors to the entire matrix. """
         payload = {
             "tile_index": 0,
             "length": 1,
@@ -76,7 +83,7 @@ class CandleLight(Light, i_controller.MatrixLight):
             "x": 0,
             "y": 0,
             "width": 5,
-            "height": 6 }
+            "height": 6}
         self._impl.fire_and_forget(SetTileState64, payload, num_repeats=1)
 
     @tries(_MAX_TRIES, WorkflowException)

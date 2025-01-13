@@ -1,19 +1,30 @@
 from collections import deque
 
-from .vm_codes import LoopVar
+from bardolph.vm.vm_codes import LoopVar
+
 
 class StackFrame:
-    def __init__(self, variables=None, return_addr=None):
-        self.vars = variables or {}
-        self.return_addr = return_addr or 0
+    def __init__(self, parent=None):
+        self.vars = parent.vars if parent is not None else {}
+        self.params = {}
+        self.parent = parent
+        self.constants = parent.constants if parent is not None else None
+        self.globals = parent.globals if parent is not None else self.vars
+        self.return_addr = None
 
-    def clear(self):
-        self.vars.clear()
-        self.return_addr = 0
+    def get_variable(self, identifier):
+        for place in (self.constants, self.vars, self.params, self.globals):
+            if identifier in place:
+                return place[identifier]
+        return None
+
+    def get_parameter(self, name):
+        return self.params.get(name, None)
+
 
 class LoopFrame(StackFrame):
-    def __init__(self, variables):
-        super().__init__(variables, None)
+    def __init__(self, parent):
+        super().__init__(parent)
         self._loop_var = {}
 
     def get_loop_var(self, index):
@@ -22,91 +33,78 @@ class LoopFrame(StackFrame):
     def set_loop_var(self, index, value):
         self._loop_var[index] = value
 
+
 class CallStack:
     """
-    As PARAM instructions are encountered, incoming parameters are saved in
-    _current but are out of scope. That StackFrame instance gets pushed when a
-    routine is called. The presence of that StackFrame at the top of the stack
-    brings the parameters into scope.
+    The CallStack is initialzed with a root-level StackFrame.
 
-    Variables are immediately put into the StackFrame referenced by self.top.
-    If the stack has only one StackFrame, then declared variables become
-    globals. Otherwise, they are local variables that go out of scope when the
-    routine returns.
+    Prior to a JSR, a CTX command leads to a call to push_stack_frame(), which
+    pushes self._top onto the stack and creates a new instance of StackFrame,
+    therefore establishing a new context.
+
+    Also prior to the JSR, optional PARAM instructions may place values into the
+    current context (self._top) as named variables.
+
+    After the JSR. an END_CTX command pops the top of the stack into self._top.
     """
 
-    def __init__(self):
-        """
-        Put an empty StackFrame into the stack as the root context. Create
-        a new StackFrame to accumulate parameters during set-up for a routine
-        invocation.
-        """
-        self._stack = deque()
-        self._root_frame = StackFrame()
-        self._stack.append(self._root_frame)
-        self._current = StackFrame()
-        self._constants = {}
+    def __init__(self, constants=None):
+        self.reset(constants)
 
-    def reset(self) -> None:
-        self._stack.clear()
-        self._root_frame.clear()
-        self._stack.append(self._root_frame)
-        self._current.clear()
-        self._constants.clear()
+    def reset(self, constants=None) -> None:
+        self._top = StackFrame()
+        self._top.constants = constants or {}
 
-    @property
-    def top(self) -> StackFrame:
-        return self._stack[-1]
+    def new_frame(self):
+        self._top = StackFrame(self._top)
+        return self._top
 
-    def put_param(self, name, value) -> None:
-        self._current.vars[name] = value
+    def put_param(self, name, value=None) -> None:
+        self._top.params[name] = value
 
-    def put_constant(self, name, value) -> None:
-        if name not in self._constants:
-            self._constants[name] = value
+    def enter_routine(self) -> None:
+        # Upon entering the routine, the only available varaiables are the
+        # incoming parameters.
+        self._top.vars = self._top.params
+
+    def exit_routine(self) -> None:
+        self._top = self._top.parent
 
     def put_variable(self, index, value) -> None:
+        # When a parameter has the same name as a global variable, the global
+        # becomes hidden.
+        #
         if isinstance(index, LoopVar):
-            assert isinstance(self.top, LoopFrame), "stack top has wrong type"
-            return self.top.set_loop_var(index, value)
-        dest = self._root_frame if index in self._root_frame.vars else self.top
-        dest.vars[index] = value
-
-    def is_param(self, name) -> bool:
-        return name in self.top.vars
+            self._top.set_loop_var(index, value)
+        elif index in self._top.params:
+            self._top.params[index] = value
+        elif index in self._top.globals:
+            self._top.globals[index] = value
+        else:
+            self._top.vars[index] = value
 
     def set_return(self, address) -> None:
-        self._current.return_addr = address
+        self._top.return_addr = address
 
     def get_return(self) -> int:
-        return self.top.return_addr
+        return self._top.return_addr
 
-    def get_variable(self, name):
-        if isinstance(name, LoopVar):
-            if isinstance(self.top, LoopFrame):
-                return self.top.get_loop_var(name)
+    def get_variable(self, identifier):
+        if isinstance(identifier, LoopVar):
+            if isinstance(self._top, LoopFrame):
+                return self._top.get_loop_var(identifier)
             return None
-        for place in (self._constants, self.top.vars, self._root_frame.vars):
-            if name in place:
-                return place[name]
-        return None
+        return self._top.get_variable(identifier)
 
-    def push_current(self) -> None:
-        self._stack.append(self._current)
-        self._current = StackFrame()
+    def pop_frame(self) -> None:
+        self._top = self._top.parent
 
     def enter_loop(self) -> None:
-        self._stack.append(LoopFrame(self.top.vars))
+        self._top = LoopFrame(self._top)
 
     def exit_loop(self) -> None:
-        assert len(self._stack) > 1, "stack underflow in loop"
-        self._stack.pop()
+        self._top = self._top.parent
 
     def unwind_loops(self) -> None:
-        while isinstance(self.top, LoopFrame):
-            self._stack.pop()
-
-    def pop_current(self) -> None:
-        assert len(self._stack) > 1, "stack underflow"
-        self._current = self._stack.pop()
-        self._current.clear()
+        while isinstance(self._top, LoopFrame):
+            self._top = self.parent

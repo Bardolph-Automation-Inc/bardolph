@@ -12,24 +12,26 @@ class CandleColorMatrix(ColorMatrix):
 
     @staticmethod
     def new_from_iterable(srce):
-        inst = CandleColorMatrix()
-        inst.set_from_iterable(srce)
-        return inst
+        return CandleColorMatrix().set_from_iterable(srce)
+
+    @staticmethod
+    def new_from_constant(init_value=None):
+        return CandleColorMatrix().set_from_constant(init_value)
 
     def get_colors(self):
         return [self._standardize_raw(param) for param in self.as_list()]
 
     def set_body(self, color):
         """
-        Set all of the cells in the body, but not the one on top, to the given
+        Set all of the cells in the body, but not the one on tip, to the given
         color.
         """
         for row in range(1, self.height):
             for column in range(0, self.width):
                 self._mat[row][column] = color.copy()
 
-    def set_top(self, color):
-        """ Set the cell at the top to the given color. """
+    def set_tip(self, color):
+        """ Set the cell at the tip to the given color. """
         m = [color]
         m.extend([[0, 0, 0, 0]] * 4)
         self._mat[0] = m
@@ -40,7 +42,7 @@ class CandleColorMatrix(ColorMatrix):
         del mat[0]
         return mat
 
-    def get_top(self):
+    def get_tip(self):
         return self._mat[0][0]
 
     def set_body_cell(self, row, column, color):
@@ -60,7 +62,9 @@ class CandleColorMatrix(ColorMatrix):
         super().overlay_submat(self._normalize_rect(rect), srce)
 
     @staticmethod
-    def _standardize_raw(color) -> int:
+    def _standardize_raw(color):
+        if color is None:
+            return None
         raw_color = []
         for param in color:
             if param < 0.0:

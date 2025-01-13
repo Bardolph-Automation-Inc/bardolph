@@ -7,7 +7,8 @@ from bardolph.parser.token import Token, TokenTypes
 
 class Lex:
     _CMP_SPEC = r'==|<=|>=|!=|[<>]'
-    _REG = 'hue saturation brightness kelvin red green blue duration time'
+    _REG = ('hue saturation brightness kelvin red green blue default duration '
+             'time')
     _REG_LIST = _REG.split()
     _NAME_SPEC = r'[a-zA-Z_][a-zA-Z0-9_]*'
     _NON_ALNUM_LIST = r'[]{}()+-*/#:^'
@@ -86,7 +87,6 @@ class Lex:
 
 def main():
     args = sys.argv[1:]
-    args = ['(abc)']
     for arg in args:
         print("lexing: {}\n".format(arg))
         lexer = Lex(arg)

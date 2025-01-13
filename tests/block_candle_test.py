@@ -2,14 +2,12 @@
 
 import unittest
 
-from bardolph.controller import i_controller
-from bardolph.controller.candle_color_matrix import CandleColorMatrix
 from bardolph.lib import i_lib, injection
 from tests import test_module
 from tests.script_runner import ScriptRunner
 
 
-class CandleTest(unittest.TestCase):
+class BlockCandleTest(unittest.TestCase):
     def setUp(self):
         test_module.configure()
         current_settings = injection.provide(i_lib.Settings)
@@ -28,40 +26,28 @@ class CandleTest(unittest.TestCase):
         for actual_color in mat.as_list():
             self.assertListEqual(color, actual_color)
 
-    def test_set_as_generic(self):
-        color = [0, 20000, 8192, 2700]
-        light_set = injection.provide(i_controller.LightSet)
-        light = light_set.get_light("Candle")
-        light.set_color(color, 0)
-
-    def test_set_all(self):
-        light_set = injection.provide(i_controller.LightSet)
-        light = light_set.get_light("Candle")
-        mat = CandleColorMatrix()
-        color = [16000, 50000, 8192, 2700]
-        mat.set_body(color)
-        mat.set_tip(color)
-        light.set_matrix(mat, 0)
-
     def test_minimal(self):
         script = self._default_code + """
             define test_name "test_minimal"
-            hue 120 saturation 50 brightness 25 kelvin 2500
-            set "Candle" row 1 2 column 3 4 tip
+            set "Candle" begin
+                hue 120 saturation 50 brightness 25 kelvin 2500
+                stage row 1 2 column 3 4 tip
+                stage row 0 1 column 0 1
+            end
         """
         runner = ScriptRunner(self)
         runner.run_script(script)
 
-        color = [120, 50, 25, 2500]
-        i = self._default_color
+        c = [120, 50, 25, 2500]
+        d = self._default_color
         z = [0] * 4
         expected = (
-            color, z, z, z, z,
-            i, i, i, i, i,
-            i, i, i, color, color,
-            i, i, i, color, color,
-            i, i, i, i, i,
-            i, i, i, i, i
+            c, z, z, z, z,
+            c, c, d, d, d,
+            c, c, d, c, c,
+            d, d, d, c, c,
+            d, d, d, d, d,
+            d, d, d, d, d
         )
         runner.check_final_matrix('Candle', expected)
 
@@ -69,19 +55,22 @@ class CandleTest(unittest.TestCase):
         script = self._default_code + """
             define test_name "test_row_only"
             hue 120 saturation 80 brightness 20 kelvin 2700
-            set "Candle" row 4
+            set "Candle" begin
+                stage row 1
+                stage row 4
+            end
         """
         runner = ScriptRunner(self)
         runner.run_script(script)
 
         c = [120, 80, 20, 2700]
-        i = self._default_color
+        d = self._default_color
         expected = (
-            i, i, i, i, i,
-            i, i, i, i, i,
-            i, i, i, i, i,
-            i, i, i, i, i,
-            i, i, i, i, i,
+            d, d, d, d, d,
+            d, d, d, d, d,
+            c, c, c, c, c,
+            d, d, d, d, d,
+            d, d, d, d, d,
             c, c, c, c, c
         )
         runner.check_final_matrix('Candle', expected)
@@ -90,7 +79,11 @@ class CandleTest(unittest.TestCase):
         script = self._default_code + """
             define test_name "test_all_rows"
             hue 240 saturation 80 brightness 20 kelvin 2700
-            set "Candle" row 0 4
+            set "Candle" begin
+                stage row 0 1
+                stage row 2
+                stage row 3 4
+            end
         """
         runner = ScriptRunner(self)
         runner.run_script(script)
@@ -111,7 +104,9 @@ class CandleTest(unittest.TestCase):
         script = self._default_code + """
             define test_name "test_column_only"
             hue 120 saturation 80 brightness 30
-            set "Candle" column 2
+            set "Candle" begin
+                stage column 2
+            end
         """
         runner = ScriptRunner(self)
         runner.run_script(script)
@@ -131,8 +126,10 @@ class CandleTest(unittest.TestCase):
     def test_tip_only(self):
         script = self._default_code + """
             define test_name "test_tip_only"
-            hue 180 saturation 80 brightness 30
-            set "Candle" tip
+            set "Candle" begin
+                hue 180 saturation 80 brightness 30
+                stage tip
+            end
         """
         runner = ScriptRunner(self)
         runner.run_script(script)
@@ -153,8 +150,12 @@ class CandleTest(unittest.TestCase):
     def test_row_with_tip(self):
         script = self._default_code + """
             define test_name "test_row_with_tip"
-            hue 240 saturation 80 brightness 30
-            set "Candle" row 0 1 tip
+            set "Candle" begin
+                hue 240 saturation 80 brightness 30
+                stage row 0
+                stage tip
+                stage row 1
+            end
         """
         runner = ScriptRunner(self)
         runner.run_script(script)
@@ -176,7 +177,10 @@ class CandleTest(unittest.TestCase):
         script = self._default_code + """
             define test_name "test_column_with_tip"
             hue 300 saturation 80 brightness 30
-            set "Candle" tip column 0 1
+            set "Candle" begin
+                stage tip
+                stage column 0 1
+            end
         """
         c = [300, 80, 30, 0]
         i = self._default_color
@@ -197,10 +201,15 @@ class CandleTest(unittest.TestCase):
         script = self._default_code + """
             define test_name "test_row_column"
             hue 0 saturation 80 brightness 30
-            set "Candle" row 0 column 2 3
+            set "Candle" begin
+                stage row 0
+                stage column 2 3
+            end
 
             # Resets to default.
-            set "Candle" column 3 4 row 2 3
+            set "Candle" begin
+                stage column 3 4 row 2 3
+            end
         """
         c = [0, 80, 30, 0]
         d = self._default_color
@@ -221,12 +230,11 @@ class CandleTest(unittest.TestCase):
             define test_name "test_top_down"
             hue 200 saturation 50 brightness 20 kelvin 2700 duration 2 time 2
             define top_down	begin
-                set "Candle" tip
-                set "Candle" tip row 0
-                set "Candle" tip row 0 1
-                set "Candle" tip row 0 2
-                set "Candle" tip row 0 3
-                set "Candle" tip row 0 4
+                set "Candle" begin
+                    stage tip
+                    repeat with row_num from 0 to 4
+                        stage row row_num
+                end
             end
             top_down
         """
@@ -244,70 +252,87 @@ class CandleTest(unittest.TestCase):
         runner.run_script(script)
         runner.check_final_matrix('Candle', expected)
 
-    def test_row_column_tip(self):
-        script = self._default_code + """
-            define test_name "test_row_column_tip"
-            hue 220 saturation 60 brightness 70 kelvin 2900
-            set "Candle" row 0 tip column 1 2
-
-            # Equivalent to:
-            # set "Candle" row 0 column 1 2 tip
-        """
-        c = [220, 60, 70, 2900]
-        d = self._default_color
-        z = [0] * 4
-        expected = (
-            c, z, z, z, z,
-            d, c, c, d, d,
-            d, d, d, d, d,
-            d, d, d, d, d,
-            d, d, d, d, d,
-            d, d, d, d, d
-        )
-        runner = ScriptRunner(self)
-        runner.run_script(script)
-        runner.check_final_matrix('Candle', expected)
-
     def test_simple_loop(self):
         script = self._default_code + """
             define test_name "test_simple_loop"
-            saturation 100 brightness 25
-            duration 2
+            saturation 100 brightness 25 kelvin 35
 
-            hue 0
-            repeat with _row from 0 to 4 begin
-                set "Candle" row _row
-                hue {hue + 60}
+            set "Candle" begin
+                hue 0
+                repeat with row_num from 1 to 3 begin
+                    stage row row_num column 1
+                    hue {hue + 60}
+                end
             end
         """
-        runner = ScriptRunner(self)
-        runner.run_script(script)
-
-    def test_rgb(self):
-        script = """
-            define test_name "test_rgb"
-            units raw
-            hue 10 saturation 20 brightness 30 kelvin 40
-            set default
-
-            units rgb
-            red 50 green 50 blue 50 kelvin 0
-
-            set "Candle" row 2 3 column 2 3
-        """
-        c = [0, 0, 32768, 0]
-        d = [10, 20, 30, 40]
+        d = self._default_color
         expected = (
             d, d, d, d, d,
             d, d, d, d, d,
-            d, d, d, d, d,
-            d, d, c, c, d,
-            d, d, c, c, d,
+            d, [0, 100, 25, 35], d, d, d,
+            d, [60, 100, 25, 35], d, d, d,
+            d, [120, 100, 25, 35], d, d, d,
             d, d, d, d, d
         )
         runner = ScriptRunner(self)
         runner.run_script(script)
         runner.check_final_matrix('Candle', expected)
+
+    def test_loop_break(self):
+        script = self._default_code + """
+            define test_name "test_simple_loop"
+            saturation 100 brightness 25 kelvin 35
+
+            set "Candle" begin
+                hue 0
+                repeat with row_num from 1 to 3 begin
+                    if {row_num == 3}
+                        break
+                    stage row row_num column 1
+                    hue {hue + 60}
+                end
+            end
+        """
+        d = self._default_color
+        expected = (
+            d, d, d, d, d,
+            d, d, d, d, d,
+            d, [0, 100, 25, 35], d, d, d,
+            d, [60, 100, 25, 35], d, d, d,
+            d, d, d, d, d,
+            d, d, d, d, d
+        )
+        runner = ScriptRunner(self)
+        runner.run_script(script)
+        runner.check_final_matrix('Candle', expected)
+
+    def test_routine_call(self):
+        script = self._default_code + """
+            define test_name "test_routine_call"
+            hue 0 saturation 80 brightness 30
+
+            define do_stage with start_row end_row start_col end_col begin
+                stage row start_row end_row column start_col end_col
+            end
+
+            set "Candle" begin
+                do_stage 0 1 3 4
+            end
+        """
+        c = [0, 80, 30, 0]
+        d = self._default_color
+        expected = (
+            d, d, d, d, d,
+            d, d, d, c, c,
+            d, d, d, c, c,
+            d, d, d, d, d,
+            d, d, d, d, d,
+            d, d, d, d, d
+        )
+        runner = ScriptRunner(self)
+        runner.run_script(script)
+        runner.check_final_matrix('Candle', expected)
+
 
 if __name__ == '__main__':
     unittest.main()

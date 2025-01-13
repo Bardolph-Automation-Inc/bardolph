@@ -15,7 +15,7 @@ class FakeLightModuleTest(unittest.TestCase):
     def test_large_set(self):
         light_set = provide(i_controller.LightSet)
         self.assertIsNotNone(light_set)
-        self.assertEqual(light_set.get_light_count(), 14)
+        self.assertEqual(light_set.get_light_count(), 15)
         self.assertListEqual(light_set.get_light('table-3').get_color(),
                              [16000, 16000, 16000, 2700])
 

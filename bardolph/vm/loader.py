@@ -7,8 +7,8 @@ from bardolph.controller.routine import Routine
 if __name__ == '__main__':
     from bardolph.parser.parse import Parser
 
-from .instruction import Instruction
-from .vm_codes import JumpCondition, OpCode
+from bardolph.vm.instruction import Instruction
+from bardolph.vm.vm_codes import JumpCondition, OpCode
 
 class Loader:
     def __init__(self):
@@ -54,6 +54,7 @@ class Loader:
             inst = self._next_inst()
         if inst is not None:
             self._routine_segment.append(inst)
+        new_routine.set_return(len(self._routine_segment) + 1)
         return new_routine
 
     def get_code(self):
@@ -65,6 +66,7 @@ class Loader:
         ret_value.extend(self._main_segment)
         return ret_value
 
+
 def main():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('file', help='name of the script file')
@@ -75,7 +77,7 @@ def main():
         format='%(filename)s(%(lineno)d) %(funcName)s(): %(message)s')
 
     parser = Parser()
-    parser_code = parser.load(args.file)
+    parser_code = parser.parse_file(args.file)
 
     loader = Loader()
     routines = {}

@@ -22,4 +22,5 @@ Bardolph Project
     docs/web_server
     docs/python_interface
     docs/controller
+    docs/iteration
     docs/release_notes

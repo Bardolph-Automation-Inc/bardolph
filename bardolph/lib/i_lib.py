@@ -11,4 +11,9 @@ class TimePattern:
 
 class LogConfig: pass
 
+class Output:
+    def out(self, output) -> None: pass
+    def newline(self) -> None: pass
+    def flush(self) -> None: pass
+
 def configure(): pass
