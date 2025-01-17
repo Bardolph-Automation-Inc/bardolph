@@ -98,6 +98,18 @@ without accessing any actual lights.
 
 Note that the above commands are documented in :ref:`command_line`.
 
+.. index:: installation; upgrade, updating version
+
+Upgrading to Latest Version
+===========================
+From time to time, the package will be updated with fixes and new features. To
+upgrade to the latest verstion:
+
+.. code-block:: bash
+
+    source bardolph-venv/bin/activate
+    pip install -U bardolph
+
 .. index:: local build
 
 Alternative: Build and Install

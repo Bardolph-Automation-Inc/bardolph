@@ -220,8 +220,8 @@ class Parser:
             if not self._zone_range():
                 return False
             operand = Operand.MZ_LIGHT
-        elif self._current_token.is_any(TokenTypes.BEGIN, TokenTypes.COLUMN,
-                                        TokenTypes.ROW, TokenTypes.TIP):
+        elif self._current_token.is_any(
+                TokenTypes.BEGIN, TokenTypes.COLUMN, TokenTypes.ROW):
             if operand is not Operand.LIGHT:
                 return self.token_error(
                     '"{} not allowed with groups or locations.')

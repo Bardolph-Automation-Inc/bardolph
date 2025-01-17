@@ -54,7 +54,6 @@ class TokenTypes(Enum):
     STAGE = auto()
     SYNTAX_ERROR = auto()
     TIME_PATTERN = auto()
-    TIP = auto()
     TO = auto()
     UNITS = auto()
     UNKNOWN = auto()

@@ -11,16 +11,16 @@ to control or experiment with their lights in an automated way, using a minimal
 amount of coding.
 
 Using their names, you can control individual lights, groups or locations. Or,
-just pick a color for all the lights on your network. If you have any multi-zone
-lights, the language allows you to set colors for specific zones.
+just pick a color for all the lights on your network. If you have any
+multi-zone lights, the language allows you to set colors for specific zones.
 
 The program does not use the Internet to access the bulbs, and no login is
 required; all of its  communication occurs over the local WiFi network. You
 can edit scripts with a basic text editor and run them from the command line.
 
-The language may be missing some constructs you might expect, such as loops and
-arithmetic expressons, as it's still under development. However, it is also
-very simple, and should be usable by non-programmers.
+The language may be missing some constructs you might expect, such as arrays,
+string manipulation, and data structures, but it's still under development and
+you will probably find it very useful.
 
 ## Quick Examples
 Here is a script, named `all_on.ls`, that will turn on all your lights:
@@ -47,8 +47,8 @@ To run it:
 ```
 lsrun red.ls
 ```
-The application executes in the foreground as long as a script is running. In this
-example, the application will run for 5 minutes.
+The application executes in the foreground as long as a script is running.
+In this example, the application will run for 5 minutes.
 
 As a convenience, you can pass a script as a command-line parameter using
 `lsrun -s`, followed by the script code in a quoted string. For example, to

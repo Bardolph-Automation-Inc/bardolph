@@ -31,7 +31,7 @@ class BlockCandleTest(unittest.TestCase):
             define test_name "test_minimal"
             set "Candle" begin
                 hue 120 saturation 50 brightness 25 kelvin 2500
-                stage row 1 2 column 3 4 tip
+                stage row 1 2 column 3 4
                 stage row 0 1 column 0 1
             end
         """
@@ -40,12 +40,11 @@ class BlockCandleTest(unittest.TestCase):
 
         c = [120, 50, 25, 2500]
         d = self._default_color
-        z = [0] * 4
         expected = (
-            c, z, z, z, z,
             c, c, d, d, d,
             c, c, d, c, c,
             d, d, d, c, c,
+            d, d, d, d, d,
             d, d, d, d, d,
             d, d, d, d, d
         )
@@ -67,11 +66,11 @@ class BlockCandleTest(unittest.TestCase):
         d = self._default_color
         expected = (
             d, d, d, d, d,
-            d, d, d, d, d,
             c, c, c, c, c,
             d, d, d, d, d,
             d, d, d, d, d,
-            c, c, c, c, c
+            c, c, c, c, c,
+            d, d, d, d, d
         )
         runner.check_final_matrix('Candle', expected)
 
@@ -83,6 +82,7 @@ class BlockCandleTest(unittest.TestCase):
                 stage row 0 1
                 stage row 2
                 stage row 3 4
+                stage row 5
             end
         """
         runner = ScriptRunner(self)
@@ -91,7 +91,7 @@ class BlockCandleTest(unittest.TestCase):
         c = [240, 80, 20, 2700]
         i = self._default_color
         expected = (
-            i, i, i, i, i,
+            c, c, c, c, c,
             c, c, c, c, c,
             c, c, c, c, c,
             c, c, c, c, c,
@@ -114,87 +114,13 @@ class BlockCandleTest(unittest.TestCase):
         c = [120, 80, 30, 0]
         i = self._default_color
         expected = (
-            i, i, i, i, i,
+            i, i, c, i, i,
             i, i, c, i, i,
             i, i, c, i, i,
             i, i, c, i, i,
             i, i, c, i, i,
             i, i, c, i, i
         )
-        runner.check_final_matrix('Candle', expected)
-
-    def test_tip_only(self):
-        script = self._default_code + """
-            define test_name "test_tip_only"
-            set "Candle" begin
-                hue 180 saturation 80 brightness 30
-                stage tip
-            end
-        """
-        runner = ScriptRunner(self)
-        runner.run_script(script)
-
-        c = [180, 80, 30, 0]
-        d = self._default_color
-        z = [0] * 4
-        expected = (
-            c, z, z, z, z,
-            d, d, d, d, d,
-            d, d, d, d, d,
-            d, d, d, d, d,
-            d, d, d, d, d,
-            d, d, d, d, d
-        )
-        runner.check_final_matrix('Candle', expected)
-
-    def test_row_with_tip(self):
-        script = self._default_code + """
-            define test_name "test_row_with_tip"
-            set "Candle" begin
-                hue 240 saturation 80 brightness 30
-                stage row 0
-                stage tip
-                stage row 1
-            end
-        """
-        runner = ScriptRunner(self)
-        runner.run_script(script)
-
-        c = [240, 80, 30, 0]
-        i = self._default_color
-        z = [0] * 4
-        expected = (
-            c, z, z, z, z,
-            c, c, c, c, c,
-            c, c, c, c, c,
-            i, i, i, i, i,
-            i, i, i, i, i,
-            i, i, i, i, i
-        )
-        runner.check_final_matrix('Candle', expected)
-
-    def test_column_with_tip(self):
-        script = self._default_code + """
-            define test_name "test_column_with_tip"
-            hue 300 saturation 80 brightness 30
-            set "Candle" begin
-                stage tip
-                stage column 0 1
-            end
-        """
-        c = [300, 80, 30, 0]
-        i = self._default_color
-        z = [0] * 4
-        expected = (
-            c, z, z, z, z,
-            c, c, i, i, i,
-            c, c, i, i, i,
-            c, c, i, i, i,
-            c, c, i, i, i,
-            c, c, i, i, i
-        )
-        runner = ScriptRunner(self)
-        runner.run_script(script)
         runner.check_final_matrix('Candle', expected)
 
     def test_row_column(self):
@@ -216,9 +142,9 @@ class BlockCandleTest(unittest.TestCase):
         expected = (
             d, d, d, d, d,
             d, d, d, d, d,
+            d, d, d, c, c,
+            d, d, d, c, c,
             d, d, d, d, d,
-            d, d, d, c, c,
-            d, d, d, c, c,
             d, d, d, d, d
         )
         runner = ScriptRunner(self)
@@ -231,8 +157,7 @@ class BlockCandleTest(unittest.TestCase):
             hue 200 saturation 50 brightness 20 kelvin 2700 duration 2 time 2
             define top_down	begin
                 set "Candle" begin
-                    stage tip
-                    repeat with row_num from 0 to 4
+                    repeat with row_num from 0 to 5
                         stage row row_num
                 end
             end
@@ -241,7 +166,7 @@ class BlockCandleTest(unittest.TestCase):
         c = [200, 50, 20, 2700]
         z = [0] * 4
         expected = (
-            c, z, z, z, z,
+            c, c, c, c, c,
             c, c, c, c, c,
             c, c, c, c, c,
             c, c, c, c, c,
@@ -268,10 +193,10 @@ class BlockCandleTest(unittest.TestCase):
         d = self._default_color
         expected = (
             d, d, d, d, d,
-            d, d, d, d, d,
             d, [0, 100, 25, 35], d, d, d,
             d, [60, 100, 25, 35], d, d, d,
             d, [120, 100, 25, 35], d, d, d,
+            d, d, d, d, d,
             d, d, d, d, d
         )
         runner = ScriptRunner(self)
@@ -296,9 +221,9 @@ class BlockCandleTest(unittest.TestCase):
         d = self._default_color
         expected = (
             d, d, d, d, d,
-            d, d, d, d, d,
             d, [0, 100, 25, 35], d, d, d,
             d, [60, 100, 25, 35], d, d, d,
+            d, d, d, d, d,
             d, d, d, d, d,
             d, d, d, d, d
         )
@@ -322,9 +247,9 @@ class BlockCandleTest(unittest.TestCase):
         c = [0, 80, 30, 0]
         d = self._default_color
         expected = (
+            d, d, d, c, c,
+            d, d, d, c, c,
             d, d, d, d, d,
-            d, d, d, c, c,
-            d, d, d, c, c,
             d, d, d, d, d,
             d, d, d, d, d,
             d, d, d, d, d

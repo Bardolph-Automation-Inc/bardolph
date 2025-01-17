@@ -5,10 +5,9 @@ from lifxlan.errors import WorkflowException
 from lifxlan.msgtypes import GetTileState64, SetTileState64, StateTileState64
 
 from bardolph.controller import i_controller, light
-from bardolph.lib.param_helper import param_16, param_color, param_32
-from bardolph.lib.retry import tries
-
 from bardolph.controller.candle_color_matrix import CandleColorMatrix
+from bardolph.lib.param_helper import param_16, param_32, param_color
+from bardolph.lib.retry import tries
 
 _MAX_TRIES = 3
 

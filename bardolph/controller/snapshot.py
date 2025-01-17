@@ -105,13 +105,8 @@ class ScriptSnapshot(Snapshot):
         self.append('set "{}" begin\n'.format(light.get_name()))
 
     def candle_cell(self, row, column, raw_color):
-        if row == 0:
-            if column == 0:
-                self.color(raw_color)
-                self.append('stage tip\n')
-        else:
-            self.color(raw_color)
-            self.append('stage row {} column {}\n'.format(row, column))
+        self.color(raw_color)
+        self.append('stage row {} column {}\n'.format(row, column))
 
     def end_candle(self, light):
         self.append('end\n')
@@ -217,11 +212,7 @@ class TextSnapshot(Snapshot):
         self._nl()
 
     def candle(self, light):
-        self._add_field('   tip')
         mat = light.get_matrix()
-        self.color(mat.get_tip())
-        self._nl()
-        mat = mat.get_body()
         for row in range(0, 5):
             for col in range(0, 5):
                 self._add_field('   {:1d} {:1d}'.format(row, col))

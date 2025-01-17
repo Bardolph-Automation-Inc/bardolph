@@ -7,7 +7,7 @@ class MatrixParser(SubParser):
     def matrix_spec(self) -> bool:
         """
         Entry point for general parser. At this point, the current token is
-        row, column, tip, or begin.
+        row, column, or begin.
         """
         self.code_gen.add_instruction(OpCode.MATRIX)
         inline_matrix = not self.current_token.is_a(TokenTypes.BEGIN)
@@ -31,17 +31,10 @@ class MatrixParser(SubParser):
             (OpCode.MOVEQ, None, Register.LAST_ROW),
             (OpCode.MOVEQ, None, Register.FIRST_COLUMN),
             (OpCode.MOVEQ, None, Register.LAST_COLUMN),
-            (OpCode.MOVEQ, True, Register.MAT_BODY),
-            (OpCode.MOVEQ, True, Register.MAT_TIP),
             (OpCode.MOVEQ, Operand.MATRIX, Register.OPERAND),
             OpCode.GET_COLOR
         )
         return True
-
-    def _tip(self, has_tip) -> bool:
-        if has_tip:
-            return self.trigger_error('"tip" supplied more than once.')
-        return self.next_token()
 
     def _rows(self, has_rows) -> bool:
         if has_rows:
@@ -81,14 +74,9 @@ class MatrixParser(SubParser):
         self.code_gen.add_instruction(
             OpCode.MOVEQ, Operand.MATRIX, Register.OPERAND)
 
-        has_tip = has_rows = has_columns = False
-        while self.current_token.is_any(
-                TokenTypes.TIP, TokenTypes.ROW, TokenTypes.COLUMN):
-            if self.current_token.is_a(TokenTypes.TIP):
-                if not self._tip(has_tip):
-                    return False
-                has_tip = True
-            elif self.current_token.is_a(TokenTypes.ROW):
+        has_rows = has_columns = False
+        while self.current_token.is_any(TokenTypes.ROW, TokenTypes.COLUMN):
+            if self.current_token.is_a(TokenTypes.ROW):
                 if not self._rows(has_rows):
                     return False
                 has_rows = True
@@ -97,21 +85,15 @@ class MatrixParser(SubParser):
                     return False
                 has_columns = True
 
-        self.code_gen.add_instruction(OpCode.MOVEQ, has_tip, Register.MAT_TIP)
-        if not (has_rows or has_columns):
-            self.code_gen.add_instruction(
-                OpCode.MOVEQ, False, Register.MAT_BODY)
-        else:
-            self.code_gen.add_instruction(
-                OpCode.MOVEQ, True, Register.MAT_BODY)
-            if not has_rows:
-                self.code_gen.add_list(
-                    (OpCode.MOVEQ, None, Register.FIRST_ROW),
-                    (OpCode.MOVEQ, None, Register.LAST_ROW)
-                )
-            if not has_columns:
-                self.code_gen.add_list(
-                    (OpCode.MOVEQ, None, Register.FIRST_COLUMN),
-                    (OpCode.MOVEQ, None, Register.LAST_COLUMN)
-                )
+        if not has_rows:
+            self.code_gen.add_list(
+                (OpCode.MOVEQ, None, Register.FIRST_ROW),
+                (OpCode.MOVEQ, None, Register.LAST_ROW)
+            )
+        if not has_columns:
+            self.code_gen.add_list(
+                (OpCode.MOVEQ, None, Register.FIRST_COLUMN),
+                (OpCode.MOVEQ, None, Register.LAST_COLUMN)
+            )
+
         return True

@@ -5,7 +5,8 @@ from bardolph.controller import units
 from bardolph.controller.candle_color_matrix import CandleColorMatrix
 from bardolph.controller.color_matrix import Rect
 from bardolph.controller.get_key import getch
-from bardolph.controller.i_controller import LightSet, MatrixLight, MultizoneLight
+from bardolph.controller.i_controller import (LightSet, MatrixLight,
+                                              MultizoneLight)
 from bardolph.controller.units import UnitMode
 from bardolph.lib.i_lib import Clock, TimePattern
 from bardolph.lib.injection import inject, provide
@@ -35,8 +36,6 @@ class Registers:
         self.last_column = None
         self.last_row = None
         self.last_zone = 0
-        self.mat_body = False
-        self.mat_tip = False
         self.matrix = None
         self.name = None
         self.operand = Operand.NULL
@@ -199,13 +198,10 @@ class Machine:
     def _color_matrix(self) -> None:
         color = self._reg.get_color()
         mat = self._reg.matrix
-        if self._reg.mat_body:
-            rect = Rect(
-                self._reg.first_row, self._reg.last_row,
-                self._reg.first_column, self._reg.last_column)
-            mat.overlay_color(rect, color)
-        if self._reg.mat_tip:
-            mat.set_tip(color)
+        rect = Rect(
+            self._reg.first_row, self._reg.last_row,
+            self._reg.first_column, self._reg.last_column)
+        mat.overlay_color(rect, color)
 
     def _color_matrix_light(self) -> None:
         light = self._get_named_light()

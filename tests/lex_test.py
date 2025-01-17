@@ -22,7 +22,7 @@ class LexTest(unittest.TestCase):
         input_string = """(99) all and as at blue brightness
             define # comment \n column default duration green hue if in
             off on or kelvin logical print printf println raw red return rgb
-            row saturation set stage time tip wait zone 12:*4 {3 * 4} ^
+            row saturation set stage time wait zone 12:*4 {3 * 4} ^
             -1.0 01.234\n"Hello There" x _abc @ [ ] < <= > >= == !="""
         expected = [
             TokenTypes.MARK, '(',
@@ -59,7 +59,6 @@ class LexTest(unittest.TestCase):
             TokenTypes.SET, 'set',
             TokenTypes.STAGE, 'stage',
             TokenTypes.REGISTER, 'time',
-            TokenTypes.TIP, 'tip',
             TokenTypes.WAIT, 'wait',
             TokenTypes.ZONE, 'zone',
             TokenTypes.TIME_PATTERN, '12:*4',

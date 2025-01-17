@@ -5,6 +5,16 @@ class Rect:
     def __init__(self, top=0, bottom=0, left=0, right=0):
         self.top, self.bottom, self.left, self.right = top, bottom, left, right
 
+    def __eq__(self, other):
+        if isinstance(other, Rect):
+            return (self.top == other.top and self.bottom == other.bottom
+                    and self.left == other.left and self.right == other.right)
+        return False
+
+    def __repr__(self):
+        return 'Rect({}, {}, {}, {})'.format(
+            self.top, self.bottom, self.left, self.right)
+
 
 class ColorMatrix:
     """
@@ -115,3 +125,19 @@ class ColorMatrix:
         for row in range(rect.top, rect.bottom + 1):
             for column in range(rect.left, rect.right + 1):
                 self._mat[row][column] = srce[row][column]
+
+    @staticmethod
+    def _standardize_raw(color):
+        # Keep all elements within the range expected by the bulb.
+        if color is None:
+            return None
+        raw_color = []
+        for param in color:
+            if param < 0.0:
+                param = 0
+            elif param > 65535.0:
+                param = 65535
+            else:
+                param = round(param)
+            raw_color.append(param)
+        return raw_color

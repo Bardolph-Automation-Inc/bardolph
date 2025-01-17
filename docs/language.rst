@@ -55,10 +55,12 @@ Note that the ``set`` command is what actually causes the lights to adopt the
 new settings and change their colors. The ``all`` parameter causes the given
 settings to be applied to all of the lights found on the network.
 
+.. index:: register; list
+
 A script sets the color and brightness of the lights, over a given interval,
 by specifying 5 numbers: ``hue``, ``saturation``, ``brightness``, ``kelvin``,
 and ``duration``. During execution, the Bardolph virtual machine sends these
-settings to the lights.
+settings to the lights. These global variables are referred to as *registers*.
 
 The value you supply for ``hue`` is an angle expressed in
 in degrees, normally between 0 and 360. The values for ``saturation``
@@ -193,7 +195,7 @@ When applied to a multi-zone light, the entire device is powered
 on or off; you can't set the power for individual zones (although you
 can set the brightness to zero).
 
-.. index:: multi-zone lights, lights; multi-zone
+.. index:: multi-zone lights, lights; multi-zone, zone
 
 Multi-Zone Lights
 =================
@@ -227,7 +229,7 @@ the log, and the light will not be accessed. Unlike Python ranges, the
 numbers are inclusive. For example, `zone 1 3` would include zones 1, 2,
 and 3.
 
-.. index:: candle lights, lights; candle
+.. index:: candle lights, lights; candle, row, column, default
 
 Candle Bulbs
 ============
@@ -245,23 +247,24 @@ as the so-called "Tube E26", I'll try to test and fix the implementation for
 those, as well.
 
 The underlying API for these devices is covered in the
-`LIFX documentaion <https://lan.developer.lifx.com/docs/candle>`_. I've
-attempted to make control of this type of bulb relatively straigtforward.
-In the Bardolph model, the light has 5 rows, each consisting of 5 zones that
-encircle the center axis of the bulb. It also has a `tip` element. The rows are
-numbered 0 through 4, as are the columns.
+`LIFX documentaion <https://lan.developer.lifx.com/docs/candle>`_. The bulb
+is divided vertically into 6 rows. Going around the axis of the bulb, there are
+5 columns. Note that row 5, which is at the tip of the bulb, has only 2 LED'S,
+which occupy columns 0 and 1. You can still assign values to the other cells
+in that row; they are simply ignored.
 
 The diagram below illustrates how the areas of the bulb are addressed:
 
-.. figure:: candle_diagram.gif
+.. figure:: candle_diagram.png
     :align: center
     :figwidth: 75 %
 
     Candle Bulb Layout
 
-Values for `row` and `column` must be between 0 and 4. The columns wrap around
-the bulb, but aside from running a script, there's no obvious way to know where
-the LED's centered on column 0 are positioned.
+Values for ``row`` must be between 0 and 5, and ``column`` must be between
+0 and 4.. The columns wrap around the bulb, but aside from running a script,
+there's no obvious way to know where the LED's centered on column 0 are
+positioned.
 
 .. note:: Given the physical construction of these bulbs, it may be difficult to
     pick out individual cells. As far as I can tell, because the LED array is
@@ -287,19 +290,11 @@ For example:
     set "Candle" row 1 column 3
 
 This code will set the entire bulb's ``hue`` to 220, with the exception of the
-cell at row 1, column 3. Note that the tip of the bulb will also get the
-default color. Notice also the large difference in ``brightness``, which makes
-it easier to distinguish the individual cell.
+cell at row 1, column 3. Note the large difference in ``brightness``, which
+will makew it easier to distinguish the individual cell if you try this code.
 
 When two numbers are given, they are assumed to be a range, which is
 inclusive. For example, `row 2 4` specifies rows 2, 3, and 4.
-
-Aside from rows and columns, you can set the color of the tip of the bulb:
-
-.. code-block:: lightbulb
-
-    hue 240
-    set "Candle" row 1 column 3 tip
 
 Whenever the ending value is not supplied, it is given the starting
 value. For example:
@@ -311,20 +306,28 @@ value. For example:
     # Equivalent:
     set "Candle" row 1
 
-If you supply only ``column`` or only ``row``, the full range (0 through 4) of
-the unspecified parameter is assumed. For example:
+If you supply only ``column`` or only ``row``, the full range (0 through 5
+for ``row``, 0 through 4 for ``column``) of the unspecified parameter is
+assumed:
 
 .. code-block:: lightbulb
 
-    set "Candle" row 1
+    set "Candle" row 1 2
     set "Candle" column 1 3
 
     # Equivalent:
-    set "Candle" row 1 column 0 4
-    set "Candle" column 1 3 row 0 4
+    set "Candle" row 1 2 column 0 4
+    set "Candle" row 0 5 column 1 3
 
-As shown in this example, there is no requirement on the order for the ``row``
-and ``column`` specifications.
+Although the examples so far have ``row`` before ``column``, that order is not
+required:
+
+.. code-block:: lightbulb
+
+    set "Candle" row 1 2 column 3 4
+
+    # Equivalent:
+    set "Candle" column 3 4 row 1 2
 
 .. index:: candle full syntax
 
@@ -334,7 +337,7 @@ In the examples so far, each ``set`` contains a single command. This is limiting
 because you can set only one area of the bulb's body section. A more powerful
 syntax uses ``begin`` and ``end`` to contain a collection of settings that
 are sent as a unit that updates the entire bulb. For example, to set a few
-different areas of the bulb, plus the tip:
+different areas of the bulb:
 
 .. code-block:: lightbulb
 
@@ -347,24 +350,21 @@ different areas of the bulb, plus the tip:
 
         hue 300
         stage row 3
-
-        hue 90 brightness 50
-        stage tip
+        stage row 4
     end
 
 The ``stage`` keyword is used here because no communication with the bulb occurs
 within the ``begin`` - ``end`` block. Instead, an internal data structure gets
-built as ``stage`` commands are executetd.
+built as ``stage`` commands are executed.
 
 When ``end`` is reached, the virtual machine sends the entire result to the bulb
 as a block of data. Any cell that has not been accessed in the ``begin``
-/ ``end`` clause receives the default. Every cell in the entire bulb gets a new
-setting. This behavior is guided by the underlying LIFX API supported by
-multi-colored bulbs.
+/ ``end`` clause receives the default. This means that every cell in the entire
+bulb receives a new setting. This behavior is guided by the underlying LIFX API
+supported by multi-colored bulbs.
 
-As with the shorter syntax, both `row` and `column` are optional. The `tip`
-keyword is also optional; omitting it assigns the default color to the tip of
-the bulb. Here are some examples:
+As with the shorter syntax, both ``row`` and ``column`` are optional. Here are
+some examples:
 
 .. code-block:: lightbulb
 
@@ -391,15 +391,18 @@ the bulb. Here are some examples:
         stage row 2 column 3
     end
 
-    # Set a square area and the tip of the bulb.
+    # Set a square area and the tip
     hue 210
     set "Candle" begin
-        stage row 1 2 column 3 4 tip
+        stage row 1 2 column 3 4
+
+        # tip
+        stage row 5
     end
 
-As another example, here is a script that sets the tip to hue 120, and
-sets the rest of it to gradually changing colors. In this example, it is not
-necessary to set the default, because all of the cells are staged:
+As another example, here is a script that gives the bulb a gradient of
+colors. In this example, it is not necessary to set the default, because all
+of the cells get staged:
 
 .. code-block:: lightbulb
 
@@ -407,17 +410,17 @@ necessary to set the default, because all of the cells are staged:
 
     set "Candle" begin
         hue 120
-        stage tip
-        hue 150
         stage row 0
-        hue 180
+        hue 150
         stage row 1
-        hue 210
+        hue 180
         stage row 2
-        hue 240
+        hue 210
         stage row 3
-        hue 270
+        hue 240
         stage row 4
+        hue 270
+        stage row 5
     end
 
 Of course, this can be accomplished with more succinct code:
@@ -426,26 +429,25 @@ Of course, this can be accomplished with more succinct code:
 
     saturation 100 brightness 50 kelvin 2500
 
+    hue 120
     set "Candle" begin
-        hue 120
-        stage tip
-        repeat with row_num from 0 to 4 begin
-            hue {hue + 30}
+        repeat with row_num from 0 to 5 begin
             stage row row_num
+            hue {hue + 30}
         end
     end
 
-.. index:: time, time measurement
+.. index:: time, time measurement, duration
 
 Timing Color Changes
 ====================
 Scripts can contain time delays and durations, both of which are are expressed
-in seconds. A time delay designates the amount of time to wait before
-transmitting the next command to the lights. The duration value is passed
+in seconds. A ``time`` value designates the amount of time to wait before
+transmitting the next command to the lights. The ``duration`` value is passed
 through to the bulbs, and its interpretation is defined by the
-`LIFX API <https://lan.developer.lifx.com>`_. Basically, by setting a duration,
-you determine how long it should take the bulb to transition to its new
-state. For example:
+`LIFX API <https://lan.developer.lifx.com>`_. Basically, by setting
+``duration``, you determine how long it should take the bulb to transition to
+its new state. For example:
 
 .. code-block:: lightbulb
 
@@ -465,13 +467,13 @@ The underlying API has a precision down to milliseconds. For example, all
 digits are significant in a ``time`` parameter of `1.234`. However, in
 practice, the host computer or underlying threading support built into the
 Python runtime may not be able to keep up. For that reason, I recommend that
-you do not try to use a time or duration that is less than 0.1 seconds.
+you do not try to use a ``time`` or ``duration`` that is less than 0.1 seconds.
 
 As mentioned above, the existing values for ``time`` and ``duration`` are
 re-used with each command. In this example, ``time`` is set only
 once, but there will be the same delay between every action.
 
-.. index:: time with and
+.. index:: time with and, and; time
 
 Multiple Lights Using `and`
 ---------------------------
@@ -493,18 +495,18 @@ This contrasts with:
 .. code-block:: lightbulb
 
     # Does not use "and": 2-second delay before the second light is turned on.
-    time 2 on "Table" on "Chair Side"
+    time 2
+    on "Table"
+    on "Lamp"
 
 This script will:
 
 #. Wait 2 seconds.
 #. Turn on the light named "Table".
 #. Wait 2 seconds.
-#. Turn on the light named "Chair Side".
+#. Turn on the light named "Lamp".
 
-The ``and`` keyword works with ``set``, ``on``, and ``off``. When multiple lights are
-specified this way, the interpreter attempts to change all of the lights at
-once, with (theoretically) no delay between each one.
+The ``and`` keyword works with ``set``, ``on``, and ``off``.
 
 If a script specifies zones, the ``and`` comes after the zone numbers. This
 can be convenient for coordinating a multi-zone light with single-zone
@@ -517,7 +519,7 @@ bulbs. For example, with a multi-zone light named "Strip" and a bulb named
   set "Strip" zone 0 5 and "Table"
 
 Here's an example of simultaneously setting multiple zones on the
-same light:
+same light at the same time:
 
 .. code-block:: lightbulb
 
@@ -791,7 +793,8 @@ Assignment of one variable to another has by-value semantics:
 In this example, `y` has an independent copy of the original value of `x`,
 even after `x` has been given a new value.
 
-.. index:: mathematical expressions, numeric operations, logical expressions
+.. index::  mathematical expressions, numeric operations, logical expressions,
+            and; logical expressions
 
 Mathematical and Logical Expressions
 ====================================
@@ -838,27 +841,40 @@ Note that ``*`` and ``/`` have a higher precedence than ``+`` and ``-``. The
 
 .. code-block:: lightbulb
 
-  assign a {3 + 4 * 5}    # a = 23
-  assign b {(3 + 4) * 5}  # b = 35
+    assign a {3 + 4 * 5}    # a = 23
+    assign b {(3 + 4) * 5}  # b = 35
 
-  if {5 > 1 or 10 < 100 and 20 == 30 }   # true
-    on all
+    if {5 > 1 or 10 < 100 and 20 == 30 }   # true
+        on all
 
-  if {(5 > 1 or 10 < 100) and 20 == 30 } # false
-    off all
+    if {(5 > 1 or 10 < 100) and 20 == 30 } # false
+        off all
 
 Numerical values in a logical context are coerced to booleans, where 0 is false,
 and any other value is true.
+
+.. index:: register; where allowed
 
 Registers can provide values:
 
 .. code-block:: lightbulb
 
-  assign double_brt {brightness * 2}
-  brightness double_brt
-  brightness {double_brt / (2 + 10)}
+    assign double_brt {brightness * 2}
+    brightness double_brt
+    brightness {double_brt / (2 + 10)}
 
-  assign double_brt {double_brt - 10}
+    assign double_brt {double_brt - 10}
+
+However, registers (``hue``, ``saturation``, ``brightness``, ``kelvin``,
+``time`` and ``duration``) can not be used as values for ``zone``, ``row``,
+or ``column``.
+
+.. code-block:: lightbulb
+
+    # None of this will work, because hue and brightness are registers.
+
+    set "Candle" row hue
+    set "Strip" zone brightness
 
 .. index:: routine, subourtine, define; routine
 
@@ -929,27 +945,25 @@ outside of the routine:
 
 .. code-block:: lightbulb
 
-  define do_brightness with x begin
-    assign x 50     # Overwrite local copy.
-    assigh y 50     # Local variable
-    brightness x    # Set brightness to 50.
-  end
+    define do_brightness with x begin
+        assign x 50    # Overwrite the parameter
+        brightness x   # Set brightness to 50.
+    end
 
-  assign x 200
-  assign y 100
-  do_brightness y
-  hue x             # x unchanged: set hue to 200.
-  saturation y      # y unchanged: set saturation to 100.
+    assign y 100
+    do_brightness y    # Call do_brightness with 100
+    saturation y       # Set saturation to 100
 
-Variables assigned outside of a routine are considered global and are
-visible in all scopes:
+    saturation x       # Error: x no longer exists
+
+Variables assigned outside of a routine are considered global and are visible
+in all scopes:
 
 .. code-block:: lightbulb
 
   assign y 100
 
-  define set_global
-  begin
+  define set_global begin
     assign y 50
   end
 
@@ -969,10 +983,11 @@ instance becomes hidden and is inaccessible in the entire body of the routine:
         hue z
     end
 
-    set_hue_plus 25  # Sets hue to 35
+    # Sets hue to 35
+    set_hue_plus 25
 
-    # Global variable z still contains 100.
-    saturation z        # Sets saturation to 100
+    # Global variable z still contains 100; sets saturation to 100
+    saturation z
 
 .. index:: return, function, define; function
 
@@ -986,7 +1001,7 @@ For example:
 
 .. code-block:: lightbulb
 
-    define plus with x begin
+    define increment with x begin
         return {x + 1}
     end
 
@@ -1025,11 +1040,10 @@ declarations. As noted above, the parameters are passed by value:
 
 .. index:: conditionals, if, else
 
-
 Conditionals
 ============
 A conditional consists of the ``if`` keyword, followed by an expression and
-one or more commands. It can also have an ``else`` clause:
+one or more commands. It can also have one or more ``else`` clauses:
 
 .. code-block:: lightbulb
 
@@ -1048,7 +1062,16 @@ one or more commands. It can also have an ``else`` clause:
      off all
   end
 
-.. index:: loops, repeat, repeat; infinite loop, iteration
+  if {x >= 5} begin
+     on all
+     hue 120 set all
+  end else if {x < 0}
+     off all
+  else begin
+     saturation 25
+  end
+
+.. index:: loops, repeat, repeat; infinite loop, iteration, while
 
 Repeat Loops
 ============
@@ -1066,7 +1089,7 @@ Thoretically, this loop will run forever. However, the job control for the VM
 is designed to support graceful cutoff of a script's execution. For ambient
 interior lighting, this is expected to be a common use case.
 
-Use `repeat while` for a loop based on a logical condition:
+Use ``repeat`` ``while`` for a loop based on a logical condition:
 
 .. code-block:: lightbulb
 
@@ -1171,7 +1194,7 @@ body of the loop.
     end
 
 If you want to control the number of iterations dynamically, you can use a
-`repeat while` construct.
+``repeat`` ``while`` construct.
 
 .. index:: iteration by light, repeat; for every light
 
