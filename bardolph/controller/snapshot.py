@@ -162,26 +162,30 @@ class TextSnapshot(Snapshot):
         self.append('\n')
 
     @injection.inject(LightSet)
-    def _add_sets(self, light_set):
+    def _add_sets(self, filter, light_set):
         self._add_set(
             'Groups', light_set.get_group_names(),
-            light_set.get_group_lights)
+            light_set.get_group_lights,
+            filter)
         self._add_set(
             'Locations', light_set.get_location_names(),
-            light_set.get_location_lights)
+            light_set.get_location_lights,
+            filter)
 
-    def _add_set(self, heading, names, get_fn):
+    def _add_set(self, heading, set_names, get_fn, filter=None):
         self.append('\n{}\n'.format(heading))
         self.append('-' * 15)
         self._nl()
-        for name in names:
-            self.append('{}\n'.format(name))
-            for light in get_fn(name):
-                self.append('   {}\n'.format(light))
+        for set_name in set_names:
+            light_names = get_fn(set_name)
+            if filter is None or filter in light_names:
+                self.append('{}\n'.format(set_name))
+                for light_name in light_names:
+                    self.append('    {}\n'.format(light_name))
 
-    def generate(self, name):
-        if super().generate(name):
-            self._add_sets()
+    def generate(self, filter):
+        if super().generate(filter):
+            self._add_sets(filter)
         return self
 
     def start_light(self, light):
@@ -212,9 +216,10 @@ class TextSnapshot(Snapshot):
         self._nl()
 
     def candle(self, light):
-        mat = light.get_matrix()
-        for row in range(0, 5):
-            for col in range(0, 5):
+        candle_matrix = light.get_matrix()
+        mat = candle_matrix.matrix
+        for row in range(0, candle_matrix.height):
+            for col in range(0, candle_matrix.width):
                 self._add_field('   {:1d} {:1d}'.format(row, col))
                 self.color(mat[row][col])
                 self._nl()

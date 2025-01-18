@@ -350,6 +350,18 @@ Ctrl/C.
 .. index::
     single: web uninstall
 
+.. index:: installation; upgrade, updating version
+
+Upgrading to the Latest Version
+===============================
+From time to time, the package will be updated with fixes and new features. To
+upgrade to the latest verstion:
+
+.. code-block:: bash
+
+    source bardolph-venv/bin/activate
+    pip install -U bardolph
+
 Uninstalling
 ============
 Uninstall with:
