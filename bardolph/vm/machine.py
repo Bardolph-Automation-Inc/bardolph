@@ -7,6 +7,7 @@ from bardolph.controller.color_matrix import Rect
 from bardolph.controller.get_key import getch
 from bardolph.controller.i_controller import (LightSet, MatrixLight,
                                               MultizoneLight)
+from bardolph.controller.routine import RuntimeRoutine
 from bardolph.controller.units import UnitMode
 from bardolph.lib.i_lib import Clock, TimePattern
 from bardolph.lib.injection import inject, provide
@@ -113,7 +114,8 @@ class Machine:
 
     def run(self, program) -> None:
         loader = Loader()
-        loader.load(program, self._routines)
+        loader.load(program)
+        self._routines = loader.get_routines()
         self._program = loader.get_code()
         self._keep_running = True
 
@@ -318,7 +320,6 @@ class Machine:
 
     def _end_ctx(self) -> None:
         pass
-        # self._call_stack.pop_frame()
 
     def _param(self) -> None:
         """
@@ -340,7 +341,11 @@ class Machine:
         self._call_stack.set_return(self._reg.pc + 1)
         routine_name = inst.param0
         rtn = self._routines.get(routine_name, None)
-        self._reg.pc = rtn.get_address()
+        if isinstance(rtn, RuntimeRoutine):
+            self._reg.result = rtn.invoke(self._call_stack.get_top())
+            self._return()
+        else:
+            self._reg.pc = rtn.get_address()
 
     def _end(self) -> None:
         if self.current_inst.param0 is Operand.MATRIX:

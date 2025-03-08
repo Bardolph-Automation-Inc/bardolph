@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bardolph"
-version = "0.2.3"
+version = "0.2.4"
 description="Simple scripting language for LIFX lights"
 readme = "README.md"
 authors = [{name  = "Al Fontes", email="barolph@fontes.org"}]
@@ -37,6 +37,7 @@ include = [
     "bardolph.fakes",
     "bardolph.lib",
     "bardolph.parser",
+    "bardolph.runtime",
     "bardolph.vm",
     "tests",
     "web"

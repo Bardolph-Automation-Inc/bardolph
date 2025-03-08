@@ -19,9 +19,23 @@ backwards, but for now there's just the latest update.
 In all cases, you can also assume that there were some bug fixes and code
 clean-up, although I don't log most bugs on Github.
 
+March 7, 2025
+=============
+Release: 0.2.4
+
+This release introduces a small collection of mathematical functions. Underlying
+that change is a new subsystem that supports a runtime library and the ability
+to write callable routines in Python.
+
+January 17, 2025
+================
+Release: 0.2.3
+
+This is mostly bug fixes.
+
 January 13, 2025
-===============
-Release: 0.2.1
+================
+Release: 0.2.2
 
 This is the first release that includes documentation for "candle" type bulbs.
 I have been working on that feature for quite a while, but before now I wasn't

@@ -4,7 +4,7 @@
    http://www.bardolph.org
 
 .. index::
-   single: language reference
+    single: language reference
 
 .. _language:
 
@@ -57,10 +57,12 @@ settings to be applied to all of the lights found on the network.
 
 .. index:: register; list
 
+Registers
+---------
 A script sets the color and brightness of the lights, over a given interval,
 by specifying 5 numbers: ``hue``, ``saturation``, ``brightness``, ``kelvin``,
 and ``duration``. During execution, the Bardolph virtual machine sends these
-settings to the lights. These global variables are referred to as *registers*.
+settings to the lights. These global variables are referred to as **registers**.
 
 The value you supply for ``hue`` is an angle expressed in
 in degrees, normally between 0 and 360. The values for ``saturation``
@@ -101,8 +103,8 @@ and ``kelvin``:
 
 .. code-block:: lightbulb
 
-  hue 120 saturation 100 brightness 50 kelvin 2700 set all
-  hue 180 set all
+    hue 120 saturation 100 brightness 50 kelvin 2700 set all
+    hue 180 set all
 
 This script will:
 
@@ -291,7 +293,7 @@ For example:
 
 This code will set the entire bulb's ``hue`` to 220, with the exception of the
 cell at row 1, column 3. Note the large difference in ``brightness``, which
-will makew it easier to distinguish the individual cell if you try this code.
+will make it easier to distinguish the individual cell if you run this code.
 
 When two numbers are given, they are assumed to be a range, which is
 inclusive. For example, `row 2 4` specifies rows 2, 3, and 4.
@@ -853,17 +855,38 @@ Note that ``*`` and ``/`` have a higher precedence than ``+`` and ``-``. The
 Numerical values in a logical context are coerced to booleans, where 0 is false,
 and any other value is true.
 
-.. index:: register; where allowed
+.. index::
+    single: curly braces, when required
 
+.. note:: Curly braces are required wherever a numerical expression involves
+    any kind of an operator and one or more operands. If a single numerical
+    constant, variable, or function call is referenced, the braces are optional.
+
+    .. code-block:: lightbulb
+
+        define square with x begin
+            return {x ^ 2}
+        end
+
+        # These are equivalent.
+        assign x 100
+        assign x {100}              # Optional but allowed.
+        assign x {50 * 2}           # Required.
+        assign x [square 10]        # Not required.
+        assign x {25 * [square 2]}  # Required due to multiplication.
+
+.. index::
+    single: register; as value
+
+Referencing Registers
+---------------------
 Registers can provide values:
 
 .. code-block:: lightbulb
 
-    assign double_brt {brightness * 2}
-    brightness double_brt
-    brightness {double_brt / (2 + 10)}
+    brightness {brightness * 1.1}
 
-    assign double_brt {double_brt - 10}
+    assign double_brt {brightness * 2}
 
 However, registers (``hue``, ``saturation``, ``brightness``, ``kelvin``,
 ``time`` and ``duration``) can not be used as values for ``zone``, ``row``,
@@ -1037,6 +1060,211 @@ declarations. As noted above, the parameters are passed by value:
 
     printf "Set brightness to {:.2f}\n."
         [half_bright [light_brightness "Lamp"] "Top"]
+
+.. index:: mathematical functions
+
+Built-In Mathematical Functions
+-------------------------------
+
+A small number of built-in functions is available for simple mathematical
+operations. They are called with the same syntax utilized by user-defined
+functions. For example:
+
+.. code-block:: lightbulb
+
+    assign brt [round {brightness / 5}]
+
+.. index:: ciel, mathematical functions; ceil
+
+[ceil *x*]
+^^^^^^^^^^
+
+This returns the smallest integer that is greater than or equal to x.
+
++-----------------------+
+|.. centered:: Examples |
++-------------+---------+
+| Call        | Returns |
++=============+=========+
+| [ceil 1.0]  | 1       |
++-------------+---------+
+| [ceil 1.01] | 2       |
++-------------+---------+
+| [ceil -1.5] | 1       |
++-------------+---------+
+
+.. index:: cycle, mathematical functions; cycle
+
+[cycle *theta*]
+^^^^^^^^^^^^^^^
+
+The function normalizes an angle such that the result is between 0
+and 360 degrees. This is useful in an infinite loop where you keep adding or
+subtracting to a value for ``hue``. For example:
+
+.. code-block:: lightbulb
+
+    hue 0
+
+    repeat begin
+        hue [cycle {hue + 120}]
+        set all
+    end
+
+In this example, ``hue`` will be set to 0, 120, and 240. After that, when a
+value of 360 gets passed into the ``cycle`` function, it returns 0, effectively
+restarting the angle. This allows an infinite loop to keep adding to an angle
+with no risk of overflow.
+
++------------------------+
+|.. centered:: Examples  |
++--------------+---------+
+| Call         | Returns |
++==============+=========+
+| [cycle 355]  | 355     |
++--------------+---------+
+| [cycle 365]  | 5       |
++--------------+---------+
+| [cycle -10]  | 350     |
++--------------+---------+
+| [cycle 360]  | 0       |
++--------------+---------+
+| [cycle 3607] | 7       |
++--------------+---------+
+
+.. index:: floor, mathematical functions; floor
+
+[floor *x*]
+^^^^^^^^^^^
+
+This returns the largest integer that is less than or equal to x.
+
++------------------------+
+|.. centered:: Examples  |
++--------------+---------+
+| Call         | Returns |
++==============+=========+
+| [floor 1.0]  | 1       |
++--------------+---------+
+| [floor 2.1]  | 2       |
++--------------+---------+
+| [floor -1.6] | -2      |
++--------------+---------+
+
+.. index:: round, mathematical functions; round
+
+[round *x*]
+^^^^^^^^^^^
+
+Rounds off x to the nearest integer.
+
++------------------------+
+|.. centered:: Examples  |
++--------------+---------+
+| Call         | Returns |
++==============+=========+
+| [round 1.1]  | 1       |
++--------------+---------+
+| [1.5]        | 2       |
++--------------+---------+
+| [round -1.5] | -2      |
++--------------+---------+
+
+.. index:: square root, mathematical functions; square root, sqrt
+
+[sqrt *x*]
+^^^^^^^^^^
+
+This returns the square root of x. If x < 0, an error is sent to the log, and
+the function returns 0.
+
++--------------------------------------------------+
+|.. centered:: Examples                            |
++-----------+---------+----------------------------+
+| Call      | Returns | Notes                      |
++===========+=========+============================+
+| [sqrt 4]  | 2       |                            |
++-----------+---------+----------------------------+
+| [sqrt -9] | 0       | Error message sent to log. |
++-----------+---------+----------------------------+
+
+.. index::
+    single: trigonometric functions
+    single: sine
+    single: mathematical functions; sine
+    single: cosine
+    single: mathematical functions; cosine
+    single: tangent
+    single: mathematical functions; tangent
+
+Trigonometric: [sin *theta*], [cos *theta*], [tan *theta*]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+These are all trigonometric functions. In all cases, theta is an angle
+measured in degrees.
+
++-----------------------+
+|.. centered:: Examples |
++-------------+---------+
+| Call        | Returns |
++=============+=========+
+| [sin 30]    | 0.5     |
++-------------+---------+
+| [cos 30]    | 0.866   |
++-------------+---------+
+| [tan 45]    | 1.0     |
++-------------+---------+
+
+Note that for documentation purposes, the above return values have been
+rounded.
+
+.. index::
+    single: arcsine
+    single: mathematical functions; arcsine
+    single: arccosine
+    single: mathematical functions; arccosine
+    single: arctangent
+    single: mathematical functions; arctangent
+
+Trigonometric: [asin theta], [acos theta], [atan theta]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+These are all trigonometric functions. In all cases, the returned value is an
+angle measured in degrees.
+
++------------------------+
+|.. centered:: Examples  |
++--------------+---------+
+| Call         | Returns |
++==============+=========+
+| [asin 0.5]   | 30      |
++--------------+---------+
+| [acos 0.866] | 30      |
++--------------+---------+
+| [atan 1]     | 45      |
++--------------+---------+
+
+Note that for documentation purposes, the above parameter and return values
+have been rounded.
+
+.. index:: trunc, mathematical functions; trunc
+
+[trunc *x*]
+^^^^^^^^^^^
+
+Truncates the fraction from x.
+
++------------------------+
+|.. centered:: Examples  |
++--------------+---------+
+| Call         | Returns |
++==============+=========+
+| [trunc 1.1]  | 1       |
++--------------+---------+
+| [trunc 1.5]  | 1       |
++--------------+---------+
+| [trunc -1.5] | 1       |
++--------------+---------+
 
 .. index:: conditionals, if, else
 

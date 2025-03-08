@@ -7,7 +7,6 @@ from bardolph.lib.injection import provide
 from bardolph.lib.job_control import JobControl
 
 
-
 class ScriptRunner:
     def __init__(self, test_case):
         self._test_case = test_case
@@ -70,6 +69,19 @@ class ScriptRunner:
             self._test_case.assertEqual(actual, expected)
         else:
             self._test_case.assertAlmostEqual(actual, expected, 5)
+
+    def assert_list_almost_equal(self, list0, list1, precision=1, message=''):
+        self._test_case.assertEqual(len(list0), len(list1), message)
+        iter0 = iter(list0)
+        iter1 = iter(list1)        
+        go = True
+        while go:
+            try:
+                obj0 = next(iter0)
+                obj1 = next(iter1)
+                self._test_case.assertAlmostEqual(obj0, obj1, precision, message)
+            except StopIteration:
+                go = False
 
     def test_code(self, script, lights, expected):
         self.run_script(script)

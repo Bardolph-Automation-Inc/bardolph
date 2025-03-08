@@ -3,8 +3,10 @@
 import argparse
 import logging
 
-from bardolph.controller.routine import Routine
+from bardolph.controller.routine import Routine, RuntimeRoutine
 from bardolph.controller.units import UnitMode
+from bardolph.lib import injection
+from bardolph.lib.injection import inject
 from bardolph.lib.symbol_table import SymbolType
 from bardolph.lib.time_pattern import TimePattern
 from bardolph.parser.code_gen import CodeGen
@@ -15,6 +17,7 @@ from bardolph.parser.lex import Lex
 from bardolph.parser.loop_parser import LoopParser
 from bardolph.parser.matrix_parser import MatrixParser
 from bardolph.parser.token import Token, TokenTypes
+from bardolph.runtime import bardolph_fn, i_runtime, runtime_module
 from bardolph.vm.loader import Loader
 from bardolph.vm.vm_codes import (JumpCondition, OpCode, Operand, Operator,
                                   Register, SetOp)
@@ -56,14 +59,17 @@ class Parser:
         }
         self._token_trace = False
 
-    def parse(self, input_string):
+    def parse(self, input_string) -> bool:
         self._context.clear()
         self._code_gen.clear()
         self._error_output = ''
+        self._load_runtime()
         self._tokens = Lex(input_string).tokens()
         self.next_token()
-        success = self._script()
-        return self._code_gen.program if success else None
+        return self._script()
+
+    def get_program(self):
+        return self._code_gen.program
 
     def parse_file(self, file_name):
         logging.debug('"{}"'.format(file_name))
@@ -83,6 +89,13 @@ class Parser:
     @property
     def current_token(self):
         return self._current_token
+
+    @inject(i_runtime.Runtime)
+    def _load_runtime(self, runtime):
+        for name, fn in runtime.get_fns().items():
+            routine = RuntimeRoutine(name, fn)
+            routine.params = bardolph_fn.params(fn)
+            self._context.add_routine(routine)
 
     def _script(self) -> bool:
         return self._body() and self._eof()
@@ -545,6 +558,9 @@ class Parser:
         self._add_instruction(OpCode.CTX)
         self.next_token()
         for param_name in routine.value.params:
+            if self.current_token == ']':
+                return self.trigger_error(
+                    'Missing parameter {}'.format(param_name))
             if not self._rvalue():
                 return False
             self._add_instruction(OpCode.PARAM, param_name, Register.RESULT)
@@ -723,7 +739,7 @@ def dump_routines(routines):
         print('Return address:', routine.get_return(), '\n')
 
 
-def main():
+def _init_args():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('file', help='name of the script file')
     arg_parser.add_argument(
@@ -732,20 +748,28 @@ def main():
         '-l', '--load', help="use Loader", action='store_true')
     arg_parser.add_argument(
         '-v', '--verbose', help='list routine offsets', action='store_true')
-    args = arg_parser.parse_args()
+    return arg_parser.parse_args()
+
+
+def main():
+    args = _init_args()
+    injection.configure()
+    runtime_module.configure()
 
     logging.basicConfig(
         level=logging.DEBUG,
         format='%(filename)s(%(lineno)d) %(funcName)s(): %(message)s')
     parser = Parser()
-    output_code = parser.parse_file(args.file)
-    if args.load:
-        routines = {}
-        loader = Loader()
-        loader.load(output_code, routines)
-        output_code = loader.get_code()
-    if output_code:
-        print('\nInstructions\n============')
+    if not parser.parse_file(args.file):
+        print("Error compiling: {}".format(parser.get_errors()))
+    else:
+        output_code = parser.get_program()
+        if args.load:
+            loader = Loader()
+            loader.load(output_code)
+            routines = loader.get_routines()
+            output_code = loader.get_code()
+
         inst_num = 0
         for inst in output_code:
             if args.assembly:
@@ -755,8 +779,6 @@ def main():
             inst_num += 1
         if args.verbose and args.load:
             dump_routines(routines)
-    else:
-        print("Error compiling: {}".format(parser.get_errors()))
 
 
 if __name__ == '__main__':

@@ -111,7 +111,7 @@ It implements a simple web page that lists available scripts and provides a
 1:1 mapping betwen a script and a URL. The server is designed to run locally
 on a WiFi network.
 
-For example, if have a machine with the hostname
+For example, if you have a computer with the hostname
 `myserver.local`, you could launch the  `all_on.ls` script by going to
 `http://myserver.local/all-on` with any browser on your WiFi network.
 The benefit here is the ability to launch a script using a simple

@@ -25,15 +25,18 @@ class ScriptJob(Job):
         return new_instance
 
     def load_file(self, file_name):
-        self._program = self._parser.parse_file(file_name)
-        if self._program is None:
-            logging.error(
-                "{}, {}".format(file_name, self._parser.get_errors()))
+        if self._parser.parse_file(file_name):
+            self._program = self._parser.get_program()
+        else:
+            logging.error("{}, {}".format(file_name, self._parser.get_errors()))
+            self._program = []
         return self._program
 
     def load_string(self, input_string):
-        self._program = self._parser.parse(input_string)
-        if self._program is None:
+        if self._parser.parse(input_string):
+            self._program = self._parser.get_program()
+        else:
+            self._program = None
             logging.error(self._parser.get_errors())
         return self._program
 

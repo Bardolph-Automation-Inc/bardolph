@@ -1,4 +1,3 @@
-from collections import deque
 
 from bardolph.vm.vm_codes import LoopVar
 
@@ -55,6 +54,9 @@ class CallStack:
         self._top = StackFrame()
         self._top.constants = constants or {}
 
+    def get_top(self):
+        return self._top
+
     def new_frame(self):
         self._top = StackFrame(self._top)
         return self._top
@@ -95,6 +97,9 @@ class CallStack:
                 return self._top.get_loop_var(identifier)
             return None
         return self._top.get_variable(identifier)
+
+    def get_parameter(self, name):
+        return self._top.get_parameter(name)
 
     def pop_frame(self) -> None:
         self._top = self._top.parent

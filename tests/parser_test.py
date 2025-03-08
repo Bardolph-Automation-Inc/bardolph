@@ -61,7 +61,8 @@ class ParserTest(unittest.TestCase):
             (OpCode.COLOR)
         )
         expected = code_gen.program
-        actual = self.parser.parse(input_string)
+        self.assertTrue(self.parser.parse(input_string))
+        actual = self.parser.get_program()
         self.assertEqual(expected, actual,
                          "Single zone failed: {} {}".format(expected, actual))
 
@@ -77,7 +78,8 @@ class ParserTest(unittest.TestCase):
             (OpCode.COLOR)
         )
         expected = code_gen.program
-        actual = self.parser.parse(input_string)
+        self.assertTrue(self.parser.parse(input_string))
+        actual = self.parser.get_program()
         self.assertEqual(expected, actual,
                          "Multi-zone failed: {} {}".format(expected, actual))
 
@@ -91,7 +93,8 @@ class ParserTest(unittest.TestCase):
             (OpCode.POP, "x")
         )
         expected = code_gen.program
-        actual = self.parser.parse(input_string)
+        self.assertTrue(self.parser.parse(input_string))
+        actual = self.parser.get_program()
         self.assertEqual(expected, actual, "Error with space in expression.")
 
 

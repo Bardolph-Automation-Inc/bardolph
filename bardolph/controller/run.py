@@ -11,6 +11,7 @@ from bardolph.controller import arg_helper
 from bardolph.controller import light_module
 from bardolph.controller import config_values
 from bardolph.controller.script_job import ScriptJob
+from bardolph.runtime import runtime_module
 
 _epilog = """The -n parameter is optional, but if you don't specify it,
 discovery of the lights will take several seconds, and there will
@@ -61,6 +62,7 @@ def main():
     injection.configure()
     init_settings(args)
     light_module.configure()
+    runtime_module.configure()
 
     jobs = job_control.JobControl()
     if args.script is not None:

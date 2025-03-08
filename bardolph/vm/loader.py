@@ -3,17 +3,22 @@
 import argparse
 import logging
 
-from bardolph.controller.routine import Routine
+from bardolph.controller.routine import Routine, RuntimeRoutine
+
 if __name__ == '__main__':
     from bardolph.parser.parse import Parser
 
+from bardolph.lib.injection import inject
+from bardolph.runtime import i_runtime
 from bardolph.vm.instruction import Instruction
 from bardolph.vm.vm_codes import JumpCondition, OpCode
+
 
 class Loader:
     def __init__(self):
         self._main_segment = []
         self._routine_segment = []
+        self._routines = {}
         self._iter = None
 
     def _next_inst(self):
@@ -25,21 +30,27 @@ class Loader:
             self._iter = None
             return None
 
-    def load(self, instructions, routines):
-        """ Upon completion routines will be populated as a dictionary
-        of Routine objects, keyed on routine name. """
+    @inject(i_runtime.Runtime)
+    def load(self, instructions, runtime):
         self._main_segment.clear()
         self._routine_segment.clear()
+        self._routines.clear()
+        self._load_runtime()
         if instructions is not None:
             self._iter = iter(instructions)
             inst = self._next_inst()
             while inst is not None:
                 if inst.op_code is OpCode.ROUTINE:
                     rtn = self._load_routine(inst)
-                    routines[rtn.name] = rtn
+                    self._routines[rtn.name] = rtn
                 else:
                     self._main_segment.append(inst)
                 inst = self._next_inst()
+
+    @inject(i_runtime.Runtime)
+    def _load_runtime(self, runtime):
+        for name, fn in runtime.get_fns().items():
+            self._routines[name] = RuntimeRoutine(name, fn)
 
     def _load_routine(self, current_inst):
         routine_name = current_inst.param0
@@ -66,6 +77,9 @@ class Loader:
         ret_value.extend(self._main_segment)
         return ret_value
 
+    def get_routines(self):
+        return self._routines
+
 
 def main():
     arg_parser = argparse.ArgumentParser()
@@ -80,8 +94,7 @@ def main():
     parser_code = parser.parse_file(args.file)
 
     loader = Loader()
-    routines = {}
-    loader.load(parser_code, routines)
+    loader.load(parser_code)
     if loader.get_code() is not None:
         inst_num = 0
         for inst in loader.get_code():

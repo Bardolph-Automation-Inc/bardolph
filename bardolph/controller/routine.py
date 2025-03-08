@@ -13,6 +13,10 @@ class Routine:
     def params(self):
         return self._params
 
+    @params.setter
+    def params(self, params):
+        self._params = params
+
     def add_param(self, name):
         self._params.append(name)
 
@@ -31,3 +35,11 @@ class Routine:
     def get_return(self):
         return self._return
 
+
+class RuntimeRoutine(Routine):
+    def __init__(self, name, fn):
+        super().__init__(name)
+        self._fn = fn
+
+    def invoke(self, stack_frame):
+        return self._fn(stack_frame)

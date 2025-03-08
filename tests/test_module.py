@@ -1,9 +1,11 @@
+
 import logging
 
 from bardolph.controller import light_set
 from bardolph.fakes import fake_clock, fake_light_api
 from bardolph.lib import (i_lib, injection, log_config, object_list_output,
                           settings, std_out_output)
+from bardolph.runtime import runtime_module
 
 
 def configure(small_set=False):
@@ -23,6 +25,7 @@ def configure(small_set=False):
         fake_light_api.configure()
     light_set.configure()
     std_out_output.configure()
+    runtime_module.configure()
 
 
 def using_small_set():

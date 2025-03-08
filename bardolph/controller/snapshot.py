@@ -122,10 +122,10 @@ class InstructionSnapshot(Snapshot):
         script_snapshot = ScriptSnapshot()
         script_snapshot.generate(name)
         parser = Parser()
-        code = parser.parse(script_snapshot.text)
-        for inst in code:
-            self.append(str(inst) + '\n')
-        return self
+        if parser.parse(script_snapshot.text):
+            for inst in parser.get_program():
+                self.append(str(inst) + '\n')
+            return self
 
 
 class NameSnapshot(Snapshot):
