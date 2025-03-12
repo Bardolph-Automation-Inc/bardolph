@@ -1,10 +1,7 @@
 import logging
 import time
 
-from lifxlan.errors import WorkflowException
-
 from bardolph.controller import i_controller
-
 
 _MAX_TRIES = 3
 
@@ -34,7 +31,7 @@ class Light(i_controller.Light):
         return self._location
 
     def get_age(self) -> float:
-        #seconds
+        # seconds
         return time.time() - self._birth
 
     def get_color(self):
@@ -50,4 +47,3 @@ class Light(i_controller.Light):
 
     def set_power(self, *_):
         logging.warning("controller.Light: set_power() not implemented.")
-

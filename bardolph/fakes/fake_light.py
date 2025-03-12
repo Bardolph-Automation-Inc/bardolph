@@ -1,21 +1,21 @@
 import logging
 
 from bardolph.controller import i_controller
-from bardolph.controller.candle_color_matrix import CandleColorMatrix
+from bardolph.controller.color_matrix import ColorMatrix
 from bardolph.fakes.activity_monitor import Action, ActivityMonitor
 from bardolph.lib.param_helper import (param_16, param_32, param_bool,
                                        param_color)
 
 
 class Light(i_controller.Light):
-    def __init__(self, name, group, location, color=None):
+    def __init__(self, name, group, location):
         super().__init__()
         self._age = 0.0
         self._name = name
         self._group = group
         self._location = location
         self._power = 0
-        self._color = color or [0] * 4
+        self._color = [0, 0, 0, 0]
 
         self._set_color = None
         self._quiet = False
@@ -75,9 +75,12 @@ class Light(i_controller.Light):
 
 
 class MultizoneLight(Light, i_controller.MultizoneLight):
-    def __init__(self, name, group, location, color=None, num_zones=16):
-        super().__init__(name, group, location, color)
-        self._zone_colors = [color or [0] * 4] * num_zones
+    def __init__(self, name, group, location, num_zones=16):
+        super().__init__(name, group, location)
+        self._zone_colors = [[0, 0, 0, 0] for _ in range(0, num_zones)]
+
+    def get_num_zones(self) -> int:
+        return 16
 
     def get_zone_colors(self, start_index=0, end_index=16):
         start_index = param_16(start_index)
@@ -100,23 +103,28 @@ class MultizoneLight(Light, i_controller.MultizoneLight):
 
 
 class MatrixLight(Light, i_controller.MatrixLight):
-    def __init__(self, name, group, location, color=None):
-        super().__init__(name, group, location, color)
-        if color is None:
-            color = [-1] * 4
-        def all_color(color):
+    def __init__(self, name, group, location, height=6, width=5):
+        super().__init__(name, group, location)
+        self._height = height
+        self._width = width
+        def all_zero():
             while True:
-                color = [c + 1 for c in color]
-                yield color
-        self._matrix = CandleColorMatrix.new_from_iterable(all_color(color))
+                yield [0, 0, 0, 0]
+        self._matrix = ColorMatrix.new_from_iterable(height, width, all_zero())
 
-    def get_matrix(self):
-        self._monitor.log_call(Action.GET_MATRIX)
-        return self._matrix
+    def get_height(self) -> int:
+        return self._height
 
-    def set_matrix(self, matrix, duration) -> None:
+    def get_width(self) -> int:
+        return self._width
+
+    def set_matrix(self, matrix, duration=0) -> None:
         logging.info(
             'Set matrix for "{}", duration {}'.format(self._name, duration))
         logging.info('\n' + str(matrix))
         self._matrix.set_from_matrix(matrix)
         self._monitor.log_call(Action.SET_MATRIX, matrix, duration)
+
+    def get_matrix(self):
+        self._monitor.log_call(Action.GET_MATRIX)
+        return self._matrix

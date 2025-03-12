@@ -18,9 +18,8 @@ class Rect:
 
 class ColorMatrix:
     """
-    Generalized matrix for colors, with no specific width or height. Each cell
-    is expected to contain a color, represented as a list of 4 unsigned, 16-bit
-    integers.
+    Generalized matrix for colors. Each cell is expected to contain a color,
+    represented as a list of 4 unsigned, 16-bit integers.
 
     When a rectangle is used as a parameter to a method, the coordinates are
     inclusive, starting at zero. For example, a rectangle covering an entire
@@ -28,10 +27,11 @@ class ColorMatrix:
     """
 
     def __init__(self, height, width):
-        """ Set all cells to zero. """
-        self._width = width
         self._height = height
-        self._mat = [[0] * width] * height
+        self._width = width
+        self._mat = []
+        for _ in range(0, height):
+            self._mat.append([[0, 0, 0, 0] for __ in range(0, width)])
 
     def __str__(self):
         ret_value = ''
@@ -49,11 +49,11 @@ class ColorMatrix:
         return ret_value
 
     @staticmethod
-    def new_from_iterable(srce, height, width):
+    def new_from_iterable(height, width, srce):
         return ColorMatrix(height, width).set_from_iterable(srce)
 
     @staticmethod
-    def new_from_constant(height, width, init_value=None):
+    def new_from_constant(height, width, init_value):
         return ColorMatrix(height, width).set_from_constant(init_value)
 
     @property
@@ -69,28 +69,26 @@ class ColorMatrix:
         return self._mat
 
     def set_from_iterable(self, srce):
-        """ Initialize from one-dimensional, list, tuple, generator, etc. """
-        self._mat.clear()
         it = iter(srce)
-        for row_count in range(0, self.height):
-            row = []
-            for column_count in range(0, self.width):
-                row.append(next(it))
-            self._mat.append(row)
+        for row in range(0, self.height):
+            for col in range(0, self.width):
+                self._mat[row][col] = next(it)
         return self
 
     def set_from_constant(self, value):
-        """ Set every elmement to the same color. """
-        self._mat.clear()
-        for _ in range(0, self.height):
-            self._mat.append([value] * self.width)
+        for row in range(0, self._height):
+            for col in range(0, self._width):
+                self._mat[row][col] = value
         return self
 
     def set_from_matrix(self, srce):
-        self._width = srce.width
-        self._height = srce.height
-        self._mat = copy.deepcopy(srce.matrix)
+        for row in range(0, self._height):
+            for col in range(0, self._width):
+                self._mat[row][col] = srce.matrix[row][col]
         return self
+
+    def get_colors(self):
+        return [self._standardize_raw(param) for param in self.as_list()]
 
     def find_replace(self, to_find, replacement):
         for row in range(0, self.height):
@@ -98,37 +96,27 @@ class ColorMatrix:
                 if self._mat[row][column] == to_find:
                     self._mat[row][column] = replacement.copy()
 
-    def apply_transform(self, fn):
-        for row in range(0, self.height):
-            for column in range(0, self.width):
-                value = self._mat[row][column]
-                if value is not None:
-                    self._mat[row][column] = fn(value)
-
     def as_list(self):
         return [self._mat[row][column]
                 for row in range(0, self.height)
                 for column in range(0, self.width)]
 
     def overlay_color(self, rect: Rect, color) -> None:
-        """ Set the cells within rect to color. """
+        # Set the cells within rect to color.
+        self._normalize_rect(rect)
         for row in range(rect.top, rect.bottom + 1):
             for column in range(rect.left, rect.right + 1):
                 self._mat[row][column] = color
 
-    def overlay_submat(self, rect: Rect, srce) -> None:
-        """
-        Set the cells within the corners to the values in the corresponding
-        cells in srce. The content of corners is 4 elements containing first and
-        last row, followed by first and last column.
-        """
+    def overlay_section(self, rect: Rect, srce) -> None:
+        # Copy the contents of srce into the section.
+        self._normalize_rect(rect)
         for row in range(rect.top, rect.bottom + 1):
             for column in range(rect.left, rect.right + 1):
                 self._mat[row][column] = srce[row][column]
 
     @staticmethod
     def _standardize_raw(color):
-        # Keep all elements within the range expected by the bulb.
         if color is None:
             return None
         raw_color = []
@@ -141,3 +129,26 @@ class ColorMatrix:
                 param = round(param)
             raw_color.append(param)
         return raw_color
+
+    def _normalize_rect(self, rect) -> None:
+        """
+        Fill in default values if necessary.
+        """
+        match rect.top is None, rect.bottom is None:
+            case True, True:
+                rect.top = 0
+                rect.bottom = self.height - 1
+            case True, False:
+                rect.top = rect.bottom
+            case False, True:
+                rect.bottom = rect.top
+
+        match rect.left is None, rect.right is None:
+            case True, True:
+                rect.left = 0
+                rect.right = self.width - 1
+            case True, False:
+                rect.left = rect.right
+            case False, True:
+                rect.right = rect.left
+        return rect

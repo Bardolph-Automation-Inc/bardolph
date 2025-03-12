@@ -1,8 +1,7 @@
-import copy
 import logging
 
 from bardolph.controller import units
-from bardolph.controller.candle_color_matrix import CandleColorMatrix
+from bardolph.controller.color_matrix import ColorMatrix
 from bardolph.controller.color_matrix import Rect
 from bardolph.controller.get_key import getch
 from bardolph.controller.i_controller import (LightSet, MatrixLight,
@@ -382,8 +381,22 @@ class Machine:
     def _end_loop(self) -> None:
         self._call_stack.exit_loop()
 
-    def _matrix(self) -> None:
-        self._reg.matrix = CandleColorMatrix.new_from_constant()
+    @inject(LightSet)
+    def _matrix(self, light_set) -> None:
+        name = self._reg.name
+        light = light_set.get_light(name)
+        if light is None:
+            Machine._report_missing(name)
+            height = width = 255
+        elif not isinstance(light, MatrixLight):
+            logging.error(
+                'Light "{}" is not matrix type (Candle, Tube, etc.)'
+                .format(name))
+            height = width = 255
+        else:
+            height = light.get_height()
+            width = light.get_width()
+        self._reg.matrix = ColorMatrix.new_from_constant(height, width, None)
 
     def _nop(self) -> None: pass
 
@@ -467,7 +480,7 @@ class Machine:
         if self._reg.unit_mode is UnitMode.RAW:
             return srce
         xform_fn = units.convert_fn(self._reg.unit_mode, UnitMode.RAW)
-        return CandleColorMatrix.new_from_iterable(
+        return ColorMatrix.new_from_iterable(srce.height, srce.width,
             (xform_fn(color) for color in srce.get_colors()))
 
     def _assure_units(self, color):
@@ -485,8 +498,8 @@ class Machine:
             return srce
 
         xform_fn = units.convert_fn(UnitMode.RAW, self._reg.unit_mode)
-        return CandleColorMatrix.new_from_iterable(
-            (xform_fn(color) for color in srce.as_list()))
+        return ColorMatrix.new_from_iterable(
+            (xform_fn(color) for color in srce.as_list()), 6, 5)
 
     def _move(self) -> None:
         """

@@ -166,3 +166,66 @@ Uninstall with:
 This will work whether you installed a downloaded package, or built and
 installed a package locally. If you are using a virtual environment, you need
 to activate it before runnning the uninstall command.
+
+.. index:: lifxlan Library, lifxlan; installation, lifxlan; latest version
+
+.. _lifxlan_setup:
+
+Installing the lifxlan Library
+==============================
+If you are successfully acccessing all of your devices, you can skip this
+section. However if you have a Tube device which is not being discovered, the
+following information may be helpful.
+
+All access by Bardolph to the LIFX devices is handled through the lifxlan
+library. The source code for that library is on Github, at
+https://github.com/mclarkk/lifxlan. A packaged version of the library is
+available on PyPi at https://pypi.org/project/lifxlan/. If you install
+Bardolph using *pip*, it will automatically install the *lifxlan* package from
+PyPi as well.
+
+However, that library contains an internal list of known products, which can be
+out of date. Whenever LIFX releases a new product, there is a lag before the
+lifxlan library is updated with that product's specifications. This means that a
+fairly new type of device may not be discovered.
+
+For example, as of the time of
+this writing (March, 2025), the version of *lifxlan* on PyPi does not recognize
+Tube devices, such as the
+`Tube E26 <https://www.lifx.com/products/tube-smart-light>`_. If a script
+attempts to access such a device under these conditions, there will be an
+error message about a light not being found, and the script will not work.
+
+In this situation you can probably fix the problem by downloading the latest
+source code for *lifxlan* and installing the library from that code.
+
+To do so, first activate your virtual environment. For example:
+
+.. code-block:: bash
+
+    source bardolph-venv/bin/activate
+
+Then, with the virtual environment active, run the following command to remove
+the PyPi version of the package:
+
+.. code-block:: bash
+
+    pip uninstall lifxlan
+
+Finally, with the virtual environment still active, run the following commands
+from your home directory to install from the latest source code:
+
+.. code-block:: bash
+
+    git clone https://github.com/mclarkk/lifxlan
+    cd lifxlan
+    python setup.py install
+
+When this is complete, you should be able to see devices that were previously
+undiscovered.
+
+Note that there may still be devices that are missing. The definitive list is
+available at https://github.com/LIFX/products/blob/master/products.json. If
+your device is on that list, but still not handled by *lifxlan*, you may want
+to try running generate_products_file.py, although I haven't tried it and
+don't recommend it.

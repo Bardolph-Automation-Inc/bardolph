@@ -362,6 +362,13 @@ upgrade to the latest verstion:
     source bardolph-venv/bin/activate
     pip install -U bardolph
 
+Upgrading lifxlan to the Latest Version
+=======================================
+If you have a newly-released device that hasn't been on the market for very
+long, you may need to install the *lifxlan* library from the latest source
+code. For more information, see :ref:`lifxlan_setup` in the basic installation
+instructions.
+
 Uninstalling
 ============
 Uninstall with:

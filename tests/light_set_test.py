@@ -31,10 +31,10 @@ class LightSetTest(unittest.TestCase):
 
         self._color = [1, 2, 3, 4]
         fake_light_api.using([
-            (self._light0, self._group0, self._loc0, self._color),
-            (self._light1, self._group0, self._loc1, self._color),
-            (self._light2, self._group1, self._loc0, self._color),
-            (self._light3, self._group1, self._loc1, self._color)
+            (self._light0, self._group0, self._loc0),
+            (self._light1, self._group0, self._loc1),
+            (self._light2, self._group1, self._loc0),
+            (self._light3, self._group1, self._loc1)
         ]).configure()
         light_set.configure()
 
@@ -72,10 +72,10 @@ class LightSetTest(unittest.TestCase):
         tested_set.discover()
 
         fake_light_api.using([
-            (self._light0, self._group0, self._loc0, self._color),
-            (self._light1, self._group0, self._loc1, self._color),
-            (self._light2, self._group0, self._loc1, self._color),
-            (self._light3, self._group2, self._loc0, self._color)
+            (self._light0, self._group0, self._loc0),
+            (self._light1, self._group0, self._loc1),
+            (self._light2, self._group0, self._loc1),
+            (self._light3, self._group2, self._loc0)
         ]).configure()
         tested_set.refresh()
 

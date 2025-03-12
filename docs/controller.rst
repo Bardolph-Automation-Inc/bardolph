@@ -96,8 +96,6 @@ in an assembly language, is represented by Enum `bardolph.vm.OpCode`.
 This section covers some of the instructions that I needed to document for
 myself while working on the VM.
 
-.. index:: VM; move instruction, VM; moveq instruction
-
 Move - `move` and `moveq`
 -------------------------
 These are the basic instructions for moving data between registers and
@@ -139,8 +137,6 @@ the symbol isn't in either dictionary, an error has occurred. The parser
 should catch that error and report it; if it doesn't, there's a bug in
 the parse code.
 
-.. index:: VM; set instruction
-
 Set Color - `color`
 -------------------
 To execute the `color` command, the VM reads the values from its `hue`,
@@ -150,8 +146,6 @@ is assumed to contain the name of a light. Correspondingly, if `operand`
 contains "group" or "location", the `name` register will be treated as the
 name of a group or location. Lastly, if `operand` contains "all", the VM
 will set all known lights to that color.
-
-.. index:: VM; get instruction
 
 Get Color - `get_color`
 -----------------------
@@ -167,8 +161,6 @@ stored in the registers.
 
 If the "operand" register contains `group` or `location`, then the registers
 receive the arithmetic mean of the lights belonging to that group or location.
-
-.. index:: VM; jump instruction
 
 Jump to Address - `jump`
 ------------------------
@@ -190,8 +182,6 @@ function would `True`.
 * `INDIRECT`: jump unconditionally, but treat `param1` as the name of a variable
     and get the offset by dereferencing that variable.
 
-.. index:: VM; power instruction
-
 Set Power - `power`
 -------------------
 Similar to the `color` instruction, `power` relies on the `operand` and `name`
@@ -203,20 +193,12 @@ mean turn the lights on, and will send 65535 to the lights. As with the `set`
 command, the targetd lights are specified by the content of the `operand`
 register.
 
-.. index:: VM; pause instruction
-
 Pause for Keypress - `pause`
 ----------------------------
 Display a message on the console, and wait for the user to press a key. If they
 press !, the script will continue to run and ignore any subsequent pause
 instructions. Pressing 'q' stops the execution and exits. Any other key resumes
 normal execution of the script.
-
-.. index::
-    single: VM; disc instruction
-    single: VM; discn instruction
-    single: VM; discl instruction
-    single: VM; discp instruction
 
 Discover Lights - `disc`, `discm`
 ---------------------------------
@@ -273,16 +255,12 @@ To iterate within a group:
 To access locations: to iterate locations, use a process similar to the one
 above, but put `location` into the `operand` register.
 
-.. index:: VM; wait instruction
-
 Wait
 ----
 Wait for the given delay to expire. The `time` register can contain
 the delay, expressed in milliseconds. If the `time` register contains
 a time pattern, then the VM idles until the system time matches the
 pattern.
-
-.. index:: VM; variables
 
 Variables
 ---------
@@ -332,8 +310,6 @@ If the currently executing code is not within a routine, the top of
 the call stack will effectively point to the root frame, which
 contains the global variables.
 
-.. index:: VM; macros
-
 Macros
 ------
 A macro is distinguished from a variable as it is resolved at compile time.
@@ -344,8 +320,6 @@ Sequence:
 #. In source code, reach `define` statement for value, which can be a string,
 number, or time pattern.
 #. Save the value of the macro in the call context's globals.
-
-.. index:: VM; routines
 
 Subroutines
 -----------

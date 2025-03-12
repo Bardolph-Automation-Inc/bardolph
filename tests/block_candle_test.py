@@ -48,7 +48,7 @@ class BlockCandleTest(unittest.TestCase):
             d, d, d, d, d,
             d, d, d, d, d
         )
-        runner.check_final_matrix('Candle', expected)
+        runner.check_final_matrix('Candle', 6, 5, expected)
 
     def test_row_only(self):
         script = self._default_code + """
@@ -72,7 +72,7 @@ class BlockCandleTest(unittest.TestCase):
             c, c, c, c, c,
             d, d, d, d, d
         )
-        runner.check_final_matrix('Candle', expected)
+        runner.check_final_matrix('Candle', 6, 5, expected)
 
     def test_all_rows(self):
         script = self._default_code + """
@@ -98,7 +98,7 @@ class BlockCandleTest(unittest.TestCase):
             c, c, c, c, c,
             c, c, c, c, c
         )
-        runner.check_final_matrix('Candle', expected)
+        runner.check_final_matrix('Candle', 6, 5, expected)
 
     def test_column_only(self):
         script = self._default_code + """
@@ -121,7 +121,7 @@ class BlockCandleTest(unittest.TestCase):
             i, i, c, i, i,
             i, i, c, i, i
         )
-        runner.check_final_matrix('Candle', expected)
+        runner.check_final_matrix('Candle', 6, 5, expected)
 
     def test_row_column(self):
         script = self._default_code + """
@@ -149,7 +149,7 @@ class BlockCandleTest(unittest.TestCase):
         )
         runner = ScriptRunner(self)
         runner.run_script(script)
-        runner.check_final_matrix('Candle', expected)
+        runner.check_final_matrix('Candle', 6, 5, expected)
 
     def test_top_down(self):
         script = self._default_code + """
@@ -175,7 +175,7 @@ class BlockCandleTest(unittest.TestCase):
         )
         runner = ScriptRunner(self)
         runner.run_script(script)
-        runner.check_final_matrix('Candle', expected)
+        runner.check_final_matrix('Candle', 6, 5, expected)
 
     def test_simple_loop(self):
         script = self._default_code + """
@@ -201,7 +201,7 @@ class BlockCandleTest(unittest.TestCase):
         )
         runner = ScriptRunner(self)
         runner.run_script(script)
-        runner.check_final_matrix('Candle', expected)
+        runner.check_final_matrix('Candle', 6, 5, expected)
 
     def test_loop_break(self):
         script = self._default_code + """
@@ -229,7 +229,7 @@ class BlockCandleTest(unittest.TestCase):
         )
         runner = ScriptRunner(self)
         runner.run_script(script)
-        runner.check_final_matrix('Candle', expected)
+        runner.check_final_matrix('Candle', 6, 5, expected)
 
     def test_routine_call(self):
         script = self._default_code + """
@@ -256,7 +256,7 @@ class BlockCandleTest(unittest.TestCase):
         )
         runner = ScriptRunner(self)
         runner.run_script(script)
-        runner.check_final_matrix('Candle', expected)
+        runner.check_final_matrix('Candle', 6, 5, expected)
 
 
 if __name__ == '__main__':

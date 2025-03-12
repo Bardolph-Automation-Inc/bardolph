@@ -55,7 +55,7 @@ Note that the ``set`` command is what actually causes the lights to adopt the
 new settings and change their colors. The ``all`` parameter causes the given
 settings to be applied to all of the lights found on the network.
 
-.. index:: register; list
+.. index:: register; list of
 
 Registers
 ---------
@@ -231,31 +231,57 @@ the log, and the light will not be accessed. Unlike Python ranges, the
 numbers are inclusive. For example, `zone 1 3` would include zones 1, 2,
 and 3.
 
-.. index:: candle lights, lights; candle, row, column, default
+.. index::
+    single: candle lights
+    single: lights; candle
+    single: tube lights
+    single: lights; tube
+    single: matrix lights
+    single: lights; matrix
+    pair: row; column
+    single: default
 
-Candle Bulbs
-============
+Matrix (Candle and Tube) Bulbs
+==============================
 
-This section covers the use of Bardolph to control LIFX "Candle" lights.
-Note that it applies only to candle lights that are "Polychrome" and capable
-of changing color. Scripts for "White to Warm" candle lights are basically
-the same as those for any other bulb model.
+This section covers the use of Bardolph to control LIFX "Candle" and "Tube"
+lights. Note that it applies only to lights that are "Polychrome"
+and capable of changing color. Scripts for "White to Warm" lights are
+basically the same as those for any other bulb model.
 
-This is an experimental feature, but it does seem to work. It has been
-tested with the
+This has been tested with the
 `Candle E12 <https://www.lifx.com/products/candle-smart-light-e12>`_
-bulb. When I have a chance to get some of the other "Polychrome" lights, such
-as the so-called "Tube E26", I'll try to test and fix the implementation for
+and the
+`Tube E26 <https://www.lifx.com/products/tube-smart-light>`_
+bulbs. If some of the other "Polychrome" devices, such as the ceiling lights,
+support the published API, I'll try to test and fix the implementation for
 those, as well.
 
+.. note:: As of the time of this writing, (March, 2025), the version of the
+    `lifxlan Python library <https://github.com/mclarkk/lifxlan>`_
+    that is
+    `hosted on pypi.org <https://pypi.org/project/lifxlan/>`_
+    does not yet support the Tube product. If you are attempting to access a
+    Tube device and get "Light not found" error messages, this may be the
+    reason.
+
+    To access that kind of light, you will need to download the lifxlan source
+    code from Github and install itfrom the command line. For more information,
+    see :ref:`lifxlan_setup` in the basic installation instructions.
+
 The underlying API for these devices is covered in the
-`LIFX documentaion <https://lan.developer.lifx.com/docs/candle>`_. The bulb
-is divided vertically into 6 rows. Going around the axis of the bulb, there are
-5 columns. Note that row 5, which is at the tip of the bulb, has only 2 LED'S,
+`LIFX documentaion <https://lan.developer.lifx.com/docs/candle>`_. A Candle bulb
+is divided vertically into 6 rows, while a Tube bulb has 11 rows. Going around
+the axis of either type of bulb, there are 5 columns.
+
+Note that row 0, which is at the tip of the bulb, has only 2 LED'S,
 which occupy columns 0 and 1. You can still assign values to the other cells
 in that row; they are simply ignored.
 
-The diagram below illustrates how the areas of the bulb are addressed:
+Candle Layout
+-------------
+
+The diagram below illustrates how the areas of a Candle bulb are addressed:
 
 .. figure:: candle_diagram.png
     :align: center
@@ -268,12 +294,26 @@ Values for ``row`` must be between 0 and 5, and ``column`` must be between
 there's no obvious way to know where the LED's centered on column 0 are
 positioned.
 
+Tube Layout
+-----------
+
+This diagram below illustrates how the areas of a Tube are addressed:
+
+.. figure:: tube_diagram.png
+    :align: center
+    :figwidth: 75 %
+
+    Tube Bulb Layout
+
+In this case, values for ``row`` can be between 0 and 10, but ``column`` must
+still be between 0 and 4.
+
 .. note:: Given the physical construction of these bulbs, it may be difficult to
     pick out individual cells. As far as I can tell, because the LED array is
-    contained in a white, cone-shaped diffuser, the light from the various LED's
-    tends to get blended, which I believe is intentional.
+    contained in a white diffuser, the light from the various LED's tends to get
+    blended, which I believe is intentional.
 
-In order to set a candle bulb's color you need to:
+In order to set a matrix bulb's color you need to:
 
 #. Set the default color.
 #. Set the colors for the desired parts of the bulb.
@@ -303,10 +343,10 @@ value. For example:
 
 .. code-block:: lightbulb
 
-    set "Candle" row 1 1
+    set "Tube" row 1 1
 
     # Equivalent:
-    set "Candle" row 1
+    set "Tube" row 1
 
 If you supply only ``column`` or only ``row``, the full range (0 through 5
 for ``row``, 0 through 4 for ``column``) of the unspecified parameter is
@@ -331,9 +371,9 @@ required:
     # Equivalent:
     set "Candle" column 3 4 row 1 2
 
-.. index:: candle full syntax
+.. index:: candle full syntax, tube full syntax, candle full syntax
 
-Full Syntax for Candle Bulbs
+Full Syntax for Matrix Bulbs
 ----------------------------
 In the examples so far, each ``set`` contains a single command. This is limiting
 because you can set only one area of the bulb's body section. A more powerful
@@ -372,7 +412,7 @@ some examples:
 
     # Set the entire bulb to the same color.
     hue 180
-    set "Candle"
+    set "Tube"
 
 
     # Prepare for subsequent changbes by setting the default.
@@ -383,23 +423,23 @@ some examples:
     # Set column 3 in all rows to the same color. The rest of the bulb gets
     # the default.
     hue 190
-    set "Candle" begin
+    set "Tube" begin
         stage column 3
     end
 
     # Set a single element of the bulb.
-    set "Candle" begin
+    set "Tube" begin
         hue 200
-        stage row 2 column 3
+        stage row 8 column 3
     end
 
     # Set a square area and the tip
     hue 210
-    set "Candle" begin
+    set "Tube" begin
         stage row 1 2 column 3 4
 
         # tip
-        stage row 5
+        stage row 0
     end
 
 As another example, here is a script that gives the bulb a gradient of
@@ -1151,6 +1191,17 @@ This returns the largest integer that is less than or equal to x.
 | [floor -1.6] | -2      |
 +--------------+---------+
 
+.. index:: rnd, random number, mathematical functions; random number
+
+[random min max]
+^^^^^^^^^^^^^^^^
+
+Return an random integer *n* such that min ≤ n ≤ max. For example:
+
+.. code-block:: lightbulb
+
+    brightness [random 1 100]
+
 .. index:: round, mathematical functions; round
 
 [round *x*]
@@ -1190,12 +1241,12 @@ the function returns 0.
 
 .. index::
     single: trigonometric functions
-    single: sine
-    single: mathematical functions; sine
-    single: cosine
-    single: mathematical functions; cosine
-    single: tangent
-    single: mathematical functions; tangent
+    single: sin (sine)
+    single: mathematical functions; sin (sine)
+    single: cos (cosine)
+    single: mathematical functions; cos (cosine)
+    single: tan (tangent)
+    single: mathematical functions; tan (tangent)
 
 Trigonometric: [sin *theta*], [cos *theta*], [tan *theta*]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1219,12 +1270,12 @@ Note that for documentation purposes, the above return values have been
 rounded.
 
 .. index::
-    single: arcsine
-    single: mathematical functions; arcsine
-    single: arccosine
-    single: mathematical functions; arccosine
-    single: arctangent
-    single: mathematical functions; arctangent
+    single: asin (arcsine)
+    single: mathematical functions; asin (arcsine)
+    single: acos (arccosine)
+    single: mathematical functions; acos (arccosine)
+    single: atan (arctangent)
+    single: mathematical functions; atan (arctangent)
 
 Trigonometric: [asin theta], [acos theta], [atan theta]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

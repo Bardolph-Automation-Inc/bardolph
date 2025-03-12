@@ -19,6 +19,20 @@ backwards, but for now there's just the latest update.
 In all cases, you can also assume that there were some bug fixes and code
 clean-up, although I don't log most bugs on Github.
 
+March 12, 2025
+==============
+Release: 0.2.6
+
+Add support and documentation for Tube lights
+(https://www.lifx.com/products/tube-smart-light). Add a function to generate
+random numbers.
+
+March 8, 2025
+=============
+Release: 0.2.5
+
+Quick bug fix.
+
 March 7, 2025
 =============
 Release: 0.2.4

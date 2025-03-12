@@ -38,10 +38,13 @@ class Light:
 
 
 class MultizoneLight(Light):
+    def get_num_zones(self) -> int: pass
     def get_zone_colors(self, first_zone, last_zone): pass
     def set_zone_colors(self, first_zone, last_zone, color, duration): pass
 
 
 class MatrixLight(Light):
+    def get_height(self) -> int: pass
+    def get_width(self) -> int: pass
     def get_matrix(self): pass
     def set_matrix(self, matrix, duration): pass

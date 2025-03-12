@@ -34,6 +34,7 @@ class Register(Enum):
         upper = name.upper()
         return getattr(Register, upper) if hasattr(Register, upper) else None
 
+
 class OpCode(Enum):
     BREAKPOINT = auto()
     COLOR = auto()
@@ -68,11 +69,13 @@ class OpCode(Enum):
     TIME_PATTERN = auto()
     WAIT = auto()
 
+
 class JumpCondition(Enum):
     ALWAYS = auto()
     IF_FALSE = auto()
     IF_TRUE = auto()
     INDIRECT = auto()
+
 
 class LoopVar(Enum):
     # These variables are internal and invisible to the script code.
@@ -82,6 +85,7 @@ class LoopVar(Enum):
     FIRST = auto()
     INCR = auto()
     LAST = auto()
+
 
 class Operator(Enum):
     ADD = auto()
@@ -114,12 +118,14 @@ class Operand(Enum):
     MZ_LIGHT = auto()
     NULL = auto()
 
+
 class IoOp(Enum):
     LITERAL = auto()
     PRINT = auto()
     PRINT_END = auto()
     PRINTF = auto()
     REGISTER = auto()
+
 
 class SetOp(Enum):
     """ Used with TimePattern """

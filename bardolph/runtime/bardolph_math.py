@@ -1,7 +1,10 @@
 import builtins
 import math
+import random as py_random
 
 from bardolph.runtime.bardolph_fn import builtin
+
+py_random.seed()
 
 
 @builtin
@@ -51,3 +54,7 @@ def atan(x):
 @builtin
 def cycle(theta):
     return theta if theta >= 0.0 and theta < 360.0 else theta % 360.0
+
+@builtin
+def random(min, max):
+    return py_random.randrange(min, max)

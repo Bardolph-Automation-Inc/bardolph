@@ -45,14 +45,12 @@ class FakeLightApi(i_controller.LightApi):
     def _build_light(self, spec):
         match spec:
             case name, group, location:
-                return fake_light.Light(name, group, location, [0] * 4)
-            case name, group, location, color:
-                return fake_light.Light(name, group, location, color)
-            case name, group, location, color, LightType.MATRIX:
-                return fake_light.MatrixLight(name, group, location, color)
-            case name, group, location, color, LightType.MULTI_ZONE, zones:
-                return fake_light.MultizoneLight(
-                    name, group, location, color, zones)
+                return fake_light.Light(name, group, location)
+            case name, group, location, LightType.MATRIX, height, width:
+                return fake_light.MatrixLight(
+                    name, group, location, height, width)
+            case name, group, location, LightType.MULTI_ZONE, zones:
+                return fake_light.MultizoneLight(name, group, location, zones)
 
         logging.warning(
             "FakeLightApi._build_light(), no match: {}".format(spec))
@@ -70,37 +68,35 @@ class _Reinit:
 
 def using_large_set():
     settings = injection.provide(i_lib.Settings)
-    default_color = settings.get_value('matrix_init_color', [0] * 4)
 
     specs = (
-        ('Top', 'Pole', 'Home', [10, 20, 30, 40]),
-        ('Middle', 'Pole', 'Home', [100, 200, 300, 400]),
-        ('Bottom', 'Pole', 'Home', [1000, 2000, 3000, 4000]),
+        ('Top', 'Pole', 'Home'),
+        ('Middle', 'Pole', 'Home'),
+        ('Bottom', 'Pole', 'Home'),
 
-        ('Strip', 'Furniture', 'Home', default_color, LightType.MULTI_ZONE, 16),
-        ('Balcony', 'Windows', 'Home', default_color, LightType.MULTI_ZONE, 32),
-        ('Candle', 'Furniture', 'Home', [0] * 4, LightType.MATRIX),
+        ('Strip', 'Furniture', 'Home', LightType.MULTI_ZONE, 16),
+        ('Balcony', 'Windows', 'Home', LightType.MULTI_ZONE, 32),
+        ('Candle', 'Furniture', 'Home', LightType.MATRIX, 6, 5),
 
-        ('Lamp', 'Furniture', 'Living Room', [10000, 20000, 30000, 4004]),
+        ('Lamp', 'Furniture', 'Living Room'),
 
-        ('table-0', 'Table', 'Living Room', [16000, 16000, 16000, 2700]),
-        ('table-1', 'Table', 'Living Room', [16000, 16000, 16000, 2700]),
-        ('table-2', 'Table', 'Living Room', [16000, 16000, 16000, 2700]),
-        ('table-3', 'Table', 'Living Room', [16000, 16000, 16000, 2700]),
-        ('table-4', 'Table', 'Living Room', [16000, 16000, 16000, 2700]),
-        ('table-5', 'Table', 'Living Room', [16000, 16000, 16000, 2700]),
-        ('table-6', 'Table', 'Living Room', [16000, 16000, 16000, 2700]),
-        ('table-7', 'Table', 'Living Room', [16000, 16000, 16000, 2700])
+        ('table-0', 'Table', 'Living Room'),
+        ('table-1', 'Table', 'Living Room'),
+        ('table-2', 'Table', 'Living Room'),
+        ('table-3', 'Table', 'Living Room'),
+        ('table-4', 'Table', 'Living Room'),
+        ('table-5', 'Table', 'Living Room'),
+        ('table-6', 'Table', 'Living Room'),
+        ('table-7', 'Table', 'Living Room')
     )
     return _Reinit(specs)
 
 
 def using_small_set():
-    color = [1, 2, 3, 4]
     specs = (
-        ('light_1', 'a', 'b', color),
-        ('light_2', 'group', 'loc', color),
-        ('light_0', 'group', 'loc', color)
+        ('light_1', 'a', 'b'),
+        ('light_2', 'group', 'loc'),
+        ('light_0', 'group', 'loc')
     )
     return _Reinit(specs)
 

@@ -1,7 +1,7 @@
 import time
 
 from bardolph.controller import i_controller
-from bardolph.controller.candle_color_matrix import CandleColorMatrix
+from bardolph.controller.color_matrix import ColorMatrix
 from bardolph.controller.script_job import ScriptJob
 from bardolph.lib.injection import provide
 from bardolph.lib.job_control import JobControl
@@ -73,7 +73,7 @@ class ScriptRunner:
     def assert_list_almost_equal(self, list0, list1, precision=1, message=''):
         self._test_case.assertEqual(len(list0), len(list1), message)
         iter0 = iter(list0)
-        iter1 = iter(list1)        
+        iter1 = iter(list1)
         go = True
         while go:
             try:
@@ -100,14 +100,14 @@ class ScriptRunner:
             if light.get_name() not in allowed:
                 self._test_case.assertEqual(len(light.get_call_list()), 0)
 
-    def check_final_matrix(self, light_name, expected):
+    def check_final_matrix(self, light_name, height, width, expected):
         light_set = provide(i_controller.LightSet)
         light = light_set.get_light(light_name)
         self._test_case.assertIsNotNone(light)
         self._test_case.assertIsInstance(light, i_controller.MatrixLight)
 
         actual_mat = light.get_matrix()
-        expected_mat = CandleColorMatrix.new_from_iterable(expected)
+        expected_mat = ColorMatrix.new_from_iterable(height, width, expected)
 
         self._test_case.assertListEqual(
             expected_mat.get_colors(), actual_mat.get_colors(),

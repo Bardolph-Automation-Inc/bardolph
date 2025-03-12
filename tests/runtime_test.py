@@ -52,6 +52,10 @@ class RuntimeTest(unittest.TestCase):
         self._runner.run_script(script)
         self.assertListEqual(self._output.get_objects(), [2, 3, -2])
 
+    def test_random(self):
+        self._runner.run_script('print [random 0 100]')
+        self.assertTrue(0 <= self._output.get_object() <= 100)
+
     def test_sqrt(self):
         script = """
             print [sqrt -9]

@@ -33,8 +33,8 @@ class Snapshot:
     def start_multizone(self, light): pass
     def zone(self, light, number, color): pass
     def end_multizone(self, light): pass
-    def candle_cell(self, row, column, color): pass
-    def end_candle(self, light): pass
+    def matrix_cell(self, row, column, color): pass
+    def end_matrix(self, light): pass
 
     def color(self, raw_color):
         self.setting(Register.HUE, raw_color[0])
@@ -49,12 +49,12 @@ class Snapshot:
         for number, color in enumerate(light.get_zone_colors()):
             self.zone(light, number, color)
 
-    def candle(self, light):
+    def matrix(self, light):
         light_matrix = light.get_matrix()
         mat = light_matrix.matrix
-        for row in range(0, light_matrix.width):
-            for column in range(0, light_matrix.height - 1):
-                self.candle_cell(row, column, mat[row][column])
+        for row in range(0, light_matrix.height):
+            for column in range(0, light_matrix.width):
+                self.matrix_cell(row, column, mat[row][column])
 
     @injection.inject(LightSet)
     def generate(self, filter, light_set):
@@ -76,9 +76,9 @@ class Snapshot:
                     self.multizone(light)
                     self.end_multizone(light)
                 elif isinstance(light, i_controller.MatrixLight):
-                    self.start_candle(light)
-                    self.candle(light)
-                    self.end_candle(light)
+                    self.start_matrix(light)
+                    self.matrix(light)
+                    self.end_matrix(light)
                 else:
                     self.start_light(light)
                     self.light(light)
@@ -101,14 +101,14 @@ class ScriptSnapshot(Snapshot):
         self.color(raw_color)
         self.append('set "{}" zone {}\n'.format(light.get_name(), number))
 
-    def start_candle(self, light):
+    def start_matrix(self, light):
         self.append('set "{}" begin\n'.format(light.get_name()))
 
-    def candle_cell(self, row, column, raw_color):
+    def matrix_cell(self, row, column, raw_color):
         self.color(raw_color)
         self.append('stage row {} column {}\n'.format(row, column))
 
-    def end_candle(self, light):
+    def end_matrix(self, light):
         self.append('end\n')
 
     def power(self, light):
@@ -135,7 +135,7 @@ class NameSnapshot(Snapshot):
     def start_multizone(self, light):
         self.start_light(light)
 
-    def start_candle(self, light):
+    def start_matrix(self, light):
         self.start_light(light)
 
 
@@ -208,18 +208,18 @@ class TextSnapshot(Snapshot):
     def end_zones(self, _):
         self._nl()
 
-    def start_candle(self, light):
+    def start_matrix(self, light):
         self.start_light(light)
         for spacer in range(0, 4):
             self._add_field(' ')
         self.power(light)
         self._nl()
 
-    def candle(self, light):
-        candle_matrix = light.get_matrix()
-        mat = candle_matrix.matrix
-        for row in range(0, candle_matrix.height):
-            for col in range(0, candle_matrix.width):
+    def matrix(self, light):
+        light_matrix = light.get_matrix()
+        mat = light_matrix.matrix
+        for row in range(0, light_matrix.height):
+            for col in range(0, light_matrix.width):
                 self._add_field('   {:1d} {:1d}'.format(row, col))
                 self.color(mat[row][col])
                 self._nl()
