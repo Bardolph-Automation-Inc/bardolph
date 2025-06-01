@@ -14,7 +14,7 @@ sys.path.append('.')
 from bardolph.pygments import bardolph_lexer
 
 project = 'Bardolph'
-copyright = '2025, Al Fontes'
+copyright = '2025, Bardolph Automation, Inc'
 author = 'Al Fontes'
 
 from sphinx.highlighting import lexers

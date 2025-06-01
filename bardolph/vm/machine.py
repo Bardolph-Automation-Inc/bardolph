@@ -11,6 +11,7 @@ from bardolph.controller.units import UnitMode
 from bardolph.lib.i_lib import Clock, TimePattern
 from bardolph.lib.injection import inject, provide
 from bardolph.lib.symbol import Symbol
+from bardolph.vm.array import Array
 from bardolph.vm.call_stack import CallStack
 from bardolph.vm.loader import Loader
 from bardolph.vm.vm_codes import (JumpCondition, LoopVar, OpCode, Operand,
@@ -81,12 +82,10 @@ class Machine:
     def __init__(self):
         self._cue_time = 0
         self._clock = provide(Clock)
-        self._constants = {}
-        self._globals = {}
         self._routines = {}
         self._program = []
         self._reg = Registers()
-        self._call_stack = CallStack(self._constants)
+        self._call_stack = CallStack()
         self._vm_io = VmIo(self._call_stack, self._reg)
         self._vm_math = VmMath(self._call_stack, self._reg)
         self._vm_discover = VmDiscover(self._call_stack, self._reg)
@@ -95,18 +94,16 @@ class Machine:
         excluded = (OpCode.STOP, OpCode.ROUTINE)
         op_codes = [code for code in OpCode if code not in excluded]
         self._fn_table = {
-            op_code: getattr(self, '_' + op_code.name.lower())
+            op_code: getattr(self, '_' + op_code.name.lower(), self._unimpl)
             for op_code in (op_codes)
         }
         self._fn_table[OpCode.STOP] = self.stop
 
     def reset(self) -> None:
         self._reg.reset()
-        self._constants.clear()
-        self._globals.clear()
         self._routines.clear()
         self._cue_time = 0
-        self._call_stack.reset(self._constants)
+        self._call_stack.reset()
         self._vm_math.reset()
         self._keep_running = True
         self._enable_pause = True
@@ -153,6 +150,13 @@ class Machine:
     @property
     def current_inst(self):
         return self._program[self._reg.pc]
+
+    def _param_value(self, value):
+        if isinstance(value, Register):
+            return self._reg.get_by_enum(value)
+        elif isinstance(value, (str, LoopVar)):
+            return self._call_stack.get_variable(value)
+        return value
 
     def _color_to_reg(self, color) -> None:
         reg = self._reg
@@ -341,7 +345,7 @@ class Machine:
         routine_name = inst.param0
         rtn = self._routines.get(routine_name, None)
         if isinstance(rtn, RuntimeRoutine):
-            self._reg.result = rtn.invoke(self._call_stack.get_top())
+            self._vm_math.pushq(rtn.invoke(self._call_stack.get_top()))
             self._return()
         else:
             self._reg.pc = rtn.get_address()
@@ -358,22 +362,20 @@ class Machine:
         self._call_stack.exit_routine()
 
     def _jump(self) -> None:
-        # In the current instruction, param0 contains the condition, and param1
-        # contains the offset.
         inst = self.current_inst
-        if inst.param0 is JumpCondition.INDIRECT:
-            address = self._call_stack.get_variable(inst.param1)
-            self._reg.pc = address
-        else:
-            jump_if = {
-                JumpCondition.ALWAYS: {True: True, False: True},
-                JumpCondition.IF_FALSE: {True: False, False: True},
-                JumpCondition.IF_TRUE: {True: True, False: False}
-            }
-            if jump_if[inst.param0][bool(self._reg.result)]:
+        match inst.param0:
+            case JumpCondition.INDIRECT:
+                address = self._call_stack.get_variable(inst.param1)
+                self._reg.pc = address
+            case JumpCondition.ALWAYS:
                 self._reg.pc += inst.param1
-            else:
-                self._reg.pc += 1
+            case JumpCondition.IF_FALSE | JumpCondition.IF_TRUE:
+                self._vm_math.pop(Register.RESULT)
+                if (bool(self._reg.result) ^
+                        (inst.param0 is JumpCondition.IF_FALSE)):
+                    self._reg.pc += inst.param1
+                else:
+                    self._reg.pc += 1
 
     def _loop(self) -> None:
         self._call_stack.enter_loop()
@@ -398,7 +400,39 @@ class Machine:
             width = light.get_width()
         self._reg.matrix = ColorMatrix.new_from_constant(height, width, None)
 
-    def _nop(self) -> None: pass
+    def _array(self):
+        array_name = self.current_inst.param0
+        array_len = self._param_value(self.current_inst.param1)
+        stack_top = self._call_stack.get_top()
+        var = stack_top.get_variable(array_name)
+        if var is None:
+            self._call_stack.put_variable(array_name, Array(array_len))
+        else:
+            var.add_dimension(array_len)
+        return True
+
+    def _deref(self):
+        # Should put the result on the top of the expression stack.
+        offset = self._param_value(self.current_inst.param1)
+        array_name = self.current_inst.param0
+        array = self._call_stack.get_variable(array_name)
+        array.deref(offset)
+        return True
+
+    def _index(self):
+        # Should put the result on the top of the expression stack.
+        offset = self._param_value(self.current_inst.param1)
+        array_name = self.current_inst.param0
+        array = self._call_stack.get_variable(array_name)
+        array.index(offset)
+        return True
+
+    def _nop(self) -> bool:
+        return True
+
+    def _unimpl(self) -> bool:
+        logging.debug("Machine._unimpl() called")
+        return True
 
     def _push(self) -> None:
         self._vm_math.push(self.current_inst.param0)
@@ -453,7 +487,7 @@ class Machine:
     def _constant(self) -> None:
         name = self.current_inst.param0
         value = self.current_inst.param1
-        self._constants[name] = value
+        self._call_stack.put_constant(name, value)
 
     def _wait(self) -> None:
         time = self._reg.time
@@ -502,24 +536,21 @@ class Machine:
             (xform_fn(color) for color in srce.as_list()), 6, 5)
 
     def _move(self) -> None:
-        """
-        Move from variable/register to variable/register.
-        """
+        # Move from variable/register to variable/register.
         inst = self.current_inst
-        value = inst.param0
-        dest = inst.param1
+        value, dest = inst.param0, inst.param1
         if isinstance(value, Register):
             value = self._reg.get_by_enum(value)
         elif isinstance(value, (str, LoopVar)):
             value = self._call_stack.get_variable(value)
+            ### if isinstance(value, Array, ArrayBranch):
+            ###    value = value.get_value()
         self._do_put_value(dest, value)
 
     def _moveq(self) -> None:
-        """
-        Move a value from the instruction itself into a register or variable.
-        """
-        value = self.current_inst.param0
-        dest = self.current_inst.param1
+        # Copy a literal value within the instruction to a register or variable.
+        inst = self.current_inst
+        value, dest = inst.param0, inst.param1
         if dest is Register.UNIT_MODE:
             self._switch_unit_mode(value)
         else:
@@ -529,7 +560,11 @@ class Machine:
         if isinstance(dest, Register):
             self._reg.set_by_enum(dest, value)
         else:
-            self._call_stack.put_variable(dest, value)
+            current_value = self._call_stack.get_variable(dest)
+            ### if isinstance(current_value, Array):
+            ###     current_value.set_value(value)
+            ### else:
+            self._call_stack.put_variable(dest, value) ###
 
     def _switch_unit_mode(self, to_mode) -> None:
         from_mode = self._reg.unit_mode

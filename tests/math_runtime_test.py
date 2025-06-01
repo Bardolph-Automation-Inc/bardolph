@@ -6,7 +6,7 @@ from tests.script_runner import ScriptRunner
 from tests import test_module
 
 
-class RuntimeTest(unittest.TestCase):
+class MathRuntimeTest(unittest.TestCase):
     def setUp(self):
         test_module.configure()
         self._output = test_module.replace_print()

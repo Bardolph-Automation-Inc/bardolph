@@ -1,6 +1,6 @@
-from bardolph.vm.vm_codes import OpCode, Operand, Register
-from bardolph.parser.token import TokenTypes
 from bardolph.parser.sub_parser import SubParser
+from bardolph.parser.token import TokenTypes
+from bardolph.vm.vm_codes import OpCode, Operand, Register
 
 
 class MatrixParser(SubParser):
@@ -52,11 +52,15 @@ class MatrixParser(SubParser):
             return self.token_error('Expected a range for columns, got {}')
         return self._range(Register.FIRST_COLUMN, Register.LAST_COLUMN)
 
-    def _range(self, first, last, only_one=False):
-        if not self.rvalue(first):
+    def _range(self, first, last):
+        if not self.rvalue():
             return False
-        if not only_one and self.at_rvalue(False):
-            return self.rvalue(last)
+        self.code_gen.pop(first)
+        if self.at_rvalue(False):
+            if not self.rvalue():
+                return False
+            self.code_gen.pop(last)
+            return True
 
         self.code_gen.add_instruction(OpCode.MOVEQ, None, last)
         return True

@@ -17,6 +17,10 @@ class SubParser:
         return self.parser._context
 
     @property
+    def current_int(self):
+        return self.parser._current_int()
+
+    @property
     def current_float(self):
         return self.parser._current_float()
 
@@ -35,8 +39,11 @@ class SubParser:
     def next_token(self):
         return self.parser.next_token()
 
-    def rvalue(self, dest=Register.RESULT, code_gen=None):
-        return self.parser._rvalue(dest, code_gen)
+    def rvalue(self, code_gen=None):
+        return self.parser._rvalue(code_gen or self.code_gen)
+
+    def rvalue_str(self, code_gen=None):
+        return self.parser._rvalue_str(code_gen or self.code_gen)
 
     def at_rvalue(self, include_reg=True):
         return self.parser._at_rvalue(include_reg)

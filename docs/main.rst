@@ -239,9 +239,12 @@ I have tested with the devices that I own, which includes:
 
     * 800-lumen "Mini C"
     * 1100-lumen "A19" with the disk-shaped lens
-    * Candle E12 "Polychrome"
-    * Candle E12 "White to Warm"
-    * Color 800 "A19 Smart Light" globe-shaped bulb
+    * "Beam"
+    * "Color Zones Candle" E12, E26
+    * "Color A19 Smart Light" globe-shaped bulb
+    * "Indoor Neon Flex"
+    * "Tube" E25
+    * "White to Warm Candle" E12
     * Z "Lightstrip" (tested with 16 and 32 zones)
 
 In general, you should be able to use any of the standard bulbs and strips.

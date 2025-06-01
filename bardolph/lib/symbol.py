@@ -1,8 +1,9 @@
 from enum import Enum, auto
 
 class SymbolType(Enum):
+    ARRAY = auto()
     EXTERN = auto()
-    MACRO = auto()
+    CONSTANT = auto()
     NO_TYPE = auto()
     PARAM = auto()
     ROUTINE = auto()

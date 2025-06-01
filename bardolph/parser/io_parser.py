@@ -1,8 +1,7 @@
 import string
 
+from bardolph.parser.sub_parser import SubParser
 from bardolph.vm.vm_codes import IoOp, OpCode, Register
-
-from .sub_parser import SubParser
 
 
 class IoParser(SubParser):
@@ -40,6 +39,7 @@ class IoParser(SubParser):
     def _out_rvalue(self, end=None) -> bool:
         if not self.rvalue():
             return False
+        self.code_gen.pop(Register.RESULT)
         self.code_gen.add_instruction(
             OpCode.OUT, IoOp.REGISTER, Register.RESULT)
         if end is not None:

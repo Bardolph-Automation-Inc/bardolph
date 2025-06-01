@@ -37,7 +37,7 @@ Here's an example, showing a comment:
 .. code-block:: lightbulb
 
     # comment
-    hue 360 # red
+    hue 360           # red
     saturation 100    # 100% saturation
     brightness 60.0   # 60% brightness
     kelvin 2700
@@ -111,10 +111,9 @@ This script will:
 #. Set all lights to HSBK of 120, 100, 50, 2700
 #. Set all lights to HSBK of 180, 100, 50, 2700
 
-Any uninitialized values default to zero, or an empty string. This can lead
-to unwanted results, so each of the values should be set at least once before
-setting the color of any lights. Or, consider starting your script with
-`get all` (the ``get`` command is described below).
+Any uninitialized light value defaults to ``hue``, ``saturation``,
+``brightness``, and ``kelvin`` all equal to zero. If you send that default HSBK
+[0, 0, 0, 0] to a light, the bulb goes dark, due to the brightness of 0.
 
 .. index:: name syntax
 
@@ -131,21 +130,6 @@ name can contain letters, numbers, and underscores. For example:
 
 Names are handled with case-sensitive logic.
 
-.. index:: abbreviations
-
-Abbreviations
-=============
-Scripts can be much terser with shorthand color setting names which are
-capitalized: ``H`` (hue), ``S`` (saturation), ``B`` (brightness), and ``K``
-(kelvin). The following two lines do the same thing:
-
-.. code-block:: lightbulb
-
-  hue 180 saturation 100 brightness 50 kelvin 2700 set all
-  H 180 S 100 B 50 K 2700 set all
-
-.. index:: lights; individual, lights; set color, color; set for light
-
 Individual Lights
 =================
 Scripts can control individual lights by name. For example, if you have a light
@@ -156,6 +140,9 @@ named "Table", you can set its color with:
   hue 120 saturation 100 brightness 75 kelvin 2700
   set "Table"
 
+If you look at the properties of a light in the LIFX mobile app, you can
+get the name of a light. You use that name any script that controls that
+light. he name of the light that you see in the LIFX app
 A light's name is configured when you do initial setup with the LIFX software.
 
 When they appear in a script, bulb names must be in quotation marks. They
@@ -244,7 +231,7 @@ and 3.
 Matrix (Candle and Tube) Bulbs
 ==============================
 
-This section covers the use of Bardolph to control LIFX "Candle" and "Tube"
+This section covers LIFX "Candle" and "Tube" lights also called "matrix"
 lights. Note that it applies only to lights that are "Polychrome"
 and capable of changing color. Scripts for "White to Warm" lights are
 basically the same as those for any other bulb model.
@@ -257,7 +244,7 @@ bulbs. If some of the other "Polychrome" devices, such as the ceiling lights,
 support the published API, I'll try to test and fix the implementation for
 those, as well.
 
-.. note:: As of the time of this writing, (March, 2025), the version of the
+.. note:: As of the time of this writing, (May, 2025), the version of the
     `lifxlan Python library <https://github.com/mclarkk/lifxlan>`_
     that is
     `hosted on pypi.org <https://pypi.org/project/lifxlan/>`_
@@ -274,9 +261,9 @@ The underlying API for these devices is covered in the
 is divided vertically into 6 rows, while a Tube bulb has 11 rows. Going around
 the axis of either type of bulb, there are 5 columns.
 
-Note that row 0, which is at the tip of the bulb, has only 2 LED'S,
-which occupy columns 0 and 1. You can still assign values to the other cells
-in that row; they are simply ignored.
+Note that for both types of devices, row 0, which is at the tip of the bulb,
+has only 2 LED cells, which occupy columns 0 and 1. You can still assign values
+to the other cells in that row; they are simply ignored.
 
 Candle Layout
 -------------
@@ -371,7 +358,7 @@ required:
     # Equivalent:
     set "Candle" column 3 4 row 1 2
 
-.. index:: candle full syntax, tube full syntax, candle full syntax
+.. index:: candle full syntax, tube full syntax, matrix full syntax
 
 Full Syntax for Matrix Bulbs
 ----------------------------
@@ -475,7 +462,7 @@ Of course, this can be accomplished with more succinct code:
     set "Candle" begin
         repeat with row_num from 0 to 5 begin
             stage row row_num
-            hue {hue + 30}
+            hue (hue + 30)
         end
     end
 
@@ -711,21 +698,24 @@ executed. For example:
 .. code-block:: lightbulb
 
   time 0 hue 120 saturation 90 brightness 50 kelvin 2700
-  duration 200 set all
-  time 200 wait
+  duration 200
+  set all
+  time 200
+  wait
 
-In this example, the ``set`` command will take 200 seconds to fully take effect.
-The script adds a 200-second wait to keep it from exiting before that slow
-``set`` completes. If a script is waiting in the queue, this prevents that next
-script from starting before the 200-second duration has elapsed.
+In this example, the ``set`` command will take 200 seconds to fully take
+effect. The script adds a 200-second wait to keep it from exiting before
+that slow ``set`` completes. If a script is waiting in the queue, this
+prevents that next script from starting before the 200-second duration has
+elapsed.
 
 .. index:: groups, locations
 
 Groups and Locations
 ====================
-The ``set``, ``on``, and ``off`` commands can be applied to groups and locations.
-For example, if you have a location called "Living Room", you can turn them
-on and set them all to the same color with:
+The ``set``, ``on``, and ``off`` commands can be applied to groups and
+locations. For example, if you have a location called "Living Room", you
+can turn them on and set them all to the same color with:
 
 .. code-block:: lightbulb
 
@@ -835,26 +825,33 @@ Assignment of one variable to another has by-value semantics:
 In this example, `y` has an independent copy of the original value of `x`,
 even after `x` has been given a new value.
 
-.. index::  mathematical expressions, numeric operations, logical expressions,
-            and; logical expressions
+.. index::
+    single: mathematical expressions
+    single: numeric operations
+    single: logical expressions
 
 Mathematical and Logical Expressions
 ====================================
-An expression can be used wherever a number or truth value is needed. The
-syntax for an expression is to contain it in curly braces. For example, to
-put 5 + 4 into x:
+An expression can be used wherever a number or truth value is needed. For
+example, to put 5 + 4 into x:
 
 .. code-block:: lightbulb
 
-  assign x {5 + 4}
+  assign x 5 + 4
 
-Logical expressions also are contained in curly braces:
+For readability, you may want to use parentheses:
 
 .. code-block:: lightbulb
 
-  if {x > 5} off all
+  assign x (5 + 4)
 
-The following operators are available:
+Logical expressions can be used with ``if``:
+
+.. code-block:: lightbulb
+
+  if x > 5 off all
+
+The following mathematical operators are available:
 
 * ``+`` addition
 * ``-`` subtraction or negative
@@ -867,56 +864,48 @@ The following operators are available:
 * ``==`` equals
 * ``!=`` not equal to
 
-The ``or`` and ``and`` keywords can be combined with comparison operations. Some
-examples of expressions:
+Logical operators are available as well:
+
+* ``&&`` and
+* ``||`` or
+* ``!`` not
+
+Some examples of expressions:
 
 .. code-block:: lightbulb
 
-  assign a {45 * -3)
-  assign b { (4 + 5) / 3 }
-  assign h { a^2 + b^2 }
+    assign a 45 * -3
+    assign b (4 + 5) / 3
+    assign h a^2 + b^2
 
-  if {a > 0 and b != 4 or h < 5} on all
+    if a > 0 && b != 4 || h < 5 begin
+        on all
+    end
+
+    if ! (a==0 || b==0)
+        off all
 
 Note that ``*`` and ``/`` have a higher precedence than ``+`` and ``-``. The
-``and`` operator has a higher precedence than ``or``.
+``&&`` operator has a higher precedence than ``||``.
 
 .. code-block:: lightbulb
 
-    assign a {3 + 4 * 5}    # a = 23
-    assign b {(3 + 4) * 5}  # b = 35
+    assign a 3 + 4 * 5    # a = 23
+    assign b (3 + 4) * 5  # b = 35
 
-    if {5 > 1 or 10 < 100 and 20 == 30 }   # true
+    if 5 > 1 || 10 < 100 && 20 == 30    # true
         on all
 
-    if {(5 > 1 or 10 < 100) and 20 == 30 } # false
+    if 5 > 1 || (10 < 100 && 20 == 30)  # true (parentheses are unnecessary)
+        on all
+
+    if (5 > 1 || 10 < 100) && 20 == 30  # false
         off all
 
 Numerical values in a logical context are coerced to booleans, where 0 is false,
 and any other value is true.
 
-.. index::
-    single: curly braces, when required
-
-.. note:: Curly braces are required wherever a numerical expression involves
-    any kind of an operator and one or more operands. If a single numerical
-    constant, variable, or function call is referenced, the braces are optional.
-
-    .. code-block:: lightbulb
-
-        define square with x begin
-            return {x ^ 2}
-        end
-
-        # These are equivalent.
-        assign x 100
-        assign x {100}              # Optional but allowed.
-        assign x {50 * 2}           # Required.
-        assign x [square 10]        # Not required.
-        assign x {25 * [square 2]}  # Required due to multiplication.
-
-.. index::
-    single: register; as value
+.. index:: register; as value
 
 Referencing Registers
 ---------------------
@@ -924,9 +913,9 @@ Registers can provide values:
 
 .. code-block:: lightbulb
 
-    brightness {brightness * 1.1}
+    brightness brightness * 1.1
 
-    assign double_brt {brightness * 2}
+    assign double_brt brightness * 2
 
 However, registers (``hue``, ``saturation``, ``brightness``, ``kelvin``,
 ``time`` and ``duration``) can not be used as values for ``zone``, ``row``,
@@ -936,13 +925,13 @@ or ``column``.
 
     # None of this will work, because hue and brightness are registers.
 
-    set "Candle" row hue
-    set "Strip" zone brightness
+    set "Candle" row hue           # Error: using register hue as a row
+    set "Strip" zone brightness    # Error: using register brightness as a zone
 
-.. index:: routine, subourtine, define; routine
+.. index:: routine, subourtine, define; routine, function, define; function
 
-Routine Definitions
-===================
+Routine and Function Definitions
+================================
 A subprogram, hereafter called a *routine*, can be defined as a
 sequence of commands. Here's a simple exmple of a routine being defined
 and called:
@@ -1019,8 +1008,8 @@ outside of the routine:
 
     saturation x       # Error: x no longer exists
 
-Variables assigned outside of a routine are considered global and are visible
-in all scopes:
+Variables assigned outside of a routine are considered global and are
+visible in all scopes:
 
 .. code-block:: lightbulb
 
@@ -1034,7 +1023,8 @@ in all scopes:
   saturation y   # Set saturation to 50.
 
 However, if a parameter has the same name as a global variable, the outer
-instance becomes hidden and is inaccessible in the entire body of the routine:
+instance becomes hidden and is inaccessible in the entire body of the
+routine:
 
 .. code-block:: lightbulb
 
@@ -1042,7 +1032,7 @@ instance becomes hidden and is inaccessible in the entire body of the routine:
 
     define set_hue_plus with z begin
         # Global variable z is invisible here.
-        assign z {z + 10}
+        assign z (z + 10)
         hue z
     end
 
@@ -1056,16 +1046,15 @@ instance becomes hidden and is inaccessible in the entire body of the routine:
 
 Return Values
 -------------
-A routine can return a value and exit, becoming what is often referred to as
-a *function*. This is done with the ``return`` keyword. A routine can return
-either a string or a number.
+A routine can return a value and exit, becoming a *function*. This is done
+with the ``return`` keyword. A routine can return either a string or a number.
 
 For example:
 
 .. code-block:: lightbulb
 
     define increment with x begin
-        return {x + 1}
+        return x + 1
     end
 
 Any return value that is a mathematical expression must be contained in curly
@@ -1075,15 +1064,15 @@ To invoke and use a function, use square brackets. For example:
 
 .. code-block:: lightbulb
 
-    define average a b begin
-        return {(a + b) / 2}
+    define average with a b begin
+        return (a + b) / 2
     end
 
     print [average 100 200]
 
-A routine can call another and pass along incoming parameters. The called
-routine must already be defined; there currently is no support for forward
-declarations. As noted above, the parameters are passed by value:
+A routine call can be passed as a parameter. The called routine must already
+be defined; there currently is no support for forward declarations. As noted
+above, the parameters are passed by value:
 
 .. code-block:: lightbulb
 
@@ -1093,7 +1082,7 @@ declarations. As noted above, the parameters are passed by value:
     end
 
     define half_bright with brt light_name begin
-        brightness {brt / 2}
+        brightness brt / 2
         set light_name
         return brightness
     end
@@ -1147,14 +1136,14 @@ subtracting to a value for ``hue``. For example:
     hue 0
 
     repeat begin
-        hue [cycle {hue + 120}]
+        hue [cycle hue + 120]
         set all
     end
 
 In this example, ``hue`` will be set to 0, 120, and 240. After that, when a
-value of 360 gets passed into the ``cycle`` function, it returns 0, effectively
-restarting the angle. This allows an infinite loop to keep adding to an angle
-with no risk of overflow.
+value of 360 gets passed into the ``cycle`` function, it returns 0,
+effectively restarting the angle. This allows an infinite loop to keep adding to
+an angle with no risk of overflow.
 
 +------------------------+
 |.. centered:: Examples  |
@@ -1279,7 +1268,6 @@ rounded.
 
 Trigonometric: [asin theta], [acos theta], [atan theta]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 These are all trigonometric functions. In all cases, the returned value is an
 angle measured in degrees.
 
@@ -1302,7 +1290,6 @@ have been rounded.
 
 [trunc *x*]
 ^^^^^^^^^^^
-
 Truncates the fraction from x.
 
 +------------------------+
@@ -1317,6 +1304,56 @@ Truncates the fraction from x.
 | [trunc -1.5] | 1       |
 +--------------+---------+
 
+.. index:: query, other functions; query
+
+Other Built-in Functions
+------------------------
+
+.. _query function:
+
+[query *topic* *name*]
+^^^^^^^^^^^^^^^^^^^^^^
+Retrieve information about a light's built-in features. The information to
+retrieve is specified as a string in *topic* and the light is specified by
+*name*. For example, to find out if a light named "Desk Lamp" is capable of
+displaying color:
+
+.. code-block:: lightbulb
+
+    if [query "is-color" "Desk Lamp"] begin
+        hue 120
+        saturation 90
+        brightness 90
+        kelvin 2000
+    end else begin
+        brightness 50
+        kelvin 2700
+    end
+
+    set "Desk Lamp"
+
+The following queries are currently available. Note that "matrix light" refers
+to a "Candle" or "Tube" type of light.
+
++-----------------------------------------------------------------------------------+
+|.. centered:: Queries                                                              |
++----------------+------------------------------------------------------------------+
+| Topic          | Returns                                                          |
++================+==================================================================+
+| "is-color"     | 1 if the light is "Color", 0 if it is "White".                   |
++----------------+------------------------------------------------------------------+
+| "is-matrix"    | 1 if it is a matrix light, 0 otherwise                           |
++----------------+------------------------------------------------------------------+
+| "is-multizone" | 1 if the light is a "Lightstrip", "Beam", etc., 0 otherwise      |
++----------------+------------------------------------------------------------------+
+| "height"       | How many rows a light has. Useful only for matrix lights.        |
++----------------+------------------------------------------------------------------+
+| "width"        | Multizone light: how many zones. Matrix light: how many columns. |
++----------------+------------------------------------------------------------------+
+
+A simple bulb has a height and width of one. A strip light has a height of
+one.
+
 .. index:: conditionals, if, else
 
 Conditionals
@@ -1326,25 +1363,25 @@ one or more commands. It can also have one or more ``else`` clauses:
 
 .. code-block:: lightbulb
 
-  if {x < 5} off all
+  if x < 5 off all
 
   get "Top"
-  if {hue < 100} begin
+  if hue < 100 begin
     hue 100
     set "Top"
   end
 
-  if {x >= 5} begin
+  if x >= 5 begin
      on all
      hue 120 set all
   end else begin
      off all
   end
 
-  if {x >= 5} begin
+  if x >= 5 begin
      on all
      hue 120 set all
-  end else if {x < 0}
+  end else if x < 0
      off all
   else begin
      saturation 25
@@ -1372,9 +1409,9 @@ Use ``repeat`` ``while`` for a loop based on a logical condition:
 
 .. code-block:: lightbulb
 
-  repeat while {brightness < 50}
+  repeat while brightness < 50
     begin
-        brightness {brightness + 0.1}
+        brightness (brightness + 0.1)
         set all
     end
 
@@ -1452,10 +1489,10 @@ curly braces. For example:
 .. code-block:: lightbulb
 
     assign x 7
-    repeat {5 + x} with y from {x * 4} to {x * 6}
+    repeat 5 + x with y from x * 4 to x * 6
     ...
 
-    # Equivalent to:
+    # Functionally equivalent to:
     repeat 12 with y from 28 to 42
     ...
 
@@ -1477,8 +1514,8 @@ If you want to control the number of iterations dynamically, you can use a
 
 .. index:: iteration by light, repeat; for every light
 
-By Light
---------
+Iterating Over Every Light
+--------------------------
 To iterate individually over all the lights:
 
 .. code-block:: lightbulb
@@ -1510,6 +1547,8 @@ with `brt` having values of 10, 20, and 30. If you have 5 lights, you get
 
 .. index:: groups; iterating all, locations; iterating all
 
+Iterating Over Groups or Locations
+----------------------------------
 All groups or locations can be enumerated:
 
 .. code-block:: lightbulb
@@ -1521,6 +1560,8 @@ All groups or locations can be enumerated:
 
 .. index:: groups; iterating within, locations; iterating within
 
+Iterating Within Groups or Locations
+------------------------------------
 To iterate over all the lights in a location or group:
 
 .. code-block:: lightbulb
@@ -1534,6 +1575,8 @@ To iterate over all the lights in a location or group:
         set the_light
     end
 
+Mixing Lights, Groups, and Locations
+------------------------------------
 Individual lights can be part of a list:
 
 .. code-block:: lightbulb
@@ -1588,9 +1631,9 @@ to execute:
     repeat 10 with the_hue from 10 to 360 begin
         repeat all as bulb begin
             get bulb
-            if {brigtness > 50}
+            if brigtness > 50
                 break
-            brightness {brightness + 10}
+            brightness brightness + 10
             set bulb
         end
 
@@ -1647,15 +1690,27 @@ or multiple lights:
 .. code-block:: lightbulb
 
     # Errors
-    get "Table Lamp" and "Chair Side"
-    get all
 
-    # Errors
-    get location "Living Room"
-    get group "Reading Lights"
+    get "Table Lamp" and "Chair Side"  # Error: more than one light
+    get all                            # Error: more than one light
+    get location "Living Room"         # Error: location, not a light
+    get group "Reading Lights"         # Error: group, not a light
+    get "Strip" zone 5 6               # Error: multiple zones
 
-    # Error
-    get "Strip" zone 5 6
+.. index:: abbreviations
+
+Abbreviations
+=============
+Scripts can be more terse with shorthand color setting names which are
+capitalized: ``H`` (hue), ``S`` (saturation), ``B`` (brightness), and ``K``
+(kelvin). The following two lines do the same thing:
+
+.. code-block:: lightbulb
+
+  hue 180 saturation 100 brightness 50 kelvin 2700 set all
+  H 180 S 100 B 50 K 2700 set all
+
+.. index:: lights; individual, lights; set color, color; set for light
 
 .. index::
     single: raw units
@@ -1729,7 +1784,7 @@ to the lights. These two actions are equivalent:
     hue 30000 saturation 65535 brightness 32767 kelvin 2700 set all
 
     units logical
-    time 10 duration 2.5
+    time 10 duration 2.5l
     hue 165 saturation 100 brightness 50 kelvin 2700 set all
 
 Note that with raw units, `time` and `duration` are rounded to an integer
@@ -1949,7 +2004,7 @@ parameters, it must be either a literal or a macro.
     printf "{}" hue
 
     assign fmt2 "{}"
-    printf fmt2 hue   # ERROR. Must be a literal or a macro.
+    printf fmt2 hue   # Error. Must be a literal or a macro.
 
 It's possible to use named fields, which can give you cleaner code:
 

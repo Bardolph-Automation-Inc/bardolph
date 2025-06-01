@@ -4,8 +4,6 @@ import random as py_random
 
 from bardolph.runtime.bardolph_fn import builtin
 
-py_random.seed()
-
 
 @builtin
 def round(x):
@@ -58,3 +56,7 @@ def cycle(theta):
 @builtin
 def random(min, max):
     return py_random.randrange(min, max)
+
+def configure():
+    py_random.seed()
+

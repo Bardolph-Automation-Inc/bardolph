@@ -5,9 +5,9 @@
 
    http://www.bardolph.org
 
-*************************************
-Controller and Virtual Machine Module
-*************************************
+***********************
+Controller Design Notes
+***********************
 
 .. contents:: Contents
 

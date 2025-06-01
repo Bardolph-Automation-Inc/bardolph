@@ -190,7 +190,7 @@ lifxlan library is updated with that product's specifications. This means that a
 fairly new type of device may not be discovered.
 
 For example, as of the time of
-this writing (March, 2025), the version of *lifxlan* on PyPi does not recognize
+this writing (May, 2025), the version of *lifxlan* on PyPi does not recognize
 Tube devices, such as the
 `Tube E26 <https://www.lifx.com/products/tube-smart-light>`_. If a script
 attempts to access such a device under these conditions, there will be an

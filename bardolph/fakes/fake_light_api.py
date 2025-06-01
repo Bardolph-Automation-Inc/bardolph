@@ -4,21 +4,116 @@ from enum import Enum, auto
 from bardolph.controller import i_controller
 from bardolph.fakes import fake_light
 from bardolph.fakes.activity_monitor import Action, ActivityMonitor
-from bardolph.lib import i_lib, injection
 from bardolph.lib.injection import bind_instance
 from bardolph.lib.param_helper import param_32, param_bool, param_color
 
 
-class LightType(Enum):
+class _Type(Enum):
     MATRIX = auto()
     MULTI_ZONE = auto()
     STD = auto()
 
 
+class _Chroma(Enum):
+    COLOR = auto()
+    WHITE = auto()
+
+
+class _LightBuilder:
+    def __init__(self):
+        self._name = self._group = self._location = ''
+        self._type = _Type.STD
+        self._is_color = True
+        self._width = self._height = 0
+
+    def set_name(self, name: str):
+        self._name = name
+        return self
+
+    def set_group(self, group: str):
+        self._group = group
+        return self
+
+    def set_location(self, location: str):
+        self._location = location
+        return self
+
+    def set_type(self, the_type: _Type):
+        self._type = the_type
+        return self
+
+    def set_is_color(self, is_color: bool):
+        self._is_color = is_color
+        return self
+
+    def set_height(self, height: int):
+        self._height = height
+        return self
+
+    def set_width(self, width: int):
+        self._width = width
+        return self
+
+    def build(self):
+        match self._type:
+            case _Type.MATRIX:
+                new_light = fake_light.MatrixLight(
+                    self._name, self._group, self._location)
+                new_light.set_height(self._height)
+                new_light.set_width(self._width)
+            case _Type.MULTI_ZONE:
+                new_light = fake_light.MultizoneLight(
+                    self._name, self._group, self._location)
+                new_light.set_width(self._width)
+            case _Type.STD:
+                new_light = fake_light.Light(
+                    self._name, self._group, self._location)
+        new_light.set_is_color(self._is_color)
+        return new_light
+
+    @staticmethod
+    def new_from_spec(spec):
+        it = iter(spec)
+        builder = _LightBuilder()
+
+        numbers = []
+        strings = []
+        keep_going = True
+        while keep_going:
+            try:
+                desc = next(it)
+                if isinstance(desc, str):
+                    strings.append(desc)
+                elif isinstance(desc, int):
+                    numbers.append(desc)
+                elif isinstance(desc, _Chroma):
+                    builder.set_is_color(desc is _Chroma.COLOR)
+                elif isinstance(desc, _Type):
+                    builder.set_type(desc)
+            except StopIteration:
+                keep_going = False
+
+        while len(strings) < 3:
+            strings.append('')
+
+        builder.set_name(strings[0])
+        builder.set_group(strings[1])
+        builder.set_location(strings[2])
+
+        match len(numbers):
+            case 1:
+                builder.set_width(numbers[0])
+            case 2:
+                builder.set_height(numbers[0])
+                builder.set_width(numbers[1])
+
+        return builder.build()
+
+
 class FakeLightApi(i_controller.LightApi):
     def __init__(self, specs):
         self._monitor = ActivityMonitor()
-        self._lights = [self._build_light(spec) for spec in specs]
+        self._lights = [_LightBuilder().new_from_spec(spec) for spec in specs]
 
     def get_lights(self):
         return self._lights
@@ -42,23 +137,8 @@ class FakeLightApi(i_controller.LightApi):
     def get_call_list(self):
         return self._monitor.get_call_list()
 
-    def _build_light(self, spec):
-        match spec:
-            case name, group, location:
-                return fake_light.Light(name, group, location)
-            case name, group, location, LightType.MATRIX, height, width:
-                return fake_light.MatrixLight(
-                    name, group, location, height, width)
-            case name, group, location, LightType.MULTI_ZONE, zones:
-                return fake_light.MultizoneLight(name, group, location, zones)
-
-        logging.warning(
-            "FakeLightApi._build_light(), no match: {}".format(spec))
-        return None
-
 
 class _Reinit:
-    # name, group, location, optional color, optional LightType
     def __init__(self, specs):
         self._specs = specs
 
@@ -67,19 +147,19 @@ class _Reinit:
 
 
 def using_large_set():
-    settings = injection.provide(i_lib.Settings)
-
     specs = (
         ('Top', 'Pole', 'Home'),
         ('Middle', 'Pole', 'Home'),
         ('Bottom', 'Pole', 'Home'),
 
-        ('Strip', 'Furniture', 'Home', LightType.MULTI_ZONE, 16),
-        ('Balcony', 'Windows', 'Home', LightType.MULTI_ZONE, 32),
-        ('Candle', 'Furniture', 'Home', LightType.MATRIX, 6, 5),
+        ('Strip', 'Furniture', 'Home', _Type.MULTI_ZONE, 16),
+        ('Balcony', 'Windows', 'Home', _Type.MULTI_ZONE, 32),
+        ('Candle', 'Furniture', 'Home', _Type.MATRIX, 6, 5),
+        ('White Candle', 'Furniture', 'Home',
+            _Type.MATRIX, _Chroma.WHITE, 6, 5),
+        ('Tube', 'Furniture', 'Home', _Type.MATRIX, 11, 5),
 
-        ('Lamp', 'Furniture', 'Living Room'),
-
+        ('Lamp', 'Furniture', 'Living Room', _Chroma.WHITE),
         ('table-0', 'Table', 'Living Room'),
         ('table-1', 'Table', 'Living Room'),
         ('table-2', 'Table', 'Living Room'),

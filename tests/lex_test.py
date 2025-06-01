@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-from re import LOCALE
+import re
 import unittest
 
 from bardolph.parser.lex import Lex
 from bardolph.parser.token import Token, TokenTypes
+
 
 class LexTest(unittest.TestCase):
     def test_time_pattern(self):
@@ -19,11 +20,12 @@ class LexTest(unittest.TestCase):
         self.assertEqual(token_num, 5)
 
     def test_all_tokens(self):
-        input_string = """(99) all and as at blue brightness
+        input_string = """(99) all and as at blue brightness declare
             define # comment \n column default duration green hue if in
             off on or kelvin logical print printf println raw red return rgb
             row saturation set stage time wait zone 12:*4 {3 * 4} ^
-            -1.0 01.234\n"Hello There" x _abc @ [ ] < <= > >= == !="""
+            -1.0 01.234\n"Hello There" x _abc @ [ ] < <= > >= == !=
+            ! && ||"""
         expected = [
             TokenTypes.MARK, '(',
             TokenTypes.NUMBER,'99',
@@ -34,6 +36,7 @@ class LexTest(unittest.TestCase):
             TokenTypes.AT, 'at',
             TokenTypes.REGISTER, 'blue',
             TokenTypes.REGISTER, 'brightness',
+            TokenTypes.DECLARE, 'declare',
             TokenTypes.DEFINE,'define',
             TokenTypes.COLUMN, 'column',
             TokenTypes.DEFAULT, 'default',
@@ -82,7 +85,10 @@ class LexTest(unittest.TestCase):
             TokenTypes.COMPARE, '>',
             TokenTypes.COMPARE, '>=',
             TokenTypes.COMPARE, '==',
-            TokenTypes.COMPARE, '!=' ]
+            TokenTypes.COMPARE, '!=',
+            TokenTypes.MARK, '!',
+            TokenTypes.MARK, '&&',
+            TokenTypes.MARK, '||' ]
         self._lex_and_compare_pairs(input_string, expected)
 
     def test_unary_ops(self):
@@ -108,6 +114,14 @@ class LexTest(unittest.TestCase):
         expected = ('a_hue', 'saturation_z', '_brightness_', 'kelvinkelvin',
             'xblue','y_green', 'redred')
         self._lex_and_compare_same(input_string, TokenTypes.NAME, expected)
+
+    def test_nonalnum_spec(self):
+        pattern = re.compile(Lex._NON_ALNUM_SPEC)
+        for test_str in (
+                '==', '!=', '<=', '>=', '&&', '||', '!', ')', '(', '[',
+                ']', '{', '}', '+', '-', '*', '<', '<', '/', '#', ':', '^'):
+            self.assertIsNotNone(pattern.match(test_str))
+        self.assertIsNone(pattern.match('xxx'))
 
     def test_comment(self):
         input_string = 'a "b # c" # def "ghi" jkl'

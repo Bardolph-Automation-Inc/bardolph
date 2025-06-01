@@ -12,6 +12,17 @@ class DefineTest(unittest.TestCase):
         test_module.configure()
         self._runner = ScriptRunner(self)
 
+    def test_simple_fn(self):
+        script = """
+            define f with a b begin
+                return a + b
+            end
+
+            assign x [f 3 5]
+        """
+        self._runner.run_script(script)
+        self._runner.assert_var_equal('x', 8)
+
     def test_define_operand(self):
         script = """
             units raw define light_name "Top"
@@ -39,7 +50,7 @@ class DefineTest(unittest.TestCase):
             assign y hue
             hue y set "Top"
             brightness 20
-            assign z {brightness * 5}
+            assign z brightness * 5
             hue z set "Top"
         """
         self._runner.test_code(

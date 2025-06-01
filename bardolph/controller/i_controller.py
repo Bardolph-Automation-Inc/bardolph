@@ -30,6 +30,9 @@ class Light:
     def get_name(self) -> str: pass
     def get_group(self) -> str: pass
     def get_location(self) -> str: pass
+    def get_height(self) -> int: pass
+    def get_width(self) -> int: pass
+    def is_color(self) -> bool: pass
     def get_age(self) -> float: pass
     def get_color(self): pass
     def set_color(self, color, duration) -> None: pass
@@ -38,7 +41,8 @@ class Light:
 
 
 class MultizoneLight(Light):
-    def get_num_zones(self) -> int: pass
+    def get_height(self) -> int: pass
+    def get_width(self) -> int: pass
     def get_zone_colors(self, first_zone, last_zone): pass
     def set_zone_colors(self, first_zone, last_zone, color, duration): pass
 

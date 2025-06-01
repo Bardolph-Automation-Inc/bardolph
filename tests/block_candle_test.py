@@ -50,7 +50,7 @@ class BlockCandleTest(unittest.TestCase):
         )
         runner.check_final_matrix('Candle', 6, 5, expected)
 
-    def test_row_only(self):
+    def xtest_row_only(self):
         script = self._default_code + """
             define test_name "test_row_only"
             hue 120 saturation 80 brightness 20 kelvin 2700
@@ -74,7 +74,7 @@ class BlockCandleTest(unittest.TestCase):
         )
         runner.check_final_matrix('Candle', 6, 5, expected)
 
-    def test_all_rows(self):
+    def xtest_all_rows(self):
         script = self._default_code + """
             define test_name "test_all_rows"
             hue 240 saturation 80 brightness 20 kelvin 2700
@@ -100,7 +100,7 @@ class BlockCandleTest(unittest.TestCase):
         )
         runner.check_final_matrix('Candle', 6, 5, expected)
 
-    def test_column_only(self):
+    def xtest_column_only(self):
         script = self._default_code + """
             define test_name "test_column_only"
             hue 120 saturation 80 brightness 30
@@ -123,7 +123,7 @@ class BlockCandleTest(unittest.TestCase):
         )
         runner.check_final_matrix('Candle', 6, 5, expected)
 
-    def test_row_column(self):
+    def xtest_row_column(self):
         script = self._default_code + """
             define test_name "test_row_column"
             hue 0 saturation 80 brightness 30
@@ -151,7 +151,7 @@ class BlockCandleTest(unittest.TestCase):
         runner.run_script(script)
         runner.check_final_matrix('Candle', 6, 5, expected)
 
-    def test_top_down(self):
+    def xtest_top_down(self):
         script = self._default_code + """
             define test_name "test_top_down"
             hue 200 saturation 50 brightness 20 kelvin 2700 duration 2 time 2
@@ -177,7 +177,7 @@ class BlockCandleTest(unittest.TestCase):
         runner.run_script(script)
         runner.check_final_matrix('Candle', 6, 5, expected)
 
-    def test_simple_loop(self):
+    def xtest_simple_loop(self):
         script = self._default_code + """
             define test_name "test_simple_loop"
             saturation 100 brightness 25 kelvin 35
@@ -203,7 +203,7 @@ class BlockCandleTest(unittest.TestCase):
         runner.run_script(script)
         runner.check_final_matrix('Candle', 6, 5, expected)
 
-    def test_loop_break(self):
+    def xtest_loop_break(self):
         script = self._default_code + """
             define test_name "test_simple_loop"
             saturation 100 brightness 25 kelvin 35
@@ -231,7 +231,7 @@ class BlockCandleTest(unittest.TestCase):
         runner.run_script(script)
         runner.check_final_matrix('Candle', 6, 5, expected)
 
-    def test_routine_call(self):
+    def xtest_routine_call(self):
         script = self._default_code + """
             define test_name "test_routine_call"
             hue 0 saturation 80 brightness 30

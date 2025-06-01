@@ -5,6 +5,7 @@ from bardolph.controller.color_matrix import ColorMatrix
 from bardolph.controller.script_job import ScriptJob
 from bardolph.lib.injection import provide
 from bardolph.lib.job_control import JobControl
+from bardolph.parser.parse import Parser
 
 
 class ScriptRunner:
@@ -15,6 +16,10 @@ class ScriptRunner:
     @staticmethod
     def as_list(maybe_list):
         return maybe_list if isinstance(maybe_list, list) else [maybe_list]
+
+    def parse_script(self, script):
+        parser = Parser()
+        self._test_case.assertTrue(parser.parse(script), parser.get_errors())
 
     def run_script(self, script, max_waits=None):
         jobs = JobControl()
@@ -62,13 +67,18 @@ class ScriptRunner:
         self._test_case.assertEqual(
             self._machine_state.reg.get_by_enum(reg), expected)
 
-    def assert_var_equal(self, name, expected):
+    def assert_var_equal(self, name: str, expected):
         actual = self._machine_state.call_stack.get_variable(name)
         self._test_case.assertIsNotNone(actual)
         if issubclass(int, type(expected)):
             self._test_case.assertEqual(actual, expected)
         else:
             self._test_case.assertAlmostEqual(actual, expected, 5)
+
+    def assert_vars_equal(self, *pairs):
+        it = iter(pairs)
+        for pair in it:
+            self.assert_var_equal(pair, next(it))
 
     def assert_list_almost_equal(self, list0, list1, precision=1, message=''):
         self._test_case.assertEqual(len(list0), len(list1), message)

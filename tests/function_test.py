@@ -29,9 +29,9 @@ class FunctionTest(unittest.TestCase):
     def test_recursion(self):
         script = """
             define f with a begin
-                if {a > 9}
+                if a > 9
                     return a
-                return [f {a + 1}]
+                return [f a + 1]
             end
 
             # 10
@@ -42,8 +42,8 @@ class FunctionTest(unittest.TestCase):
 
     def test_calls_as_params(self):
         script = """
-            define f with a b return {a + b}
-            define g with y return {y + 1}
+            define f with a b return a + b
+            define g with y return y + 1
 
             # 17
             print [f [g 5] [g 10]]
@@ -56,8 +56,8 @@ class FunctionTest(unittest.TestCase):
             assign x 100
 
             define f with y begin
-                assign x {x * y}
-                return {x * 2}
+                assign x x * y
+                return x * 2
             end
 
             print [f 2]
@@ -73,8 +73,8 @@ class FunctionTest(unittest.TestCase):
             # Using x as a parameter hides the global.
             #
             define g with x begin
-                assign x {x * 2}
-                return {x * 2}
+                assign x x * 2
+                return x * 2
             end
 
             print [g 5]
@@ -98,16 +98,16 @@ class FunctionTest(unittest.TestCase):
     def test_multiple_returns(self):
         script = """
             define m_returns with val begin
-                if {val > 100 and val < 200}
-                    return {val * 2}
+                if val > 100 && val < 200
+                    return val * 2
 
-                if {val >= 200 and val < 1000} begin
-                    return {val * 7}
+                if val >= 200 && val < 1000 begin
+                    return val * 7
                 end
 
-                if {val > 1000} return {val * 11}
+                if val > 1000 return val * 11
 
-                if {val < 0} begin
+                if val < 0 begin
                     return
                 end
 
@@ -146,14 +146,14 @@ class FunctionTest(unittest.TestCase):
     def test_mixed_params(self):
         script = """
             define plus with i j begin
-                return {i + j}
+                return i + j
             end
 
             define multi_params with a b c begin
-                return {a + b * 100 + c * 1000}
+                return a + b * 100 + c * 1000
             end
 
-            print [multi_params 5 {5 + 2} [plus 5 4]]
+            print [multi_params 5 5+2 [plus 5 4]]
         """
         self._runner.run_script(script)
         self.assertEqual(self._output.get_object(), 9705)

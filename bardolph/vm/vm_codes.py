@@ -36,10 +36,12 @@ class Register(Enum):
 
 
 class OpCode(Enum):
+    ARRAY = auto()
     BREAKPOINT = auto()
     COLOR = auto()
     CONSTANT = auto()
     CTX = auto()
+    DEREF = auto()
     DISC = auto()
     DISCM = auto()
     DNEXT = auto()
@@ -48,6 +50,7 @@ class OpCode(Enum):
     END_CTX = auto()
     END_LOOP = auto()
     GET_COLOR = auto()
+    INDEX = auto()
     JSR = auto()
     JUMP = auto()
     LOOP = auto()

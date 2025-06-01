@@ -31,22 +31,34 @@ This means it should be cheap to buy and consume a small amount of power.
 The `Raspberry Pi Zero-W
 <https://www.raspberrypi.org/products/raspberry-pi-zero-w>`_
 has been a good fit for my everyday use. Other Raspberry Pi models will
-work as well, but the Zero-W is among the cheapest, and is entirely capable
-enough for this purpose.
+work as well, and even the newer, faster models are reasonably priced.
 
 The server runs well on a default installation of Raspberry Pi OS. It also
 runs on generic Debian and MacOS, as long as the machnine's version of Python is
 recent enough.
 
-A typical installation involves three components:
+A typical installation involves this chain of communication:
 
-#.  The web-based application (the code in the Bardolph package), written in
-    Python  that implements the UI and runs the light scripts.
-#.  A `WSGI <https://wsgi.readthedocs.io>`_ gateweay process that launches the
-    Python application and interacts with it via WSGI.
-#.  A reverse-proxy HTTP server which communicates with the WSGI
-    gateway over port 8080 and handles the HTTP protocol over port 80 to
-    communicate with end-users' browsers.
+.. figure:: proxy_diagram.png
+    :align: center
+
+#.  The user runs a browser on a phone, TV, or computer, which requests web
+    pages from the local server, typically a Raspberry Pi or similar device.
+#.  On the server computer, Apache manages requests for web pages that come in
+    over port 80 via HTTP.
+#.  Within Apache, a proxy module forwards incoming requests to a python
+    process via port 8080.
+#.  That python process runs waitress, a thin layer which implements the
+    `WSGI <https://wsgi.readthedocs.io>`_ protocol. This gives the python
+    program a simple and secure means of implementing a browser-based
+    application, without having to worry about the low-level complexities of
+    network protocols.
+#.  Inside that same python process, waitress forwards requests for web pages to
+    Flask, which is a platform for python programs to implement the actual UI
+    seen by the user. Within that UI code, clicks on the web page are translated
+    to calls into Bardolph.
+#.  Bardolph, also within that python process, responds by executing scripts
+    to control the light bulbs and other devices.
 
 ..  note:: Although this documentation covers the use of
     `waitress <https://pypi.org/project/waitress>`_ for WSGI
@@ -106,6 +118,9 @@ I also change the name of the server. In this example, my server will be
 "vanya.local". This can be done during O.S. installation or with
 `raspi-config
 <https://www.raspberrypi.com/documentation/computers/configuration.html>`_.
+
+Note, however, that this documentation uses the default `raspberrypi` hostname
+for the server.
 
 .. index::
    single: log directory setup
@@ -183,6 +198,13 @@ restart it to enable the new configuration with:
 
 Download The Source Tree
 ========================
+Log In as lights
+----------------
+If you are using the recommended dedicated user `lights`, this is the point
+where you log in as that user.
+
+Download Supporting Files
+-------------------------
 The web server relies on many non-Python files that are not part of the
 packaged distribution. As a result, you'll need to clone the entire source
 tree. First, log in as the `lights` user, then:
@@ -196,6 +218,13 @@ tree. First, log in as the `lights` user, then:
 
 Set Up a Virtual Environment
 ============================
+Log In as lights
+----------------
+If you are using the recommended dedicated user `lights`, you should also do
+these steps logged into that account.
+
+Create the Virtual Environment
+------------------------------
 To facilitate the installation of the Python modules from PyPi, you will
 probably want to set up a virtual environment. Although I'm still experimenting
 with this, currently I recommend creating one in a directory named
@@ -225,9 +254,8 @@ files and the rather complex file structure that `venv` creates.
 
 Activating
 ----------
-
 Every time you want to work with anything Bardolph-related, you need to
-first activate the virtual environment. From the `lights` home directory:
+first activate the virtual environment. From the **`lights` home directory**:
 
 .. code-block:: bash
 
@@ -306,7 +334,10 @@ for example `/home/lights/bardolph`:
 
     python -m web.start_wsgi
 
-If all goes well, you should be able to access the home page.
+If all goes well, you should be able to access the home page. Typically, the URL
+will look like:
+
+    http://raspberrypi.local
 
 After a Reboot
 --------------
@@ -373,7 +404,7 @@ Uninstalling
 ============
 Uninstall with:
 
-.. code-block:: bash
+.. code-block:: console
 
     pip uninstall bardolph
 
@@ -385,3 +416,124 @@ You can also remove the dependencies:
 .. code-block:: bash
 
     pip uninstall bardolph Flask waitress lifxlan
+
+.. index::
+    single: headless server
+    single: web server; headless
+
+Running a Headless Server
+=========================
+If you are going to use this server on a regular, daily bais, you will most
+likely want to set up a so-called "headless" server. This is a device that has
+no keyboard, mouse, or monitor attached to it. All communication with that
+device occurs over the network, typically via `ssh` or `HTTP`.
+
+To use this kind of set-up, you will typically:
+
+#. Log in via `ssh`.
+#. Launch the web server application.
+#. Log out from the `ssh` session.
+
+However, to log out cleanly while leaving the server application running, you
+will probably want to use either `nohup` or `screen`.
+
+
+.. index::
+    single: headless server; nohup
+
+Running With `nohup`
+--------------------
+The Linux `nohup` command starts a process and routes its `stdout` and `stderr`
+output to a file, by default named `nohop.out`. It also takes control of
+`stdin`, which means the process has no access to input from the keyboard.
+To use this technique, you start the web application as a background task
+within a `nohup` process.
+
+For example, log in as the `lights` user, and:
+
+.. code-block:: base
+
+    source bardolph_venv/bin/activate
+    cd bardolph
+    nohup python -m web.start_wsgi &
+    exit
+
+This will launch the WSGI server, which will keep running after you exit the
+shell.
+
+To stop the server:
+
+.. code-block:: bash
+
+    killall python
+
+.. index::
+    single: headless server; screen command
+
+Running With `screen`
+---------------------
+The `screen` utility is a popular way to run processes without staying logged
+in. The official site is https://www.gnu.org/software/screen. If it is not
+part of your distribution, you should be able to install it with
+
+.. code-block:: bash
+
+    sudo apt install screen
+
+From the command line:
+
+.. code-block:: bash
+
+    screen
+
+At that point, the utility will launch a new shell. During the start-up process
+you see some messaging, and can either read it all or just hit the Return key.
+
+When you get the new shell:
+
+.. code-block:: bash
+
+    source bardolph_venv/bin/activate
+    cd bardolph
+    python -m web.start_wsgi
+
+After the server starts, you can exit the shell, leaving it running unattended.
+To do so, press Ctrl-A, followed by the letter "d" on your keyboard. This will
+"detach" from the shell. At that point, you can log out.
+
+If you want to re-connect to that shell:
+
+.. code-block:: bash
+
+    screen -r
+
+This will reconnect to shell that's running the web server application. To stop
+the process and shut down the server, you can just press Ctrl-C.
+
+Note that the `screen` utility is very powerful, and has a lot of features
+which, while sometimes complicated, are quite useful. Although these added
+capabilities are not necessary to run the Bardolph web server, I would recommend
+that you spend some time reading the documentation or one of the many tuturials
+that are available.
+
+.. index::
+    single: web server; debug mode
+
+Running The Server in Debug Mode
+================================
+If you start digging into customizing the web application, chances are that you
+may want to run Flask in debug mode. This can be done with:
+
+.. code-block:: bash
+
+    source ~/bardolph_venv/bin/activate
+    cd ~/bardolph
+    flask --app web.flask_module:create_app run
+
+If the application launches successfullly, you can access the website with
+
+http://localhost:5000
+
+Note that port 5000 is not open to the outside, and you will not be
+able to access his URL from any other machine on your network. You can access
+it from only `localhost`.

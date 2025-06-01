@@ -11,8 +11,8 @@ class Lex:
              'time')
     _REG_LIST = _REG.split()
     _NAME_SPEC = r'[a-zA-Z_][a-zA-Z0-9_]*'
-    _NON_ALNUM_LIST = r'[]{}()+-*/#:^'
-    _NON_ALNUM_SPEC = r'==|<=|>=|[\[\]\(\){}+\-*<>/#:\^]'
+    _NON_ALNUM_LIST = [word for word in ('&&', '||', *list(r'[]{}()+-*/#:^!'))]
+    _NON_ALNUM_SPEC = r'==|!=|<=|>=|&&|\|\||!|[\[\]\(\){}+\-*<>/#:\^]'
     _NUMBER_SPEC = r'[0-9]*\.?[0-9]+'
     _LITERAL_STRING_SPEC = r'"([^"]|(?<=\\)")*"'
     _DEFAULT_SPEC = '[^\s]+'

@@ -63,7 +63,8 @@ class LoopTest(unittest.TestCase):
     def test_bare_list(self):
         script = """
             hue 45 saturation 25 brightness 75 kelvin 2000 duration 9
-            define light_0 "light_0" assign light_1 "light_1"
+            define light_0 "light_0"
+            assign light_1 "light_1"
             repeat in light_0 and light_1 and "light_2" as the_light
                 set the_light
         """
@@ -80,8 +81,9 @@ class LoopTest(unittest.TestCase):
             repeat
                 in l0 and l1 and "light_2"
                 as the_light
-                with brt from {saturation - brightness}
-                to {hue - brightness - 30}
+                with brt
+                    from saturation - brightness
+                    to hue - brightness - 30
             begin
                 brightness brt
                 set the_light
@@ -139,9 +141,12 @@ class LoopTest(unittest.TestCase):
             assign z 10
             assign thou 1000
 
-            hue {36 * y} saturation {y * z} brightness {50 * 1} kelvin thou
+            hue 36 * y
+            saturation y * z
+            brightness 50 * 1
+            kelvin thou
 
-            repeat {16 / (y - 1)} with brt from {-z+z} to {thou / 10} begin
+            repeat 16 / (y - 1) with brt from -z + z to thou / 10 begin
                 brightness brt
                 set all
             end
@@ -192,9 +197,9 @@ class LoopTest(unittest.TestCase):
 
             assign y 0
             define x 100
-            repeat while {y < 4 and x == 100} begin
+            repeat while y < 4 && x == 100 begin
                 set all
-                assign y {y + 1}
+                assign y y + 1
             end
         """
         self._runner.run_script(script)
@@ -325,11 +330,11 @@ class LoopTest(unittest.TestCase):
             units raw hue 100 saturation 200 brightness 300 kelvin 400
             assign i 0
             repeat begin
-                if {i >= 2}
+                if i >= 2
                     break
                 hue i
                 set all
-                assign i {i + 1}
+                assign i i + 1
             end
         """
         self._runner.run_script(script)
@@ -343,19 +348,19 @@ class LoopTest(unittest.TestCase):
             units raw hue 100 saturation 200 brightness 300 kelvin 400
             assign i 0
             repeat begin
-                if {i >= 2}
+                if i >= 2
                     break
                 hue i
                 set all
-                assign i {i + 1}
+                assign i i + 1
 
                 assign j 1000
                 repeat begin
-                    if {j > 1002}
+                    if j > 1002
                         break
                     hue j
                     set all
-                    assign j {j + 1}
+                    assign j j + 1
                 end
             end
         """
@@ -374,11 +379,11 @@ class LoopTest(unittest.TestCase):
         script = """
             assign y 0
             units raw hue 180 saturation 190 brightness 200 kelvin 210
-            repeat while {y < 4} begin
+            repeat while y < 4 begin
                 set all
-                if {y == 2}
+                if y == 2
                     break
-                assign y {y + 1}
+                assign y y + 1
             end
         """
         self._runner.run_script(script)
@@ -390,7 +395,7 @@ class LoopTest(unittest.TestCase):
             units raw hue 180 saturation 190 brightness 200 kelvin 210
             repeat with i from 0 to 10 begin
                 set all
-                if {i == 2}
+                if i == 2
                     break
             end
         """
@@ -404,10 +409,10 @@ class LoopTest(unittest.TestCase):
             hue 500 saturation 600 brightness 700 kelvin 800 duration 900
             assign i 0
             repeat in "light_0" and "light_1" and "light_2" as the_light begin
-                if {i == 2}
+                if i == 2
                     break
                 set the_light
-                assign i {i + 1}
+                assign i i + 1
             end
         """
         self._runner.run_script(script)

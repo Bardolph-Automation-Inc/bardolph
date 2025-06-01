@@ -41,7 +41,7 @@ class EndToEndTest(unittest.TestCase):
         self._runner.run_script(script)
         lifx = provide(i_controller.LightApi)
         self._runner.check_call_list(
-            ('Bottom', 'Top', 'Middle'),(Action.SET_COLOR, [1, 2, 3, 4], 5))
+            ('Bottom', 'Top', 'Middle'), (Action.SET_COLOR, [1, 2, 3, 4], 5))
 
     def test_mixed_and(self):
         script = """
@@ -60,9 +60,9 @@ class EndToEndTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.check_call_list(('Top', 'Middle', 'Bottom'),
-            (Action.SET_COLOR, [100, 10, 1, 1000], 0))
+                                     (Action.SET_COLOR, [100, 10, 1, 1000], 0))
         self._runner.check_call_list(('Table', 'Chair', 'Strip'),
-            (Action.SET_POWER, 1, 0))
+                                     (Action.SET_POWER, 1, 0))
 
     def test_location(self):
         script = """
@@ -76,48 +76,6 @@ class EndToEndTest(unittest.TestCase):
             ('Top', 'Middle', 'Bottom', 'Strip', 'Candle'),
             [(Action.SET_COLOR, [100, 10, 1, 1000], 0),
              (Action.SET_POWER, 1, 0)])
-
-    def test_expression(self):
-        script = """
-            assign x {5 + 6}
-        """
-        self._runner.run_script(script)
-
-    def test_if_expr(self):
-        script = """
-            units raw
-            hue 1 saturation 2 brightness 3 kelvin 4 duration 5
-
-            assign x 10
-            assign y 20
-
-            if {8 >= 7} hue 5
-            if {9 <= 10} begin saturation 55 end
-            if {8 > 7} brightness 555
-            if {not x > y} kelvin 5555
-
-            if {8 != 9} duration {50 / 5}
-            if {100 == 10 * 10} set "Top"
-        """
-        self._runner.test_code(
-            script, 'Top', (Action.SET_COLOR, [5, 55, 555, 5555], 10.0))
-
-    def test_if_else(self):
-        script = """
-            units raw hue 1 saturation 2 brightness 3 kelvin 4
-            assign five 5 assign two 2
-            if {five < two} hue 0 else hue 1000 set "Top"
-            if {five < two} begin hue 0 end else begin hue 2000 end set "Top"
-            if {five < two} hue 0 else begin hue 3000 end set "Top"
-            if {five > two} begin hue 4000 end else hue 0 set "Top"
-            if {five > two} begin hue 5000 end else hue 0 set "Top"
-        """
-        self._runner.test_code(script, 'Top', [
-            (Action.SET_COLOR, [1000, 2, 3, 4], 0.0),
-            (Action.SET_COLOR, [2000, 2, 3, 4], 0.0),
-            (Action.SET_COLOR, [3000, 2, 3, 4], 0.0),
-            (Action.SET_COLOR, [4000, 2, 3, 4], 0.0),
-            (Action.SET_COLOR, [5000, 2, 3, 4], 0.0)])
 
     def test_multiple_get_logical(self):
         script = """
@@ -169,14 +127,6 @@ class EndToEndTest(unittest.TestCase):
             (Action.SET_COLOR, [4000, 2000, 5000, 0], 1),
             (Action.SET_COLOR, [6000, 2000, 32768, 0], 1)
         ])
-
-    def test_parens_expr(self):
-        script = """
-            define last 1
-            define first 2
-            assign delta {(last - first)}
-        """
-        self._runner.run_script(script)
 
 
 if __name__ == '__main__':

@@ -11,10 +11,8 @@ from bardolph.runtime import runtime_module
 def configure(small_set=False):
     injection.configure()
     settings.using({
-        'matrix_init_color': [4, 3, 2, 1],
         'log_level': logging.ERROR,
         'log_to_console': True,
-        'single_light_discover': True,
         'use_fakes': True
     }).configure()
     log_config.configure()

@@ -1,15 +1,27 @@
-
+from bardolph.vm.array import Array
 from bardolph.vm.vm_codes import LoopVar
 
 
 class StackFrame:
     def __init__(self, parent=None):
-        self.vars = parent.vars if parent is not None else {}
-        self.params = {}
         self.parent = parent
+        self.vars = parent.vars if parent is not None else {}
         self.constants = parent.constants if parent is not None else None
         self.globals = parent.globals if parent is not None else self.vars
+        self.params = {}
         self.return_addr = None
+
+    def put_variable(self, index, value) -> None:
+        if index in self.params:
+            dest = self.params
+        elif index in self.globals:
+            dest = self.globals
+        else:
+            dest = self.vars
+        dest[index] = value
+
+    def put_constant(self, name: str, value) -> None:
+        self.constants[name] = value
 
     def get_variable(self, identifier):
         for place in (self.constants, self.vars, self.params, self.globals):
@@ -47,14 +59,14 @@ class CallStack:
     After the JSR. an END_CTX command pops the top of the stack into self._top.
     """
 
-    def __init__(self, constants=None):
-        self.reset(constants)
+    def __init__(self):
+        self.reset()
 
-    def reset(self, constants=None) -> None:
+    def reset(self) -> None:
         self._top = StackFrame()
-        self._top.constants = constants or {}
+        self._top.constants = {}
 
-    def get_top(self):
+    def get_top(self) -> StackFrame:
         return self._top
 
     def new_frame(self):
@@ -65,38 +77,30 @@ class CallStack:
         self._top.params[name] = value
 
     def enter_routine(self) -> None:
-        # Upon entering the routine, the only available varaiables are the
-        # incoming parameters.
         self._top.vars = self._top.params
 
     def exit_routine(self) -> None:
         self._top = self._top.parent
 
     def put_variable(self, index, value) -> None:
-        # When a parameter has the same name as a global variable, the global
-        # becomes hidden.
-        #
         if isinstance(index, LoopVar):
             self._top.set_loop_var(index, value)
-        elif index in self._top.params:
-            self._top.params[index] = value
-        elif index in self._top.globals:
-            self._top.globals[index] = value
         else:
-            self._top.vars[index] = value
+            self._top.put_variable(index, value)
+
+    def put_constant(self, name: str, value) -> None:
+        self._top.put_constant(name, value)
+
+    def get_variable(self, index):
+        if isinstance(index, LoopVar):
+            return self._top.get_loop_var(index)
+        return self._top.get_variable(index)
 
     def set_return(self, address) -> None:
         self._top.return_addr = address
 
     def get_return(self) -> int:
         return self._top.return_addr
-
-    def get_variable(self, identifier):
-        if isinstance(identifier, LoopVar):
-            if isinstance(self._top, LoopFrame):
-                return self._top.get_loop_var(identifier)
-            return None
-        return self._top.get_variable(identifier)
 
     def get_parameter(self, name):
         return self._top.get_parameter(name)

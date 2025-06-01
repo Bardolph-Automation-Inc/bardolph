@@ -11,13 +11,80 @@
 *************
 Release Notes
 *************
-Previously, I didn't really have any downloads, but I think people are actually
-using this thing. Therefore, I've decided to update these release notes each
-time I push a new build to PyPi. As time goes on, I might actually work
-backwards, but for now there's just the latest update.
-
 In all cases, you can also assume that there were some bug fixes and code
 clean-up, although I don't log most bugs on Github.
+
+June 1, 2025
+============
+Release: 0.2.7
+
+Curly Braces No Longer Required
+-------------------------------
+Re-work the parser so that numerical expressions no longer need to be in curly
+braces. For example,
+
+.. code-block:: lightbulb
+
+    assign x {5 + y}
+
+can now be expressed this way:
+
+.. code-block:: lightbulb
+
+    assgign x 5 + y
+
+Logical Expression Syntax Change
+--------------------------------
+Use ``||`` in place of ``or``, ``&&`` in place of ``and``, and ``!``
+instead of ``not`` in logical expressions. For example, instead of:
+
+.. code-block:: lightbulb
+
+    # Error: "and", "or", "not" no longer used in logical expressions.
+
+    if x > y and not (a > b or c > d )begin
+        on all
+    end
+
+the script needs to have:
+
+.. code-block:: lightbulb
+
+    # Instead of "or", "and", "not", use "||", "&&", "!"
+
+    if x > y && !(a > b || c > d) begin
+        on all
+    end
+
+Get Information About Lights
+----------------------------
+Add the "query" function that reports on the physical characteristics of
+devices. This allows a script the find out at runtime:
+
+* If the light is "Color" or "White".
+* Whether light is a "Lightstrip", "Beam", etc.
+* For strip types of lights, how many zones are available.
+* Whether the light is a matrix type of device, such as a Candlelight.
+* For matrix lights, how many rows and columns a light has.
+
+For exaple, to treat a light differently, depending on whether it is capable of
+changing color:
+
+.. code-block:: lightbulb
+
+    if [query "is-color" light_name] begin
+        # Color bulb, so set the hue and saturation.
+        hue 120
+        saturation 90
+        kelvin 2000
+    end else begin
+        # "White" bulb, can't set the color, so just set the temperature.
+        kelvin 2700
+    end
+
+Documentation for this function can be found here:
+:ref:`query function<query function>`
+
 
 March 12, 2025
 ==============

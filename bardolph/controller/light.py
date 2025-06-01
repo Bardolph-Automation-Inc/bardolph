@@ -30,6 +30,12 @@ class Light(i_controller.Light):
     def get_location(self):
         return self._location
 
+    def get_height(self) -> int:
+        return 1
+
+    def get_width(self) -> int:
+        return 1
+
     def get_age(self) -> float:
         # seconds
         return time.time() - self._birth

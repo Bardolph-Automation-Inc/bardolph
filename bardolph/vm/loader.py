@@ -30,8 +30,7 @@ class Loader:
             self._iter = None
             return None
 
-    @inject(i_runtime.Runtime)
-    def load(self, instructions, runtime):
+    def load(self, instructions):
         self._main_segment.clear()
         self._routine_segment.clear()
         self._routines.clear()

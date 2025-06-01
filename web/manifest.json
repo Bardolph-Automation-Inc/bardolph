@@ -70,8 +70,8 @@
     },
     {
         "file_name": "",
-        "path": "stop",
-        "title": "Stop",
+        "path": "stop-all",
+        "title": "Stop All Scripts",
         "background": "Maroon",
         "color": "White"
     }

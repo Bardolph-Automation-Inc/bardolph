@@ -18,6 +18,10 @@ class Light(light.Light):
             impl.get_label(), impl.get_group(), impl.get_location())
         self._impl = impl
         self.product_features = impl.get_product_features()
+        self._is_color = self.product_features.get('color', False)
+
+    def is_color(self):
+        return self._is_color
 
     @tries(_MAX_TRIES, WorkflowException, [-1] * 4)
     def get_color(self):
@@ -45,7 +49,10 @@ class MultizoneLight(Light, i_controller.MultizoneLight):
         super().__init__(impl)
         self._num_zones = num_zones or len(self.get_zone_colors())
 
-    def get_num_zones(self) -> int:
+    def get_height(self) -> int:
+        return 1
+
+    def get_width(self) -> int:
         return self._num_zones
 
     @tries(_MAX_TRIES, WorkflowException)

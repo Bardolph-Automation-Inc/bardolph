@@ -78,9 +78,10 @@ class LoopParser(SubParser):
         if self._loop_type.is_unbounded():
             return True
 
-        if (self._loop_type is _LoopType.COUNTED
-                and not self.rvalue(LoopVar.COUNTER)):
-            return False
+        if self._loop_type is _LoopType.COUNTED:
+            if not self.rvalue():
+                return False
+            code_gen.pop(LoopVar.COUNTER)
         if self._loop_type in (_LoopType.ALL, _LoopType.LIST):
             code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.COUNTER)
             if not (self._pre_loop_list(code_gen, context_stack) and
@@ -114,9 +115,8 @@ class LoopParser(SubParser):
                 return False
         else:
             # Push and count one light.
-            if not self.rvalue(Register.RESULT, inner_coder):
+            if not self.rvalue_str(inner_coder):
                return False
-            inner_coder.push(Register.RESULT)
             inner_coder.plus_equals(LoopVar.COUNTER)
 
         if self.current_token.is_a(TokenTypes.AND):
@@ -134,9 +134,10 @@ class LoopParser(SubParser):
         inner_code.plus_equals(LoopVar.COUNTER)
         inner_code.push(LoopVar.CURRENT)
         if self._loop_type is _LoopType.LIST:
-            if not self.rvalue(LoopVar.FIRST, code_gen):
+            if not self.rvalue_str(code_gen):
                 return self.token_error(
                     'Needed name of a group or location, got "{}"')
+            code_gen.pop(LoopVar.FIRST)
             code_gen.iter_members(operand, inner_code.program)
         else:
             code_gen.iter_lights(inner_code.program)
@@ -201,13 +202,15 @@ class LoopParser(SubParser):
         return self.next_token()
 
     def _index_var_range(self, code_gen) -> bool:
-        if not self.rvalue(LoopVar.FIRST):
+        if not self.rvalue():
             return False
+        code_gen.pop(LoopVar.FIRST)
         if not self.current_token.is_a(TokenTypes.TO):
             return self.token_error('Needed "to", got "{}"')
         self.next_token()
-        if not self.rvalue(LoopVar.LAST):
+        if not self.rvalue():
             return False
+        code_gen.pop(LoopVar.LAST)
         code_gen.add_instruction(OpCode.MOVE, LoopVar.FIRST, self._index_var)
         if self._loop_type is _LoopType.WITH:
             if not self._calc_counter(code_gen):
@@ -255,8 +258,10 @@ class LoopParser(SubParser):
                 "repeat with cycle missing number of iterations")
         if not self.at_rvalue():
             code_gen.add_instruction(OpCode.MOVEQ, 0, LoopVar.FIRST)
-        elif not self.rvalue(LoopVar.FIRST):
-            return False
+        else:
+            if not self.rvalue():
+                return False
+            code_gen.pop(LoopVar.FIRST)
 
         # increment = 360 / counter, or
         # increment = 65536 / counter, based on unit_mode register
@@ -274,11 +279,11 @@ class LoopParser(SubParser):
 
     def _loop_test(self, code_gen) -> bool:
         """
-        Generate code to leave True or False in the result register,
+        Generate code to leave True or False on top of the eval stack,
         depending on whether the loop should continue.
         """
         if self._loop_type is _LoopType.INFINITE:
-            code_gen.add_instruction(OpCode.MOVEQ, True, Register.RESULT)
+            code_gen.add_instruction(OpCode.PUSHQ, True)
             return True
         if self._loop_type is _LoopType.WHILE:
             return self.rvalue()

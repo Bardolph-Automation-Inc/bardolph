@@ -76,11 +76,15 @@ class Context:
         dest = self._locals if self._in_routine else self._globals
         dest.add_symbol(name, SymbolType.VAR, value)
 
+    def add_array(self, name, num_dimensions) -> None:
+        dest = self._locals if self._in_routine else self._globals
+        dest.add_symbol(name, SymbolType.ARRAY, num_dimensions)
+
     def add_global(self, name, symbol_type, value) -> None:
         self._globals.add_symbol(name, symbol_type, value)
 
     def get_data(self, name):
-        return self.get_symbol_typed(name, (SymbolType.MACRO, SymbolType.VAR))
+        return self.get_symbol_typed(name, (SymbolType.CONSTANT, SymbolType.VAR))
 
     def get_symbol(self, name) -> Symbol:
         """
@@ -111,8 +115,8 @@ class Context:
     def has_routine(self, name):
         return not self._global_of_type(name, SymbolType.ROUTINE).undefined
 
-    def get_macro(self, name) -> Symbol:
-        return self._global_of_type(name, SymbolType.MACRO)
+    def get_constant(self, name) -> Symbol:
+        return self._global_of_type(name, SymbolType.CONSTANT)
 
     def _global_of_type(self, name, symbol_type) -> Symbol:
         symbol = self._globals.get_symbol(name)

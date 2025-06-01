@@ -1,26 +1,25 @@
 import operator
 from numbers import Number
 
-from bardolph.controller.units import UnitMode
 from bardolph.vm.eval_stack import EvalStack
 from bardolph.vm.vm_codes import LoopVar, Operand, Operator, Register
 
 
 class VmMath:
-    _fn_table = { op_code: op_fn for op_code, op_fn in (
-        (Operator.ADD, operator.add),
-        (Operator.DIV, operator.truediv),
-        (Operator.EQ, operator.__eq__),
-        (Operator.GT, operator.gt),
-        (Operator.GTE, operator.ge),
-        (Operator.LT, operator.lt),
-        (Operator.LTE, operator.le),
-        (Operator.NOTEQ, operator.ne),
-        (Operator.MOD, operator.mod),
-        (Operator.MUL, operator.mul),
-        (Operator.POW, operator.pow),
-        (Operator.SUB, operator.sub)
-    )}
+    _fn_table = {
+        Operator.ADD: operator.add,
+        Operator.DIV: operator.truediv,
+        Operator.EQ: operator.__eq__,
+        Operator.GT: operator.gt,
+        Operator.GTE: operator.ge,
+        Operator.LT: operator.lt,
+        Operator.LTE: operator.le,
+        Operator.NOTEQ: operator.ne,
+        Operator.MOD: operator.mod,
+        Operator.MUL: operator.mul,
+        Operator.POW: operator.pow,
+        Operator.SUB: operator.sub
+    }
 
     def __init__(self, call_stack, reg):
         self._call_stack = call_stack
@@ -38,7 +37,8 @@ class VmMath:
         elif isinstance(srce, Register):
             value = self._reg.get_by_enum(srce)
         elif isinstance(srce, (str, LoopVar)):
-            value = self._call_stack.get_variable(srce)
+             value = self._call_stack.get_variable(srce)
+
         assert value is not None, "pushing None onto eval stack"
         self._eval_stack.push(value)
 
@@ -47,6 +47,8 @@ class VmMath:
 
     def pop(self, dest) -> None:
         value = self._eval_stack.pop()
+        if dest is None:
+            return
         if isinstance(dest, Register):
             self._reg.set_by_enum(dest, value)
         elif isinstance(dest, (str, LoopVar)):

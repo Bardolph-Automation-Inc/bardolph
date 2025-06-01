@@ -18,6 +18,7 @@ class TokenTypes(Enum):
     COLUMN = auto()
     COMPARE = auto()
     CYCLE = auto()
+    DECLARE = auto()
     DEFAULT = auto()
     DEFINE = auto()
     ELSE = auto()
@@ -32,9 +33,11 @@ class TokenTypes(Enum):
     LITERAL_STRING = auto()
     LOCATION = auto()
     LOGICAL = auto()
+    LOGICAL_AND = auto()
+    LOGICAL_NOT = auto()
+    LOGICAL_OR = auto()
     MARK = auto()
     NAME = auto()
-    NOT = auto()
     NULL = auto()
     NUMBER = auto()
     OFF = auto()
@@ -69,7 +72,7 @@ class TokenTypes(Enum):
 
     def is_executable(self):
         return self in (
-            TokenTypes.ASSIGN, TokenTypes.BREAKPOINT,
+            TokenTypes.ASSIGN, TokenTypes.BREAKPOINT, TokenTypes.DECLARE,
             TokenTypes.GET, TokenTypes.IF, TokenTypes.OFF, TokenTypes.ON,
             TokenTypes.PRINT, TokenTypes.PRINTF, TokenTypes.PRINTLN,
             TokenTypes.PAUSE, TokenTypes.REGISTER, TokenTypes.REPEAT,
@@ -139,7 +142,7 @@ class Token:
     def is_binop(self):
         return (self.is_a(TokenTypes.COMPARE)
                 or self.content in '+-*/%^'
-                or self.content in ('and', 'or'))
+                or self.content in ('&&', '||'))
 
     @property
     def line_number(self):
@@ -148,9 +151,9 @@ class Token:
     @property
     def prec(self):
         return {
-            'not': 1,
-            'or': 2,
-            'and': 3,
+            '!': 1,
+            '||': 2,
+            '&&': 3,
             '==': 4,
             '<=': 4,
             '>=': 4,
@@ -167,6 +170,6 @@ class Token:
 
     @property
     def assoc(self):
-        if self.content in ('not', '^'):
+        if self.content in ('!', '^'):
             return Assoc.RIGHT
         return Assoc.LEFT

@@ -27,7 +27,11 @@ class CodeGen:
     def push(self, operand) -> None:
         self.add_instruction(self._push_op(operand), operand)
 
-    def pop(self, operand) -> None:
+    def pushq(self, operand) -> None:
+        self.add_instruction(OpCode.PUSHQ, operand)
+
+    def pop(self, operand=None) -> None:
+        # The operand is where to put the value. If None, throw the value away.
         self.add_instruction(OpCode.POP, operand)
 
     def add_instruction(self, op_code, param0=None, param1=None) -> Instruction:
@@ -44,11 +48,14 @@ class CodeGen:
                 op_code, param0, param1, *_ = (*code, None, None)
                 self.add_instruction(op_code, param0, param1)
 
+    def add(self, addend0, addend1) -> None:
+        self.binop(Operator.ADD, addend0, addend1)
+
     def add_instructions(self, inst_list) -> None:
         self._code.extend(inst_list)
 
-    def add(self, addend0, addend1) -> None:
-        self.binop(Operator.ADD, addend0, addend1)
+    def wait(self) -> None:
+        self.add_instruction(OpCode.WAIT)
 
     def subtract(self, minuend, subtrahend) -> None:
         """
@@ -58,14 +65,13 @@ class CodeGen:
         self.binop(Operator.SUB, minuend, subtrahend)
 
     def test_op(self, operator, op0, op1) -> None:
-        """
-        Generate code to perform a binary operation and put the results into
-        the result register.
-        """
         self.binop(operator, op0, op1)
-        self.add_instruction(OpCode.POP, Register.RESULT)
 
     def binop(self, operator, param0, param1) -> None:
+        """
+        Generate code to perform a binary operation and put the results on top
+        of the expression stack.
+        """
         push0 = self._push_op(param0)
         push1 = self._push_op(param1)
         self.add_list(

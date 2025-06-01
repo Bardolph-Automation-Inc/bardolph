@@ -1,5 +1,7 @@
 import os
 
+from bardolph.parser.token import Token
+
 from .vm_codes import OpCode
 
 

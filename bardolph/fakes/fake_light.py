@@ -14,6 +14,9 @@ class Light(i_controller.Light):
         self._name = name
         self._group = group
         self._location = location
+        self._height = 1
+        self._width = 1
+        self._is_color = True
         self._power = 0
         self._color = [0, 0, 0, 0]
 
@@ -35,6 +38,24 @@ class Light(i_controller.Light):
 
     def get_location(self) -> str:
         return self._location
+
+    def set_height(self, height: int) -> None:
+        self._height = height
+
+    def get_height(self) -> int:
+        return self._height
+
+    def set_width(self, width: int) -> None:
+        self._width = width
+
+    def get_width(self) -> int:
+        return self._width
+
+    def is_color(self) -> bool:
+        return self._is_color
+
+    def set_is_color(self, is_color: bool) -> None:
+        self._is_color = is_color
 
     def get_age(self) -> float:
         return float(self._age)
@@ -78,9 +99,7 @@ class MultizoneLight(Light, i_controller.MultizoneLight):
     def __init__(self, name, group, location, num_zones=16):
         super().__init__(name, group, location)
         self._zone_colors = [[0, 0, 0, 0] for _ in range(0, num_zones)]
-
-    def get_num_zones(self) -> int:
-        return 16
+        self._width = num_zones
 
     def get_zone_colors(self, start_index=0, end_index=16):
         start_index = param_16(start_index)
@@ -111,12 +130,6 @@ class MatrixLight(Light, i_controller.MatrixLight):
             while True:
                 yield [0, 0, 0, 0]
         self._matrix = ColorMatrix.new_from_iterable(height, width, all_zero())
-
-    def get_height(self) -> int:
-        return self._height
-
-    def get_width(self) -> int:
-        return self._width
 
     def set_matrix(self, matrix, duration=0) -> None:
         logging.info(

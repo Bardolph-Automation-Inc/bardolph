@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from flask import Blueprint, render_template, request
 
-from bardolph.lib.injection import inject, injected, provide
+from bardolph.lib.injection import inject, provide
 from web.i_web import WebApp
 
 
@@ -17,7 +17,7 @@ class FrontEnd:
                                path_root=web_app.get_path_root())
 
     @inject(WebApp)
-    def run_script(self, path, web_app=injected):
+    def run_script(self, path, web_app):
         script_control = web_app.get_script_control(path)
         if script_control is not None:
             if script_control.running or web_app.queue_script(script_control):
@@ -25,19 +25,19 @@ class FrontEnd:
         return self.index()
 
     @inject(WebApp)
-    def off(self, web_app=injected):
+    def off(self, web_app):
         script_control = web_app.get_script_control('off')
         web_app.stop_current()
         web_app.queue_script(script_control)
         return self.render_action(script_control, "")
 
     @inject(WebApp)
-    def capture(self, web_app=injected):
+    def capture(self, web_app):
         web_app.snapshot()
         return self.index()
 
     @inject(WebApp)
-    def stop_script(self, path, web_app=injected):
+    def stop_script(self, path, web_app):
         script_control = web_app.get_script_control(path)
         if script_control is not None and script_control.running:
             web_app.stop_script(path)
@@ -45,19 +45,19 @@ class FrontEnd:
         return self.index()
 
     @inject(WebApp)
-    def stop_current(self, web_app=injected):
+    def stop_current(self, web_app):
         script_control = web_app.get_script_control('stop-current')
         web_app.stop_current()
         return self.render_action(script_control, "Requested")
 
     @inject(WebApp)
-    def stop_all(self, web_app=injected):
+    def stop_all(self, web_app):
         script_control = web_app.get_script_control('stop-all')
         web_app.stop_all()
         return self.render_action(script_control, "Requested")
 
     @inject(WebApp)
-    def render_action(self, script_control, message, web_app=injected):
+    def render_action(self, script_control, message, web_app):
         return render_template(
             'action.html',
             agent_class=self.get_agent_class(),
@@ -67,7 +67,7 @@ class FrontEnd:
             path_root=web_app.get_path_root())
 
     @inject(WebApp)
-    def status(self, web_app=injected):
+    def status(self, web_app):
         return render_template(
             "status.html",
             title="Status",

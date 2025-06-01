@@ -12,7 +12,7 @@ functional = {
     'log_to_console': True,
 
     # Ignored unless log_to_console is False.
-    'log_file_name': '/var/log/lights/lights.log',
+    'log_file_name': 'lights.log',
 
     # How long to wait before attempting the next discovery.
     'refresh_sleep_time': 60, # seconds, used when there was no problem.
