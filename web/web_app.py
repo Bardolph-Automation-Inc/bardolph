@@ -134,5 +134,5 @@ class WebApp:
         output_name = join(
             settings.get_value('script_path', '.'), '__snapshot__.ls')
         out_file = open(output_name, 'w')
-        out_file.write(ScriptSnapshot().generate().text)
+        out_file.write(ScriptSnapshot().generate(None).text)
         out_file.close()

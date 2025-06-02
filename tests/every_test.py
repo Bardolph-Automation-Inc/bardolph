@@ -5,8 +5,6 @@ import unittest
 
 module_names = (
     'activity_log_test',
-    ### 'array_test',
-    ### 'array_vm_test',
     'block_candle_test',
     'call_stack_test',
     'candle_test',
