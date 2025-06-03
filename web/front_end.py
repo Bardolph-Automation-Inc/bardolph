@@ -33,8 +33,14 @@ class FrontEnd:
 
     @inject(WebApp)
     def capture(self, web_app):
-        web_app.snapshot()
-        return self.index()
+        script_control = web_app.get_script_control('capture')
+        script_control.title = ''
+        if web_app.snapshot():
+            msg = ('The current light settings have been captured. Click '
+                   '"Retrieve" from the home page to restore those settings.')
+        else:
+            msg = 'Either the capture failed, or no lights were found.'
+        return self.render_action(script_control, msg)
 
     @inject(WebApp)
     def stop_script(self, path, web_app):

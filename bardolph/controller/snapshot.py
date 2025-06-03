@@ -17,7 +17,7 @@ class Snapshot:
         self._brief = False
 
     def start_snapshot(self):
-        self._text =''
+        self._text = ''
 
     def append(self, text):
         self._text += text
@@ -91,6 +91,10 @@ class Snapshot:
 
 
 class ScriptSnapshot(Snapshot):
+    def start_snapshot(self):
+        super().start_snapshot()
+        self._text += 'units raw duration 1000\n'
+
     def setting(self, reg, value):
         self.append('{} {:.0f} '.format(reg.name.lower(), value))
 

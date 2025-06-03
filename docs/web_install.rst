@@ -210,12 +210,12 @@ probably want to set up a virtual environment. Although I'm still experimenting
 with this, currently I recommend creating one in a directory named
 `bardolph-venv`.
 
-To create the virtual environment, from your home directory as the `lights`
-user:
+To create the virtual environment, *from your home directory as the `lights`
+user*:
 
 .. code-block:: bash
 
-    lights@harper:~ $ python -m venv bardolph-venv
+    lights@raspberrypi:~ $ python -m venv bardolph-venv
 
 The resulting directory structure will look like:
 
@@ -329,7 +329,7 @@ again. To do so, `ssh` to the server as user `lights` and:
 
 .. code-block:: bash
 
-   cd bardolph
+   cd ~/bardolph
    python -m web.start_wsgi
 
 If you are clever enough with Linux, you can probably set up an init script
@@ -366,44 +366,6 @@ Ctrl/C.
 
 .. index:: installation; upgrade, updating version
 
-Upgrading to the Latest Version
-===============================
-From time to time, the package will be updated with fixes and new features. To
-upgrade to the latest verstion:
-
-.. code-block:: bash
-
-    source bardolph-venv/bin/activate
-    pip install -U bardolph
-
-Upgrading lifxlan to the Latest Version
-=======================================
-If you have a newly-released device that hasn't been on the market for very
-long, you may need to install the *lifxlan* library from the latest source
-code. For more information, see :ref:`lifxlan_setup` in the basic installation
-instructions.
-
-Uninstalling
-============
-Uninstall with:
-
-.. code-block:: console
-
-    pip uninstall bardolph
-
-Aside from that un-install, you can also recursively delete the source tree
-and the directory containing the virtual environment.
-.
-You can also remove the dependencies:
-
-.. code-block:: bash
-
-    pip uninstall bardolph Flask waitress lifxlan
-
-.. index::
-    single: headless server
-    single: web server; headless
-
 Running a Headless Server
 =========================
 If you are going to use this server on a regular, daily bais, you will most
@@ -434,10 +396,10 @@ within a `nohup` process.
 
 For example, log in as the `lights` user, and:
 
-.. code-block:: base
+.. code-block:: bash
 
-    source bardolph-venv/bin/activate
-    cd bardolph
+    source ~/bardolph-venv/bin/activate
+    cd ~/bardolph
     nohup python -m web.start_wsgi &
     exit
 
@@ -476,8 +438,8 @@ When you get the new shell:
 
 .. code-block:: bash
 
-    source bardolph-venv/bin/activate
-    cd bardolph
+    source ~/bardolph-venv/bin/activate
+    cd ~/bardolph
     python -m web.start_wsgi
 
 After the server starts, you can exit the shell, leaving it running unattended.
@@ -551,5 +513,65 @@ as part of your setup, you need to do the following:
 This allows processes owned by the `lights` meta-user to write all of the
 logs in one place.
 
-Start Server
+Start The Server Using .ini File
+--------------------------------
+Before starting the server, you need to activate the use of the .ini file by
+setting the `BARDOLPH_INI` environment variable. Therefore, to start the server:
+
+.. code-block:: bash
+
+    export BARDOLPH_INI=log_to_file.ini
+    source ~/bardolph-venv/bin/activate
+    cd ~/bardolph
+    python -m web.start_wsgi
+
+After the server starts, there should a file `/var/log/lights/lights.log`. It
+may be empty, unless there was some kind of error.
+
+.. index::
+    single: web server; after installation
+
+After Installation
+==================
+This section covers some activities that are done post-installation.
+
+Upgrading to the Latest Version
+-------------------------------
+From time to time, the package will be updated with fixes and new features. To
+upgrade to the latest verstion:
+
+.. code-block:: bash
+
+    source ~/bardolph-venv/bin/activate
+    pip install -U bardolph
+
+Upgrading lifxlan to the Latest Version
+---------------------------------------
+If you have a newly-released device that hasn't been on the market for very
+long, you may need to install the *lifxlan* library from the latest source
+code. For more information, see :ref:`lifxlan_setup` in the basic installation
+instructions.
+
+.. index::
+    single: web server; uninstall
+
+Uninstalling
 ------------
+Uninstall with:
+
+.. code-block:: console
+
+    pip uninstall bardolph
+
+Aside from that un-install, you can also recursively delete the source tree
+and the directory containing the virtual environment.
+.
+You can also remove the dependencies:
+
+.. code-block:: bash
+
+    pip uninstall bardolph Flask waitress lifxlan
+
+.. index::
+    single: headless server
+    single: web server; headless

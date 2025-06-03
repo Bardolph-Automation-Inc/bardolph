@@ -1,15 +1,14 @@
 import copy
 import html
 import json
-from os.path import join
 import platform
-
-from bardolph.lib.i_lib import Settings
-from bardolph.lib.injection import inject
-from bardolph.lib.job_control import JobControl
+from os.path import join
 
 from bardolph.controller.script_job import ScriptJob
 from bardolph.controller.snapshot import ScriptSnapshot, TextSnapshot
+from bardolph.lib.i_lib import Settings
+from bardolph.lib.injection import inject
+from bardolph.lib.job_control import JobControl
 
 
 class ScriptControl:
@@ -131,8 +130,15 @@ class WebApp:
 
     @inject(Settings)
     def snapshot(self, settings):
+        output = ScriptSnapshot().generate(None).text
+        if output is None or len(output) == 0:
+            return False
+
         output_name = join(
             settings.get_value('script_path', '.'), '__snapshot__.ls')
         out_file = open(output_name, 'w')
-        out_file.write(ScriptSnapshot().generate(None).text)
+        out_file.write(output)
         out_file.close()
+        return True
+
+

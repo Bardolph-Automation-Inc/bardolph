@@ -17,16 +17,15 @@
 <body class="{{ agent_class }} launched" onLoad="addEvents()">
 
 <div class="main">
-  <div class="statusColumn">
-    <div
-      class="lightCommand statusRow"
-      style =
-        "color: {{ script.color }}; background-color: {{ script.background }}">
-      {{ script.title }}
-      {% if message %} {{message}} {% endif %}
+    <div class="statusColumn">
+        <div class="lightCommand statusRow"
+            style="color: {{ script.color }}; background-color: {{ script.background }}">
+            {{ script.title }}
+            {% if message %} {{message}} {% endif %}
+        </div>
+
+        <div class="lightCommand statusRow homeButton" id="">Home</div>
     </div>
-	  <div class="lightCommand statusRow homeButton" id="">Home</div>
-	</div>
 </div>
 
 </body>
