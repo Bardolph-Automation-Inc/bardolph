@@ -123,26 +123,6 @@ Note, however, that this documentation uses the default `raspberrypi` hostname
 for the server.
 
 .. index::
-   single: log directory setup
-
-Log Directory Setup
-===================
-This is a step you take as a user that has `sudo` access, such as the
-`pi` default user.
-
-The web site configuration files in the source tree specify
-that all of the logs reside in the directory `/var/log/lights`. Therefore,
-as part of your setup, you need to do the following:
-
-.. code-block:: bash
-
-  sudo mkdir /var/log/lights
-  sudo chown lights:lights /var/log/lights
-
-This allows processes owned by the `lights` meta-user to write all of the
-logs in one place.
-
-.. index::
    single: Reverse Proxy Setup
    single: Apache
 
@@ -260,6 +240,9 @@ first activate the virtual environment. From the **`lights` home directory**:
 .. code-block:: bash
 
   source bardolph-venv/bin/activate
+
+Whenever you run this command, you will notice that `(bardolph-venv)` has been
+prepended to your command-line prompt.
 
 Install The Python Modules
 ==========================
@@ -453,7 +436,7 @@ For example, log in as the `lights` user, and:
 
 .. code-block:: base
 
-    source bardolph_venv/bin/activate
+    source bardolph-venv/bin/activate
     cd bardolph
     nohup python -m web.start_wsgi &
     exit
@@ -493,7 +476,7 @@ When you get the new shell:
 
 .. code-block:: bash
 
-    source bardolph_venv/bin/activate
+    source bardolph-venv/bin/activate
     cd bardolph
     python -m web.start_wsgi
 
@@ -526,7 +509,7 @@ may want to run Flask in debug mode. This can be done with:
 
 .. code-block:: bash
 
-    source ~/bardolph_venv/bin/activate
+    source ~/bardolph-venv/bin/activate
     cd ~/bardolph
     flask --app web.flask_module:create_app run
 
@@ -537,3 +520,36 @@ http://localhost:5000
 Note that port 5000 is not open to the outside, and you will not be
 able to access his URL from any other machine on your network. You can access
 it from only `localhost`.
+
+.. index::
+   single: log directory setup
+
+Confiuguration For Logging To Files
+===================================
+By default, log output from the Bardolph module will be sent to the terminal
+session where you start the server. However, in practice, you may want to use
+a more standardized log configuration that sends all logging output to a file,
+typically under the `/var/log` directory. With these stipe, the log output will
+be written to file `/var/log/lights/lights.log`.
+
+Log in As sudo-Enabled User
+---------------------------
+This is a step you take as a user that has `sudo` access.
+
+Set Up Directory Structure
+--------------------------
+The web site configuration files in the source tree specify
+that all of the logs reside in the directory `/var/log/lights`. Therefore,
+as part of your setup, you need to do the following:
+
+.. code-block:: bash
+
+  sudo mkdir /var/log/lights
+  sudo chown lights:lights /var/log/lights
+  sudo chmod 755 /var/log/lights
+
+This allows processes owned by the `lights` meta-user to write all of the
+logs in one place.
+
+Start Server
+------------

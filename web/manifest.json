@@ -58,7 +58,7 @@
         "color": "White"
     },
     {
-        "file_name": "snapshot.ls",
+        "file_name": "__snapshot__.ls",
         "path": "retrieve",
         "background": "rgb(64, 64, 128)",
         "color": "rgb(128, 192, 192)"
