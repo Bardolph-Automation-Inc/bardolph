@@ -29,7 +29,6 @@ class WebApp:
     """
 
     def __init__(self):
-        print('WebApp.__init__()') ###
         self._scripts = {}
         self._jobs = JobControl()
         self._load_manifest()

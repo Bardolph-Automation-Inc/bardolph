@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import argparse
+import copy ###
 import logging
 
 from bardolph.controller.routine import Routine, RuntimeRoutine
+from bardolph.parser.optimizer import Optimizer
 
 if __name__ == '__main__':
     from bardolph.parser.parse import Parser
@@ -30,13 +32,15 @@ class Loader:
             self._iter = None
             return None
 
-    def load(self, instructions):
+    def load(self, instructions: list):
         self._main_segment.clear()
         self._routine_segment.clear()
         self._routines.clear()
         self._load_runtime()
         if instructions is not None:
-            self._iter = iter(instructions)
+            original = copy.deepcopy(instructions) ###
+            optimized = Optimizer().optimize(instructions)
+            self._iter = iter(optimized)
             inst = self._next_inst()
             while inst is not None:
                 if inst.op_code is OpCode.ROUTINE:

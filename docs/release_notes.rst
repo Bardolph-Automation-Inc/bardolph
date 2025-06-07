@@ -14,6 +14,28 @@ Release Notes
 In all cases, you can also assume that there were some bug fixes and code
 clean-up, although I don't log most bugs on Github.
 
+June 6, 2025
+============
+Release: 0.2.8
+
+This is primarily bug fixes and reliability improvements.
+
+Fix the broken ``lsc`` command-line tool.
+
+Fix some problems with the web app, particularly around the capture and
+retrieve buttons. Along the way, work on refining the installation instructions
+for the web server.
+
+Add a cache for matrix lights (Candle and Tube) so that they don't get asked
+for their width and height every time they are found on the network. These
+values can't change, and there were frequent problems, especially with the Tube
+light, in getting a response. Put in some more checks so that scripts are less
+likely to halt if there's a problem with the LAN API.
+
+Add a small code optimizer that shrinks the virtual machine code a little bit.
+This should also provide a starting point for more optimizations on the
+compiler-generated code.
+
 June 1, 2025
 ============
 Release: 0.2.7

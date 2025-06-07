@@ -1,4 +1,4 @@
-include bardolph.toml
+include pyproject.toml
 include *.md
 include docs/*.md
 include docs/*.png

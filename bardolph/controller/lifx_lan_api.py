@@ -18,7 +18,9 @@ class LifxLanApi(i_controller.LightApi):
     def get_lights(self, settings):
         try:
             lights = [
-                self._build_light(impl) for impl in self._lifxlan.get_lights()]
+                self._build_light(impl)
+                for impl in self._lifxlan.get_lights()
+            ]
         except lifxlan.errors.WorkflowException as ex:
             logging.error("In get_lights(): {}".format(ex))
             raise i_controller.LightException(ex)
@@ -41,7 +43,6 @@ class LifxLanApi(i_controller.LightApi):
 
     def _build_light(self, impl):
         features = impl.get_product_features()
-        product_name = impl.get_product_name()
         if features.get('multizone', False):
             return lifx_lan_light.MultizoneLight(impl)
         elif impl.get_product_features().get('matrix', False):

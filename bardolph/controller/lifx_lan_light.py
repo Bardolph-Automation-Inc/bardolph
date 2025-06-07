@@ -1,21 +1,35 @@
 import logging
 
+from bardolph.lib.cache import Cache
 from lifxlan.errors import WorkflowException
 from lifxlan.msgtypes import (GetDeviceChain, GetTileState64, SetTileState64,
                               StateDeviceChain, StateTileState64)
 
 from bardolph.controller import i_controller, light
 from bardolph.controller.color_matrix import ColorMatrix
-from bardolph.lib.param_helper import param_16, param_32, param_color
+from bardolph.lib.param_helper import param_16, param_32, param_8, param_color
 from bardolph.lib.retry import tries
 
 _MAX_TRIES = 3
 
 
+class _SizeCache(Cache):
+    def get(self, light):
+        # returns (height, width) tuple or None if not cached.
+        return super().get(light.get_uid())
+
+    def put(self, light) -> None:
+        super().put(light.get_uid(), (light.get_height(), light.get_width()))
+
+
+_the_cache = _SizeCache()
+
+
 class Light(light.Light):
     def __init__(self, impl):
         super().__init__(
-            impl.get_label(), impl.get_group(), impl.get_location())
+            hash(impl.get_mac_addr()), impl.get_label(), impl.get_group(),
+            impl.get_location())
         self._impl = impl
         self.product_features = impl.get_product_features()
         self._is_color = self.product_features.get('color', False)
@@ -78,19 +92,24 @@ class MultizoneLight(Light, i_controller.MultizoneLight):
 
 
 class MatrixLight(Light, i_controller.MatrixLight):
-    def __init__(self, impl, height=None, width=None):
+    def __init__(self, impl):
         super().__init__(impl)
-        self._height = height
-        self._width = width
-        if self._width is None or self._height is None:
-            self._get_size()
+        self._height = self._width = 0
+        self._get_size()
 
     @tries(_MAX_TRIES, WorkflowException)
     def _get_size(self) -> None:
-        result = self._impl.req_with_resp(GetDeviceChain, StateDeviceChain)
-        tile = result.tile_devices[result.start_index]
-        self._width = tile.get('width', 0)
-        self._height = tile.get('height', 0)
+        cached = _the_cache.get(self)
+        if cached is not None:
+            self._height, self._width = cached
+        else:
+            result = self._impl.req_with_resp(
+                GetDeviceChain, StateDeviceChain)
+            tile = result.tile_devices[result.start_index]
+            self._width = tile.get('width', 0)
+            self._height = tile.get('height', 0)
+            if self._width > 0 and self._height > 0:
+                _the_cache.put(self)
 
     def get_height(self) -> int:
         return self._height
@@ -98,30 +117,48 @@ class MatrixLight(Light, i_controller.MatrixLight):
     def get_width(self) -> int:
         return self._width
 
+    def _valid_width_height(self) -> bool:
+        result = True
+        if self._width is None or self._width <= 0:
+            logging.debug('width = {} in set_matrix()'.format(self._width))
+            logging.error('Data error setting matrix light color.')
+            result = False
+        if self._height is None or self._height <= 0:
+            logging.debug('height = {} in set_matrix()'.format(self._height))
+            logging.error('Data error setting matrix light color.')
+            result = False
+        return result
+
     @tries(_MAX_TRIES, WorkflowException)
     def set_matrix(self, matrix, duration=0) -> None:
-        payload = {
-            "tile_index": 0,
-            "length": 1,
-            "colors": matrix.get_colors(),
-            "duration": param_32(duration),
-            "reserved": 0,
-            "x": 0,
-            "y": 0,
-            "width": self._width,
-            "height": self._height}
-        self._impl.fire_and_forget(SetTileState64, payload, num_repeats=1)
+        if self._valid_width_height():
+            payload = {
+                "tile_index": 0,
+                "length": 1,
+                "reserved": 0,
+                "x": 0,
+                "y": 0,
+                "width": param_8(self._width),
+                "height": param_8(self._height),
+                "duration": param_32(duration),
+                "colors": matrix.get_colors()
+            }
+            self._impl.fire_and_forget(SetTileState64, payload, num_repeats=1)
 
     @tries(_MAX_TRIES, WorkflowException)
     def get_matrix(self) -> ColorMatrix:
+        if not self._valid_width_height():
+            return ColorMatrix(0, 0)
         payload = {
             "tile_index": 0,
             "length": 1,
             "reserved": 0,
             "x": 0,
             "y": 0,
-            "width": self._width,
-            "height": self._height}
+            "width": param_8(self._width),
+            "height": param_8(self._height)
+        }
         colors = self._impl.req_with_resp(
             GetTileState64, StateTileState64, payload).colors
-        return ColorMatrix.new_from_iterable(self._height, self._width, colors)
+        return ColorMatrix.new_from_iterable(
+                self._height, self._width, colors)

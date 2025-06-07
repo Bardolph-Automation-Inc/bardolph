@@ -9,6 +9,7 @@ from bardolph.controller import arg_helper
 from bardolph.controller import config_values
 from bardolph.controller import light_module
 from bardolph.controller.units import UnitMode
+from bardolph.runtime import runtime_module
 from bardolph.vm import machine
 from bardolph.vm.instruction import Instruction, OpCode
 from bardolph.vm.vm_codes import IoOp, JumpCondition, LoopVar, Operand, Operator
@@ -43,6 +44,7 @@ def build_instructions():
 
 def main():
     injection.configure()
+    runtime_module.configure()
 
     ap = argparse.ArgumentParser()
     ap.add_argument(

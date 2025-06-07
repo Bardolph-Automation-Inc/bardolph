@@ -1,5 +1,6 @@
 import functools
 import logging
+import traceback
 
 
 def tries(num_tries, ex_type, fail_value=None):
@@ -20,19 +21,21 @@ def tries(num_tries, ex_type, fail_value=None):
     Returns
     -------
         Whatever the wrapped function returns, or fail_value if the maximum
-        number of tries has ocurred.
+        number of tries have failed.
     '''
     def fn_wrapper(fn):
         @functools.wraps(fn)
-        def param_wrapper(*args, **kwargs):
+        def retry_wrapper(*args, **kwargs):
             tries_remaining = num_tries
             while tries_remaining > 0:
                 try:
                     return fn(*args, **kwargs)
                 except ex_type as ex:
                     logging.warning(ex)
+                    logging.debug(traceback.format_exc())
+                    logging.debug('Tries remaining: {}'.format(tries_remaining))
                     tries_remaining -= 1
             logging.warning('Giving up after {} tries.'.format(num_tries))
             return fail_value
-        return param_wrapper
+        return retry_wrapper
     return fn_wrapper

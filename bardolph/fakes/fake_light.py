@@ -30,6 +30,9 @@ class Light(i_controller.Light):
         return fmt.format(
             self._name, self._group, self._location, self._power, self._color)
 
+    def get_uid(self):
+        return hash(self)
+
     def get_name(self) -> str:
         return self._name
 

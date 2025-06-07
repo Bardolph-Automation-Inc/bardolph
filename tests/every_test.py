@@ -5,9 +5,8 @@ import unittest
 
 module_names = (
     'activity_log_test',
-    ### 'array_test',
-    ### 'array_vm_test',
     'block_candle_test',
+    'cache_test',
     'call_stack_test',
     'candle_test',
     'clock_test',
@@ -30,6 +29,7 @@ module_names = (
     'ls_module_test',
     'math_runtime_test',
     'noneable_test',
+    'optimizer_test',
     'param_helper_test',
     'parser_test',
     'print_test',

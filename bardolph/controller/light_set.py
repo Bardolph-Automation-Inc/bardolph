@@ -29,9 +29,6 @@ class LightSet(i_controller.LightSet):
 
     @inject(i_controller.LightApi)
     def discover(self, light_api):
-        logging.debug('start discover. so far, successes = {}, fails = {}'
-                      .format(self._num_successful_discovers,
-                              self._num_failed_discovers))
         try:
             for light in light_api.get_lights():
                 light_name = light.get_name()
@@ -47,6 +44,9 @@ class LightSet(i_controller.LightSet):
             return False
 
         self._num_successful_discovers += 1
+        logging.debug('discover. successes: {}, fails: {}'
+                      .format(self._num_successful_discovers,
+                              self._num_failed_discovers))
         return True
 
     def refresh(self):

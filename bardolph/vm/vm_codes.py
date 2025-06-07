@@ -77,7 +77,6 @@ class JumpCondition(Enum):
     ALWAYS = auto()
     IF_FALSE = auto()
     IF_TRUE = auto()
-    INDIRECT = auto()
 
 
 class LoopVar(Enum):

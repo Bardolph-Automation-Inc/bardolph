@@ -19,8 +19,8 @@ from bardolph.parser.matrix_parser import MatrixParser
 from bardolph.parser.token import Token, TokenTypes
 from bardolph.runtime import bardolph_fn, i_runtime, runtime_module
 from bardolph.vm.loader import Loader
-from bardolph.vm.vm_codes import (JumpCondition, OpCode, Operand, Operator,
-                                  Register, SetOp)
+from bardolph.vm.vm_codes import (JumpCondition, OpCode, Operand, Register,
+                                  SetOp)
 
 
 class Parser:
@@ -72,7 +72,7 @@ class Parser:
     def get_program(self):
         return self._code_gen.program
 
-    def parse_file(self, file_name):
+    def parse_file(self, file_name) -> bool:
         logging.debug('"{}"'.format(file_name))
         try:
             srce = open(file_name, 'r')
@@ -83,6 +83,7 @@ class Parser:
             logging.error('Error: file {} not found.'.format(file_name))
         except OSError:
             logging.error('Error accessing file {}'.format(file_name))
+        return False
 
     def get_errors(self) -> str:
         return self._error_output
@@ -110,6 +111,7 @@ class Parser:
     def _eof(self) -> bool:
         if not self._current_token.is_a(TokenTypes.EOF):
             return self.trigger_error("Didn't get to end of file.")
+        self._add_instruction(OpCode.STOP)
         return True
 
     def _command(self):
@@ -122,9 +124,6 @@ class Parser:
             return self.token_error('Expected register, got "{}"')
         if reg is Register.TIME:
             return self._time()
-        if self._current_token.is_a(TokenTypes.DEFAULT):
-            self._add_instruction(OpCode.DEFAULT)
-            return self.next_token()
 
         self.next_token()
         if self._current_token.is_a(TokenTypes.LITERAL_STRING):

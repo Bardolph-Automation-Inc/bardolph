@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from bardolph.controller import units
 from bardolph.controller.color_matrix import ColorMatrix
@@ -134,7 +135,8 @@ class Machine:
                 .format(
                     self._keep_running, self._reg.pc, program_len))
         except Exception as ex:
-            logging.error("Machine stopped due to {} at instruction {}"
+            logging.debug(traceback.format_exc())
+            logging.error("Script stopped due to {} at instruction {}"
                           .format(ex, self._reg.pc))
 
     def stop(self) -> None:
@@ -203,19 +205,20 @@ class Machine:
     def _color_matrix(self) -> None:
         color = self._reg.get_color()
         mat = self._reg.matrix
-        rect = Rect(
-            self._reg.first_row, self._reg.last_row,
-            self._reg.first_column, self._reg.last_column)
-        mat.overlay_color(rect, color)
+        if mat.height > 0 and mat.width > 0:
+            rect = Rect(
+                self._reg.first_row, self._reg.last_row,
+                self._reg.first_column, self._reg.last_column)
+            mat.overlay_color(rect, color)
 
     def _color_matrix_light(self) -> None:
         light = self._get_named_light()
         if light is not None:
-            matrix = self._reg.matrix
-            matrix = self._as_raw_matrix(matrix)
-            matrix.find_replace(None, self._reg.default or [0, 0, 0, 0])
-            duration = self._as_raw_time(self._reg.duration)
-            light.set_matrix(matrix, duration)
+            mat = self._as_raw_matrix(self._reg.matrix)
+            if mat.height > 0 and mat.width > 0:
+                mat.find_replace(None, self._reg.default or [0, 0, 0, 0])
+                duration = self._as_raw_time(self._reg.duration)
+                light.set_matrix(mat, duration)
 
     def _color_mz_light(self) -> None:
         light = self._get_named_light()
@@ -363,19 +366,15 @@ class Machine:
 
     def _jump(self) -> None:
         inst = self.current_inst
-        match inst.param0:
-            case JumpCondition.INDIRECT:
-                address = self._call_stack.get_variable(inst.param1)
-                self._reg.pc = address
-            case JumpCondition.ALWAYS:
+        if inst.param0 is JumpCondition.ALWAYS:
+            self._reg.pc += inst.param1
+        else:
+            self._vm_math.pop(Register.RESULT)
+            if (bool(self._reg.result) ^
+                    (inst.param0 is JumpCondition.IF_FALSE)):
                 self._reg.pc += inst.param1
-            case JumpCondition.IF_FALSE | JumpCondition.IF_TRUE:
-                self._vm_math.pop(Register.RESULT)
-                if (bool(self._reg.result) ^
-                        (inst.param0 is JumpCondition.IF_FALSE)):
-                    self._reg.pc += inst.param1
-                else:
-                    self._reg.pc += 1
+            else:
+                self._reg.pc += 1
 
     def _loop(self) -> None:
         self._call_stack.enter_loop()
@@ -396,8 +395,8 @@ class Machine:
                 .format(name))
             height = width = 255
         else:
-            height = light.get_height()
-            width = light.get_width()
+            height = light.get_height() or 0
+            width = light.get_width() or 0
         self._reg.matrix = ColorMatrix.new_from_constant(height, width, None)
 
     def _array(self):

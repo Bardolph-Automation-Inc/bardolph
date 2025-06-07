@@ -4,12 +4,11 @@ import argparse
 import os
 import stat
 
-from . import arg_helper
-from ..lib import injection
-from ..lib import settings
-from ..parser.parse import Parser
+from bardolph.controller import arg_helper, config_values
+from bardolph.lib import injection, settings
+from bardolph.parser.parse import Parser
+from bardolph.runtime import runtime_module
 
-from . import config_values
 
 def program_code(instructions):
     output = ''
@@ -24,11 +23,12 @@ def program_code(instructions):
 
 def instruction_text(file_name):
     parser = Parser()
-    program = parser.parse_file(file_name)
-    if program is None:
+    if not parser.parse_file(file_name):
         print("Error compiling {}".format(file_name))
         print(parser.get_errors())
         return None
+
+    program = parser.get_program()
     text = '    '
     text += ',\n    '.join(map(lambda inst: inst.as_list_text(), program))
     return text
@@ -50,6 +50,7 @@ def main():
 
     injection.configure()
     settings.using(config_values.functional).apply_env().configure()
+    runtime_module.configure()
 
     input_file = args.file
     program = instruction_text(input_file)

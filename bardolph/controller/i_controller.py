@@ -27,6 +27,7 @@ class LightSet:
 
 
 class Light:
+    def get_uid(self) -> int: pass
     def get_name(self) -> str: pass
     def get_group(self) -> str: pass
     def get_location(self) -> str: pass

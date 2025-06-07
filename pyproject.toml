@@ -4,13 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bardolph"
-version = "0.2.7"
+version = "0.2.8"
 description="Simple scripting language for LIFX lights"
 readme = "README.md"
 authors = [{name  = "Al Fontes", email="barolph@fontes.org"}]
-license = {file = "LICENSE.md"}
+license = "Apache-2.0"
 classifiers = [
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

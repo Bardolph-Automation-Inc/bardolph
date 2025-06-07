@@ -7,7 +7,8 @@ _MAX_TRIES = 3
 
 
 class Light(i_controller.Light):
-    def __init__(self, name=None, group=None, location=None):
+    def __init__(self, uid=None, name=None, group=None, location=None):
+        self._uid = uid or hash(self)
         self._name = name
         self._group = group
         self._location = location
@@ -20,6 +21,9 @@ class Light(i_controller.Light):
             self._name, self._group, self._location, self._multizone,
             self._birth)
         return rep
+
+    def get_uid(self):
+        return self._uid
 
     def get_name(self):
         return self._name
