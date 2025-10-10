@@ -15,7 +15,7 @@ class Lex:
     _NON_ALNUM_SPEC = r'==|!=|<=|>=|&&|\|\||!|[\[\]\(\){}+\-*<>/#:\^]'
     _NUMBER_SPEC = r'[0-9]*\.?[0-9]+'
     _LITERAL_STRING_SPEC = r'"([^"]|(?<=\\)")*"'
-    _DEFAULT_SPEC = '[^\s]+'
+    _DEFAULT_SPEC = '\S+'
 
     _STRING = re.compile(_LITERAL_STRING_SPEC)
     _TOKEN_SPEC = '|'.join((

@@ -3,7 +3,7 @@ https://www.bardolph.org
 
 # Bardolph Project
 
-Al Fontes - [bardolph@fontes.org](mailto:bardolph@fontes.org)
+Bardolph Automation, Inc. - [info@bardolphauto.com](mailto:info@bardolphauto.com)
 
 **Bardolph** is a facility for controlling LIFX (https://www.lifx.com) lights
 through a simple scripting language. It is targeted at people who would like
@@ -74,7 +74,7 @@ a cheap, dedicated device like a Raspberry Pi is an ideal way to host the
 web server.
 
 ## Python API
-I've attempted to make it easy to use Bardolph scripts in your Python code.
+We've attempted to make it easy to use Bardolph scripts in your Python code.
 For some uses, this may be significantly easier than learning and using a
 full-purpose Python library. For example, here's a complete program that
 waits 5 seconds, turns all the lights off, and turns them on again after
@@ -88,14 +88,14 @@ ls_module.queue_script('time 5 off all on all')
 ```
 
 ## System Requirements
-The program has been tested on Python versions at or above 3.7.
+The program has been tested on Python versions at or above 3.10.
 
-Because I haven't done any stress testing, I don't know the limits on
+Because we haven't done any stress testing, I don't know the limits on
 script size. Note that the application loads the encoded script into memory
 before executing it.
 
-I've tested the program on MacOS Monterey 12.0.1, a Raspberry Pi Zero W
-controlling 6 devices, a Raspberry Pi 3 and Raspberry Pi 4.
+We've tested the program on MacOS Monterey 12.0.1, a Raspberry Pi Zero W
+controlling 6 devices, a Raspberry Pi 3, Raspberry Pi 4, and Raspberry Pi 5.
 
 ## Go Try It
 For full documentation and download options, please see

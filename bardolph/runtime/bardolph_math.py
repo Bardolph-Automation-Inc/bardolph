@@ -55,7 +55,7 @@ def cycle(theta):
 
 @builtin
 def random(min, max):
-    return py_random.randrange(min, max)
+    return py_random.randrange(min, max + 1, 1)
 
 def configure():
     py_random.seed()

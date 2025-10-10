@@ -2,6 +2,7 @@ from bardolph.lib import injection, settings
 from bardolph.controller import config_values, light_module
 from bardolph.lib import job_control
 from bardolph.controller.script_job import ScriptJob
+from bardolph.runtime import runtime_module
 
 class LsModule:
     _jobs = job_control.JobControl()
@@ -15,6 +16,7 @@ def configure():
     injection.configure()
     settings.using(config_values.functional).apply_env().configure()
     light_module.configure()
+    runtime_module.configure()
 
 
 def queue_script(script) -> job_control.Agent:

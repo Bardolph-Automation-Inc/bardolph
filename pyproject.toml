@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bardolph"
-version = "0.2.8"
+version = "0.2.9"
 description="Simple scripting language for LIFX lights"
 readme = "README.md"
-authors = [{name  = "Al Fontes", email="barolph@fontes.org"}]
+authors = [{name  = "Bardolph Automation", email="info@bardolphauto.com"}]
 license = "Apache-2.0"
 classifiers = [
     "Programming Language :: Python :: 3.10",
@@ -45,7 +45,7 @@ namespaces = false
 
 [project.urls]
 Homepage = "https://www.bardolph.org"
-Repository = "https://github.com/al-fontes-jr/bardolph"
+Repository = "https://github.com/Bardolph-Automation-Inc/bardolph"
 
 [project.scripts]
 lsc = "bardolph.controller:lsc.main"
