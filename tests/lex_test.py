@@ -20,11 +20,11 @@ class LexTest(unittest.TestCase):
         self.assertEqual(token_num, 5)
 
     def test_all_tokens(self):
-        input_string = """(99) all and as at blue brightness declare
+        input_string = """(99) all and array as at blue brightness
             define # comment \n column default duration green hue if in
             off on or kelvin logical print printf println raw red return rgb
             row saturation set stage time wait zone 12:*4 {3 * 4} ^
-            -1.0 01.234\n"Hello There" x _abc @ [ ] < <= > >= == !=
+            -1.0 01.234\n"Hello There" x _abc @ [ ] < <= > >= == != []
             ! && ||"""
         expected = [
             TokenTypes.MARK, '(',
@@ -32,11 +32,11 @@ class LexTest(unittest.TestCase):
             TokenTypes.MARK, ')',
             TokenTypes.ALL, 'all',
             TokenTypes.AND, 'and',
+            TokenTypes.ARRAY, 'array',
             TokenTypes.AS, 'as',
             TokenTypes.AT, 'at',
             TokenTypes.REGISTER, 'blue',
             TokenTypes.REGISTER, 'brightness',
-            TokenTypes.DECLARE, 'declare',
             TokenTypes.DEFINE,'define',
             TokenTypes.COLUMN, 'column',
             TokenTypes.DEFAULT, 'default',
@@ -80,12 +80,13 @@ class LexTest(unittest.TestCase):
             TokenTypes.ERROR, '@',
             TokenTypes.MARK, '[',
             TokenTypes.MARK, ']',
-            TokenTypes.COMPARE, '<',
-            TokenTypes.COMPARE, '<=',
-            TokenTypes.COMPARE, '>',
-            TokenTypes.COMPARE, '>=',
-            TokenTypes.COMPARE, '==',
-            TokenTypes.COMPARE, '!=',
+            TokenTypes.CMP, '<',
+            TokenTypes.CMP, '<=',
+            TokenTypes.CMP, '>',
+            TokenTypes.CMP, '>=',
+            TokenTypes.CMP, '==',
+            TokenTypes.CMP, '!=',
+            TokenTypes.BRACKET_PAIR, '[]',
             TokenTypes.MARK, '!',
             TokenTypes.MARK, '&&',
             TokenTypes.MARK, '||' ]

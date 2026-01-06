@@ -37,11 +37,12 @@ class Register(Enum):
 
 class OpCode(Enum):
     ARRAY = auto()
+    BASE = auto()
     BREAKPOINT = auto()
     COLOR = auto()
     CONSTANT = auto()
     CTX = auto()
-    DEREF = auto()
+    DIM = auto()
     DISC = auto()
     DISCM = auto()
     DNEXT = auto()
@@ -62,6 +63,7 @@ class OpCode(Enum):
     OUT = auto()
     PARAM = auto()
     PAUSE = auto()
+    PEEK = auto()
     POP = auto()
     POWER = auto()
     PUSH = auto()
@@ -82,11 +84,13 @@ class JumpCondition(Enum):
 class LoopVar(Enum):
     # These variables are internal and invisible to the script code.
     COUNTER = auto()
+    COUNT_LAST = auto()
     CURRENT = auto()
     EXIT_JMP = auto()
-    FIRST = auto()
-    INCR = auto()
-    LAST = auto()
+    INCREMENT = auto()
+    NAME_FIRST = auto()
+    RANGE_FIRST = auto()
+    RANGE_LAST = auto()
 
 
 class Operator(Enum):
@@ -104,6 +108,8 @@ class Operator(Enum):
     NOTEQ = auto()
     OR = auto()
     POW = auto()
+    SET = auto()
+    SIZE = auto()
     SUB = auto()
     UADD = auto()
     USUB = auto()
@@ -112,7 +118,7 @@ class Operator(Enum):
 class Operand(Enum):
     ALL = auto()
     LIGHT = auto()
-    GROUP = auto()
+    GROUP = auto()      # Device-configured group or location
     LOCATION = auto()
     MATRIX = auto()
     DEFAULT = auto()

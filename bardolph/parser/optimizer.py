@@ -17,8 +17,8 @@ class Optimizer:
     def optimize(self, program: list) -> list:
         self._frames = [_InstFrame(inst) for inst in program]
         any_jumps = self._find_jumps()
-        any_push_pop = self._fold_push_pop()
-        if any_push_pop:
+        any_fold = self._fold_push_pop()
+        if any_fold:
             if any_jumps:
                 self._set_addresses()
                 self._fix_jumps()

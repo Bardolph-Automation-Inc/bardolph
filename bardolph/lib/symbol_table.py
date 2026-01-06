@@ -1,4 +1,4 @@
-from .symbol import Symbol, SymbolType
+from bardolph.lib.symbol import Symbol, SymbolType
 
 class SymbolTable:
     def __init__(self):
@@ -10,11 +10,15 @@ class SymbolTable:
     def clear(self):
         self._dict.clear()
 
-    def add_symbol(self, name, symbol_type=SymbolType.UNKNOWN, value=None):
-        self._dict[name] = Symbol(name, symbol_type, value)
+    def add_symbol(
+            self,
+            name: str,
+            symbol_type: SymbolType = SymbolType.UNDEFINED,
+            static_value=None):
+        self._dict[name] = Symbol(name, symbol_type, static_value)
 
     def get_symbol(self, name):
-        return self._dict.get(name, Symbol())
+        return self._dict.get(name, Symbol(name))
 
     def get_type(self, name):
         return self.get_symbol(name).symbol_type

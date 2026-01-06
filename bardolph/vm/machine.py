@@ -2,8 +2,7 @@ import logging
 import traceback
 
 from bardolph.controller import units
-from bardolph.controller.color_matrix import ColorMatrix
-from bardolph.controller.color_matrix import Rect
+from bardolph.controller.color_matrix import ColorMatrix, Rect
 from bardolph.controller.get_key import getch
 from bardolph.controller.i_controller import (LightSet, MatrixLight,
                                               MultizoneLight)
@@ -12,8 +11,10 @@ from bardolph.controller.units import UnitMode
 from bardolph.lib.i_lib import Clock, TimePattern
 from bardolph.lib.injection import inject, provide
 from bardolph.lib.symbol import Symbol
-from bardolph.vm.array import Array
+from bardolph.vm.array import (Array, ArrayBase, ArrayCursor, ArrayException,
+                               assure_rvalue)
 from bardolph.vm.call_stack import CallStack
+from bardolph.vm.eval_stack import EvalStack
 from bardolph.vm.loader import Loader
 from bardolph.vm.vm_codes import (JumpCondition, LoopVar, OpCode, Operand,
                                   Register, SetOp)
@@ -89,7 +90,8 @@ class Machine:
         self._call_stack = CallStack()
         self._vm_io = VmIo(self._call_stack, self._reg)
         self._vm_math = VmMath(self._call_stack, self._reg)
-        self._vm_discover = VmDiscover(self._call_stack, self._reg)
+        self._vm_discover = VmDiscover(
+            self._call_stack, self._vm_math.eval_stack, self._reg)
         self._enable_pause = True
         self._keep_running = True
         excluded = (OpCode.STOP, OpCode.ROUTINE)
@@ -125,7 +127,10 @@ class Machine:
                 if inst.op_code == OpCode.STOP:
                     break
                 fn = self._fn_table[inst.op_code]
-                fn()
+                try:
+                    fn()
+                except ArrayException as aex:
+                    logging.error(str(aex))
                 if inst.op_code not in (OpCode.END, OpCode.JSR, OpCode.JUMP):
                     self._reg.pc += 1
             self._clock.stop()
@@ -153,6 +158,10 @@ class Machine:
     def current_inst(self):
         return self._program[self._reg.pc]
 
+    @property
+    def eval_stack(self) -> EvalStack:
+        return self._vm_math.eval_stack
+
     def _param_value(self, value):
         if isinstance(value, Register):
             return self._reg.get_by_enum(value)
@@ -171,16 +180,23 @@ class Machine:
         return self._reg.get_color()
 
     def _color(self) -> None:
-        fn_map = {operand: fn for operand, fn in (
-            (Operand.ALL, self._color_all),
-            (Operand.DEFAULT, self._color_default),
-            (Operand.LIGHT, self._color_light),
-            (Operand.GROUP, self._color_group),
-            (Operand.LOCATION, self._color_location),
-            (Operand.MATRIX, self._color_matrix),
-            (Operand.MATRIX_LIGHT, self._color_matrix_light),
-            (Operand.MZ_LIGHT, self._color_mz_light))}
-        fn_map[self._reg.operand]()
+        match self._reg.operand:
+            case Operand.ALL:
+                self._color_all()
+            case Operand.DEFAULT:
+                self._color_default()
+            case Operand.LIGHT:
+                self._color_light()
+            case Operand.GROUP:
+                self._color_group()
+            case Operand.LOCATION:
+                self._color_location()
+            case Operand.MATRIX:
+                self._color_matrix()
+            case Operand.MATRIX_LIGHT:
+                self._color_matrix_light()
+            case Operand.MZ_LIGHT:
+                self._color_mz_light()
 
     @inject(LightSet)
     def _get_named_light(self, light_set) -> None:
@@ -261,12 +277,15 @@ class Machine:
         self._reg.default = self._as_raw_color(self._reg.get_color())
 
     def _power(self) -> None:
-        {
-            Operand.ALL: self._power_all,
-            Operand.LIGHT: self._power_light,
-            Operand.GROUP: self._power_group,
-            Operand.LOCATION: self._power_location
-        }[self._reg.operand]()
+        match self._reg.operand:
+            case Operand.ALL:
+                self._power_all()
+            case Operand.LIGHT:
+                self._power_light()
+            case Operand.GROUP:
+                self._power_group()
+            case Operand.LOCATION:
+                self._power_location()
 
     @inject(LightSet)
     def _power_all(self, light_set) -> None:
@@ -315,7 +334,7 @@ class Machine:
             Machine._report_missing(name)
         else:
             if isinstance(light, (MultizoneLight, MatrixLight)):
-                fmt = 'Unable to retrieve color from multi-color light "{}".'
+                fmt = 'unable to retrieve color from multi-color light "{}".'
                 logging.warning(fmt.format(name))
             else:
                 color = light.get_color()
@@ -339,7 +358,7 @@ class Machine:
             value = self._call_stack.get_variable(value.name)
         elif isinstance(value, Register):
             value = self._reg.get_by_enum(value)
-        self._call_stack.put_param(inst.param0, value)
+        self._call_stack.put_param(inst.param0, assure_rvalue(value))
 
     def _jsr(self) -> None:
         self._call_stack.enter_routine()
@@ -357,9 +376,15 @@ class Machine:
         if self.current_inst.param0 is Operand.MATRIX:
             self._reg.pc += 1
         else:
-            self._return()
+            self._exit_routine()
 
     def _return(self) -> None:
+        stack_top = self.eval_stack.top()
+        if isinstance(stack_top, ArrayCursor):
+            self.eval_stack.replace_top(stack_top.get_value())
+        self._exit_routine()
+
+    def _exit_routine(self) -> None:
         self._call_stack.unwind_loops()
         self._reg.pc = self._call_stack.get_return()
         self._call_stack.exit_routine()
@@ -399,39 +424,40 @@ class Machine:
             width = light.get_width() or 0
         self._reg.matrix = ColorMatrix.new_from_constant(height, width, None)
 
-    def _array(self):
-        array_name = self.current_inst.param0
-        array_len = self._param_value(self.current_inst.param1)
-        stack_top = self._call_stack.get_top()
-        var = stack_top.get_variable(array_name)
-        if var is None:
-            self._call_stack.put_variable(array_name, Array(array_len))
+    def _array(self) -> None:
+        name = self.eval_stack.pop()
+        array = Array()
+        self._call_stack.put_variable(name, array, True)
+        self.eval_stack.push(array)
+
+    def _dim(self) -> None:
+        size = self.eval_stack.pop()
+        array = self.eval_stack.top()
+        array.add_dimension(size)
+        return True
+
+    def _base(self) -> None:
+        top = self.eval_stack.pop()
+        if isinstance(top, ArrayBase):
+            array = top
         else:
-            var.add_dimension(array_len)
-        return True
+            array = self._call_stack.get_variable(top)
+        self.eval_stack.push(array.base())
 
-    def _deref(self):
-        # Should put the result on the top of the expression stack.
-        offset = self._param_value(self.current_inst.param1)
-        array_name = self.current_inst.param0
-        array = self._call_stack.get_variable(array_name)
-        array.deref(offset)
-        return True
+    def _index(self) -> None:
+        offset = self.eval_stack.pop()
+        if isinstance(offset, ArrayBase):
+            offset = offset.get_value()
+        cursor = self.eval_stack.top()
+        cursor.index(offset)
 
-    def _index(self):
-        # Should put the result on the top of the expression stack.
-        offset = self._param_value(self.current_inst.param1)
-        array_name = self.current_inst.param0
-        array = self._call_stack.get_variable(array_name)
-        array.index(offset)
-        return True
+    @staticmethod
+    def _nop() -> None:
+        pass
 
-    def _nop(self) -> bool:
-        return True
-
-    def _unimpl(self) -> bool:
+    @staticmethod
+    def _unimpl() -> None:
         logging.debug("Machine._unimpl() called")
-        return True
 
     def _push(self) -> None:
         self._vm_math.push(self.current_inst.param0)
@@ -449,17 +475,14 @@ class Machine:
         try:
             self._vm_math.bin_op(operator)
         except ZeroDivisionError:
-            self._trigger_error("Division by zero. Halting execution.")
-            self.stop()
-
-    def _unary_op(self, operator) -> None:
-        self._vm_math.unary_op(operator)
+            logging.error("Division by zero.")
+            self._vm_math.pushq(0)
 
     def _disc(self) -> None:
         self._vm_discover.disc()
 
     def _discm(self) -> None:
-            self._vm_discover.discm(self.current_inst.param0)
+        self._vm_discover.discm(self.current_inst.param0)
 
     def _dnext(self) -> None:
         self._vm_discover.dnext(self.current_inst.param0)
@@ -513,7 +536,8 @@ class Machine:
         if self._reg.unit_mode is UnitMode.RAW:
             return srce
         xform_fn = units.convert_fn(self._reg.unit_mode, UnitMode.RAW)
-        return ColorMatrix.new_from_iterable(srce.height, srce.width,
+        return ColorMatrix.new_from_iterable(
+            srce.height, srce.width,
             (xform_fn(color) for color in srce.get_colors()))
 
     def _assure_units(self, color):
@@ -542,8 +566,8 @@ class Machine:
             value = self._reg.get_by_enum(value)
         elif isinstance(value, (str, LoopVar)):
             value = self._call_stack.get_variable(value)
-            ### if isinstance(value, Array, ArrayBranch):
-            ###    value = value.get_value()
+        elif isinstance(value, ArrayCursor):
+            value = value.get_value()
         self._do_put_value(dest, value)
 
     def _moveq(self) -> None:
@@ -559,11 +583,7 @@ class Machine:
         if isinstance(dest, Register):
             self._reg.set_by_enum(dest, value)
         else:
-            current_value = self._call_stack.get_variable(dest)
-            ### if isinstance(current_value, Array):
-            ###     current_value.set_value(value)
-            ### else:
-            self._call_stack.put_variable(dest, value) ###
+            self._call_stack.put_variable(dest, value)
 
     def _switch_unit_mode(self, to_mode) -> None:
         from_mode = self._reg.unit_mode

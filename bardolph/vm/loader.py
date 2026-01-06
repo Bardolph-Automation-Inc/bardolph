@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-import copy ###
 import logging
 
 from bardolph.controller.routine import Routine, RuntimeRoutine
@@ -38,7 +37,6 @@ class Loader:
         self._routines.clear()
         self._load_runtime()
         if instructions is not None:
-            original = copy.deepcopy(instructions) ###
             optimized = Optimizer().optimize(instructions)
             self._iter = iter(optimized)
             inst = self._next_inst()
@@ -68,7 +66,7 @@ class Loader:
             inst = self._next_inst()
         if inst is not None:
             self._routine_segment.append(inst)
-        new_routine.set_return(len(self._routine_segment) + 1)
+        new_routine.set_return_address(len(self._routine_segment) + 1)
         return new_routine
 
     def get_code(self):

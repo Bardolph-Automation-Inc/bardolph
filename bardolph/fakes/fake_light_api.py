@@ -63,7 +63,7 @@ class _LightBuilder:
                 new_light.set_width(self._width)
             case _Type.MULTI_ZONE:
                 new_light = fake_light.MultizoneLight(
-                    self._name, self._group, self._location)
+                    self._name, self._group, self._location, self._width)
                 new_light.set_width(self._width)
             case _Type.STD:
                 new_light = fake_light.Light(
@@ -153,7 +153,7 @@ def using_large_set():
         ('Bottom', 'Pole', 'Home'),
 
         ('Strip', 'Furniture', 'Home', _Type.MULTI_ZONE, 16),
-        ('Balcony', 'Windows', 'Home', _Type.MULTI_ZONE, 32),
+        ('Balcony', 'Windows', 'Home', _Type.MULTI_ZONE, 60),
         ('Candle', 'Furniture', 'Home', _Type.MATRIX, 6, 5),
         ('White Candle', 'Furniture', 'Home',
             _Type.MATRIX, _Chroma.WHITE, 6, 5),
@@ -168,6 +168,24 @@ def using_large_set():
         ('table-5', 'Table', 'Living Room'),
         ('table-6', 'Table', 'Living Room'),
         ('table-7', 'Table', 'Living Room')
+    )
+    return _Reinit(specs)
+
+
+def using_medium_set():
+    specs = (
+        ('Top', 'Pole', 'Home'),
+        ('Middle', 'Pole', 'Home'),
+        ('Bottom', 'Pole', 'Home'),
+
+        ('Balcony', 'Windows', 'Outside', _Type.MULTI_ZONE, 60),
+        ('Candle', 'Furniture', 'Outside', _Type.MATRIX, 6, 5),
+        ('White Candle', 'Furniture', 'Outside',
+            _Type.MATRIX, _Chroma.WHITE, 6, 5),
+
+        ('Lamp', 'Windows', 'Living Room', _Chroma.WHITE),
+        ('table-0', 'Table', 'Living Room'),
+        ('table-1', 'Table', 'Living Room'),
     )
     return _Reinit(specs)
 

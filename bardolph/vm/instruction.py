@@ -1,7 +1,5 @@
 import os
 
-from bardolph.parser.token import Token
-
 from .vm_codes import OpCode
 
 
@@ -36,19 +34,25 @@ class Instruction:
     def nop(self):
         self.op_code = OpCode.NOP
 
-    def as_list_text(self) -> str:
+    def _code_output(self, op_code_str) -> str:
         if self.param0 is None and self.param1 is None:
-            return str(self.op_code)
+            return str(op_code_str)
         if self.param1 is None:
             return '{}, {}'.format(
-                self.op_code,
+                op_code_str,
                 Instruction.quote_if_string(self.param0))
         if self.param1 is os.linesep:
             param1 = repr(os.linesep)
         else:
             param1 = Instruction.quote_if_string(self.param1)
         return '{}, {}, {}'.format(
-            self.op_code, Instruction.quote_if_string(self.param0), param1)
+            op_code_str, Instruction.quote_if_string(self.param0), param1)
+
+    def as_list_text(self) -> str:
+        return self._code_output(self.op_code.name)
+
+    def asm(self) -> str:
+        return self._code_output(str(self.op_code))
 
     @staticmethod
     def quote_if_string(obj):

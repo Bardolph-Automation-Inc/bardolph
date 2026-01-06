@@ -1,5 +1,6 @@
 from collections import deque
 
+
 class EvalStack:
     def __init__(self):
         self._stack = deque()
@@ -7,7 +8,6 @@ class EvalStack:
     def clear(self):
         self._stack.clear()
 
-    @property
     def top(self):
         return self.below(0)
 

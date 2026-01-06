@@ -36,12 +36,12 @@ class IoParser(SubParser):
         self.code_gen.add_instruction(OpCode.OUT, IoOp.PRINTF, format_str)
         return True
 
-    def _out_rvalue(self, end=None) -> bool:
+    def _out_rvalue(self, eol=None) -> bool:
         if not self.rvalue():
             return False
         self.code_gen.pop(Register.RESULT)
         self.code_gen.add_instruction(
             OpCode.OUT, IoOp.REGISTER, Register.RESULT)
-        if end is not None:
-            self.code_gen.add_instruction(OpCode.OUT, IoOp.LITERAL, end)
+        if eol is not None:
+            self.code_gen.add_instruction(OpCode.OUT, IoOp.LITERAL, eol)
         return True

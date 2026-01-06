@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+from typing import Literal
 
 from bardolph.controller.routine import Routine, RuntimeRoutine
 from bardolph.controller.units import UnitMode
@@ -18,9 +19,10 @@ from bardolph.parser.loop_parser import LoopParser
 from bardolph.parser.matrix_parser import MatrixParser
 from bardolph.parser.token import Token, TokenTypes
 from bardolph.runtime import bardolph_fn, i_runtime, runtime_module
+from bardolph.vm.instruction import Instruction
 from bardolph.vm.loader import Loader
-from bardolph.vm.vm_codes import (JumpCondition, OpCode, Operand, Register,
-                                  SetOp)
+from bardolph.vm.vm_codes import (JumpCondition, OpCode, Operand, Operator,
+                                  Register, SetOp)
 
 
 class Parser:
@@ -33,11 +35,12 @@ class Parser:
         self._code_gen = CodeGen()
         self._tokens = None
         self._command_map = {
+            TokenTypes.ARRAY: self._array,
             TokenTypes.ASSIGN: self._assignment,
             TokenTypes.BREAK: self._break,
             TokenTypes.BREAKPOINT: self._breakpoint,
-            TokenTypes.DECLARE: self._declaration,
             TokenTypes.DEFINE: self._definition,
+            TokenTypes.EOL: self._eol,
             TokenTypes.GET: self._get_color,
             TokenTypes.IF: self._if,
             TokenTypes.MARK: self._mark,
@@ -59,6 +62,7 @@ class Parser:
             None: self._syntax_error
         }
         self._token_trace = False
+        self._testing_errors = False
 
     def parse(self, input_string) -> bool:
         self._context.clear()
@@ -69,7 +73,7 @@ class Parser:
         self.next_token()
         return self._script()
 
-    def get_program(self):
+    def get_program(self) -> list:
         return self._code_gen.program
 
     def parse_file(self, file_name) -> bool:
@@ -85,11 +89,14 @@ class Parser:
             logging.error('Error accessing file {}'.format(file_name))
         return False
 
+    def set_testing_errors(self, are_enabled: bool = True) -> None:
+        self._testing_errors = are_enabled
+
     def get_errors(self) -> str:
         return self._error_output
 
     @property
-    def current_token(self):
+    def current_token(self) -> Token:
         return self._current_token
 
     @inject(i_runtime.Runtime)
@@ -110,9 +117,12 @@ class Parser:
 
     def _eof(self) -> bool:
         if not self._current_token.is_a(TokenTypes.EOF):
-            return self.trigger_error("Didn't get to end of file.")
+            return self.trigger_error("didn't get to end of file")
         self._add_instruction(OpCode.STOP)
         return True
+
+    def _eol(self) -> bool:
+        return self.next_token()
 
     def _command(self):
         return self._command_map.get(
@@ -121,7 +131,7 @@ class Parser:
     def _set_reg(self):
         reg = Register.from_string(str(self._current_token))
         if reg is None:
-            return self.token_error('Expected register, got "{}"')
+            return self.token_error('expected a register, got "{}"')
         if reg is Register.TIME:
             return self._time()
 
@@ -135,7 +145,7 @@ class Parser:
 
     def _string_to_reg(self, reg) -> bool:
         if reg != Register.NAME:
-            return self.trigger_error('Quoted value not allowed here.')
+            return self.trigger_error('a quoted value is not allowed here')
         self._add_instruction(OpCode.MOVEQ, self._current_token.content, reg)
         return self.next_token()
 
@@ -146,7 +156,7 @@ class Parser:
         if self._context.in_matrix() or self._context.in_routine():
             return self._action(OpCode.COLOR)
         return self.trigger_error(
-            'Use of "stage" is not allowed in this context.')
+            'use of "stage" is not allowed in this context')
 
     def _power_on(self):
         self._add_instruction(OpCode.MOVEQ, True, Register.POWER)
@@ -170,7 +180,7 @@ class Parser:
     def _all_operand(self) -> bool:
         if self._context.in_matrix():
             return self.trigger_error(
-                'Use of "all" is not allowed in this context.')
+                'use of "all" is not allowed in this context')
         self._add_instruction(OpCode.MOVEQ, Operand.ALL, Register.OPERAND)
         self._add_instruction(OpCode.WAIT)
         self._add_instruction(self._op_code)
@@ -359,47 +369,18 @@ class Parser:
         return True
 
     def _assignment(self) -> bool:
+        expr_parser = ExpressionParser(self)
         self.next_token()
-        if not self._current_token.is_a(TokenTypes.NAME):
-            return self.token_error('Expected name for assignment, got "{}"')
-        dest_name = str(self._current_token)
-        if self._context.has_symbol_typed(dest_name, SymbolType.CONSTANT):
-            return self.token_error('Attempt to assign to constant "{}"')
-        self.next_token()
-        if self._context.has_symbol_typed(dest_name, SymbolType.ARRAY):
-            return self._array_assignment(dest_name)
-        if not self._rvalue(self._code_gen):
+        if not expr_parser.lvalue() or not expr_parser.rvalue():
             return False
-        self._code_gen.pop(dest_name)
-        self._context.add_variable(dest_name)
-        return True
-
-    def _array_assignment(self, array_name) -> bool:
-        op_code = OpCode.DEREF
-        while self._current_token == '[':
-            if not self._at_rvalue():
-                return self._token_error('Invalid array subscript: {}')
-            self.next_token()
-            if not self._rvalue(self._code_gen):
-                return False
-            if self._current_token != ']':
-                return self.trigger_error('Assignment missing closing "]"')
-            self._code_gen.add_instruction(op_code, array_name, Register.RESULT)
-            op_code = OpCode.INDEX
-            self.next_token()
-
-        if not self._at_rvalue():
-            return self.trigger_error('Missing value to assign to an array.')
-        if not self._rvalue(self._code_gen):
-            return False
-        self._code_gen.add_instruction(OpCode.MOVE, Register.RESULT, array_name)
+        self._add_instruction(OpCode.OP, Operator.SET)
         return True
 
     def _rvalue(self, code_gen) -> bool:
         if self.current_token.is_a(TokenTypes.LITERAL_STRING):
             code_gen.pushq(str(self.current_token))
             return self.next_token()
-        return ExpressionParser(self).rvalue(code_gen)
+        return ExpressionParser(self).rvalue()
 
     def _rvalue_str(self, code_gen) -> bool:
         token_str = str(self._current_token)
@@ -407,34 +388,12 @@ class Parser:
             code_gen.pushq(token_str)
             return self.next_token()
         if self._context.has_symbol_typed(
-                token_str, SymbolType.VAR, SymbolType.CONSTANT):
+                token_str, SymbolType.CONSTANT, SymbolType.VAR):
             code_gen.push(token_str)
             return self.next_token()
-        return self.token_error('Expected string, got {}')
-
-    def _rvalue_array(self, array_name, dest, code_gen) -> bool:
-        keep_going = True
-        op_code = OpCode.DEREF
-        while keep_going:
-            if self._current_token == '[':
-                self.next_token()
-                if not self._at_rvalue():
-                    return self.token_error('Invalid array subscript: {}')
-                if not self._rvalue(self._code_gen):
-                    return False
-                if self._current_token != ']':
-                    return self.trigger_error(
-                        'Array access missing closing "]"')
-                code_gen.add_instruction(op_code, array_name, Register.RESULT)
-                self.next_token()
-                keep_going = self._current_token == '['
-                op_code = OpCode.INDEX
-            else:
-                code_gen.add_instruction(OpCode.DEREF, array_name)
-                keep_going = False
-
-        code_gen.add_instruction(OpCode.MOVE, array_name, dest)
-        return True
+        if self._current_token.is_a(TokenTypes.NAME):
+            return self.token_error('Unknown: {}')
+        return self.token_error('Syntax error: {}')
 
     def _at_rvalue(self, include_reg=True) -> bool:
         token = self.current_token
@@ -450,113 +409,48 @@ class Parser:
             return not self._context.has_routine(str(self.current_token))
         return False
 
-    def _declaration(self) -> bool:
-        # Currently, the only thing that can be declared is an array.
+    def _array(self) -> bool:
         self.next_token()
         if not self._current_token.is_a(TokenTypes.NAME):
-            return self.token_error('Expected name for declaration, got: {}')
-        name = str(self._current_token)
+            return self.token_error('Expected name for array, got: {}')
+        name = self._current_token.content
+        self._add_instruction(OpCode.PUSHQ, name)
+        self._add_instruction(OpCode.ARRAY)
         self.next_token()
-        if self.current_token != '[':
-            return self.token_error(
-                'Excpected opening "[" in array declaration, got: {}')
-        num_dimensions = 0
-        while self.current_token == '[':
-            num_dimensions += 1
+
+        if not self._current_token.is_a(TokenTypes.BRACKET_PAIR):
+            if self.current_token != '[':
+                return self.token_error(
+                    'expected opening "[" in array declaration, got: {}')
+
             self.next_token()
-            if not self._at_rvalue():
-                return self.trigger_error(
-                    'Array {} declared with missing or invalid size.'
-                    .format(name))
-            if not self._rvalue(self._code_gen):
-                return False
-            self._code_gen.add_instruction(OpCode.ARRAY, name, Register.RESULT)
-            if self.current_token != ']':
-                return self.trigger_error(
-                    'Missing  closing "]" in array declaration.')
-            self.next_token()
-        self._context.add_array(name, num_dimensions)
-        return True
+            while self.current_token != ']':
+                if not self._rvalue(self._code_gen):
+                    return self.trigger_error(
+                        'array {}: missing or invalid size'.format(name))
+                self._add_instruction(OpCode.DIM)
+
+        self._context.add_array(name)
+        self._add_instruction(OpCode.POP)
+        return self.next_token()
 
     def _definition(self) -> bool:
         self.next_token()
         if not self._current_token.is_a(TokenTypes.NAME):
-            return self.token_error('Expected name for definition, got: {}')
+            return self.token_error('expected name for definition, got: {}')
 
-        name = str(self._current_token)
+        name = self._current_token.content
         self.next_token()
-        if self._detect_routine_start():
-            if not self._context.get_routine(name).undefined:
-                return self.token_error('Already defined: "{}"')
-            return self._routine_definition(name)
-        return self._macro_definition(name)
+        current_token = self._current_token
+        if (current_token.is_any(TokenTypes.LITERAL_STRING, TokenTypes.NUMBER)
+            or self._context.has_symbol_typed(
+                current_token.content, SymbolType.CONSTANT)):
+            return self._macro_definition(name)
 
-    def _detect_routine_start(self) -> bool:
-        """
-        If a definition is followed by "with", "begin", a keyword corresponding
-        to a command, or the name of an existing routine, it's defining a new
-        routine and not a variable.
-        """
-        if self._context.has_routine(str(self._current_token)):
-            return True
-        if self._current_token.token_type.is_executable():
-            return True
-        return self._current_token.is_any(TokenTypes.BEGIN, TokenTypes.WITH)
+        if not self._context.get_routine(name).undefined:
+            return self.token_error('already defined: "{}"')
 
-    def _routine_definition(self, name):
-        if self._context.in_routine():
-            return self.trigger_error('Nested definitions are not allowed.')
-
-        self._context.enter_routine()
-        self._add_instruction(OpCode.ROUTINE, name)
-
-        routine = Routine(name)
-        self._context.add_routine(routine)
-        if self._current_token.is_a(TokenTypes.WITH):
-            self.next_token()
-            if not self._params_decl(routine):
-                return False
-        result = self.command_seq()
-        self._add_instruction(OpCode.END, name)
-        self._context.exit_routine()
-        return result
-
-    def _params_decl(self, routine: Routine) -> bool:
-        """
-        The parameter declarations for the routine are not included in the
-        generated code. Declarations are used only at compile time.
-        """
-        if not self._add_param(routine):
-            return False
-        while (self._current_token.is_a(TokenTypes.NAME) and not
-                self._context.has_routine(str(self._current_token))):
-            if not self._add_param(routine):
-                return False
-        return True
-
-    def _add_param(self, routine: Routine) -> bool:
-        name = str(self._current_token)
-        if routine.has_param(name):
-            return self.token_error('Duplicate parameter name: "{}"')
-
-        self.next_token()
-        if self._current_token == '[':
-            return self._add_array_param(name, routine)
-        routine.add_param(name)
-        self._context.add_variable(name)
-        return True
-
-    def _add_array_param(self, name: str, routine: Routine) -> bool:
-        depth = 0
-        while self._current_token == '[':
-            depth += 1
-            self.next_token()
-            if self._current_token != ']':
-                return self.token_error('Param missing closing "]"".')
-            self.next_token()
-        routine.add_param(name)
-        self._context.add_array(name, depth)
-        return True
+        return self._routine_definition(name)
 
     def _macro_definition(self, name):
         """
@@ -570,10 +464,71 @@ class Parser:
             inner_macro = self._context.get_constant(str(self._current_token))
             if inner_macro is None:
                 return self.token_error('Macro needs constant, got "{}"')
-            value = inner_macro.value
+            value = inner_macro.static_value
         self._context.add_global(name, SymbolType.CONSTANT, value)
         self._add_instruction(OpCode.CONSTANT, name, value)
         return self.next_token()
+
+    def _routine_definition(self, name):
+        context = self._context
+        if context.in_routine():
+            return self.trigger_error('nested definitions are not allowed')
+
+        self._add_instruction(OpCode.ROUTINE, name)
+        if self._current_token.is_a(TokenTypes.BRACKET_PAIR):
+            routine_type = SymbolType.ARRAY
+            self.next_token()
+        else:
+            routine_type = SymbolType.VAR
+
+        routine = Routine(name, routine_type)
+        if self._current_token.is_a(TokenTypes.WITH):
+            self.next_token()
+            if not self._params_decl(routine):
+                return False
+
+        context.add_routine(routine)
+        context.enter_routine(routine)
+        result = self.command_seq()
+        self._add_instruction(OpCode.END, name)
+        context.exit_routine()
+        return result
+
+    def _params_decl(self, routine: Routine) -> bool:
+        """
+        The parameter declarations for the routine are not included in the
+        generated code. Declarations are used only at compile time.
+        """
+        any_param = False
+        while self._current_token.is_a(TokenTypes.NAME):
+            name = self._current_token.content
+
+            # Existing routine name implies single-line body, i.e. no params.
+            if self._context.has_routine(name):
+                break
+
+            self.next_token()
+            if self._current_token.is_a(TokenTypes.BRACKET_PAIR):
+                param_type = SymbolType.ARRAY
+                self.next_token()
+            else:
+                param_type = SymbolType.VAR
+            if not self._add_param(routine, name, param_type):
+                return False
+            any_param = True
+
+        if not any_param:
+            return self.trigger_error('no parameters supplied after "with"')
+
+        return True
+
+    def _add_param(
+            self, routine: Routine, name: str, param_type: SymbolType) -> bool:
+        if routine.has_param(name):
+            return self.token_error('duplicate parameter name: "{}"')
+        routine.add_param(name)
+        self._context.add_symbol(name, param_type)
+        return True
 
     def command_seq(self) -> bool:
         if not self._current_token.is_a(TokenTypes.BEGIN):
@@ -592,81 +547,82 @@ class Parser:
 
     def _call_routine(self) -> bool:
         # Invocation of a routine without square brackets.
-        expr_parser = ExpressionParser(self)
-        return expr_parser.routine(self._code_gen)
+        return ExpressionParser(self).routine()
 
     def _return(self) -> bool:
         """
-        The result of a function call is pushed onto the eval stack. If the
-        "return" keyword isn't followed by an rvalue push None.
+        Push the result of a function call onto the eval stack. If the "return"
+        keyword isn't followed by an rvalue, push None.
         """
         self.next_token()
-        if self._at_rvalue():
-            if not self._rvalue(self._code_gen):
-                return False
-        else:
+        if not self._at_rvalue():
             self._code_gen.pushq(None)
+        elif not ExpressionParser(self).rvalue():
+            return False
         self._code_gen.add_instruction(OpCode.RETURN)
         return True
 
     def _mark(self):
-        """
-        This is called when a MARK token is encountered at the topmost context.
-        A routine that returns a value is still called, but the return value is
-        thrown away. Any other standalone expression is an error.
-        """
         if self.current_token != '[':
-            return self.token_error(
-                'A mathematical expression with "{}" is not allowed here.')
+            return self.token_error('A command or expression starting with '
+                                    '"{}" is not allowed here.')
         expr_parser = ExpressionParser(self)
         self.next_token()
-        if not expr_parser.routine(self._code_gen):
+        if not expr_parser.routine(True):
             return False
-        if self.current_token != ']':
-            return self.token_error('Missing right ]: {}')
+
+        # Not an rvalue, so throw away the result.
         self._code_gen.pop()
-        return self.next_token()
+        return True
 
     def _if(self) -> bool:
         self.next_token()
         if not self._rvalue(self._code_gen):
             return False
-        marker = self._code_gen.if_true_start()
+        marker = self._code_gen.start_if_true()
         if not self.command_seq():
             return False
         if self.current_token.is_a(TokenTypes.ELSE):
-            self._code_gen.if_else(marker)
+            self._code_gen.start_else(marker)
             self.next_token()
             if not self.command_seq():
                 return False
-        self._code_gen.if_end(marker)
+        self._code_gen.end_if(marker)
         return True
 
     def _repeat(self) -> bool:
-        result = LoopParser(self).repeat(self._code_gen, self._context)
+        result = LoopParser(self).repeat()
         return result
 
     def _break(self) -> bool:
         if not self._context.in_loop():
-            return self.trigger_error('Encountered "break" not inside loop.')
+            return self.trigger_error('encountered "break" not inside loop')
         inst = self._code_gen.add_instruction(
             OpCode.JUMP, JumpCondition.ALWAYS, self._code_gen.current_offset)
         self._context.add_break(inst)
         return self.next_token()
 
-    def _add_instruction(self, op_code, param0=None, param1=None):
+    def _add_instruction(
+            self, op_code, param0=None, param1=None) -> Instruction:
         return self._code_gen.add_instruction(op_code, param0, param1)
 
-    def _add_message(self, message):
+    def _add_message(self, message) -> None:
         self._error_output += '{}\n'.format(message)
 
-    def trigger_error(self, message):
-        full_message = 'Line {}: {}'.format(
-            self._current_token.line_number, message)
-        self._add_message(full_message)
+    def trigger_error(self, message) -> Literal[False]:
+        if not self._testing_errors:
+            full_message = 'Line {}: {}'.format(
+                self._current_token.line_number, message)
+            self._add_message(full_message)
+        else:
+            self._error_output = str(self._current_token.line_number)
         return False
 
-    def _current_literal(self):
+    def token_error(self, message_format) -> Literal[False]:
+        return self.trigger_error(
+            message_format.format(self._current_token.content))
+
+    def _current_literal(self) -> str | None:
         """
         Interpret the current token as a literal and return its value. If the
         current token doesn't contain a literal, return None.
@@ -694,16 +650,16 @@ class Parser:
             return value
         if not self._current_token.is_a(TokenTypes.NAME):
             return None
-        constant = self._context.get_constant(str(self._current_token))
-        return None if constant.undefined else constant.value
+        constant = self._context.get_constant(self._current_token.content)
+        return None if constant.undefined else constant.static_value
 
-    def _current_int(self):
+    def _current_int(self) -> int | None:
         value = self._current_constant()
         if isinstance(value, int):
             return value
         return round(value) if isinstance(value, float) else None
 
-    def _current_float(self):
+    def _current_float(self) -> float | None:
         value = self._current_constant()
         if isinstance(value, float):
             return value
@@ -720,15 +676,16 @@ class Parser:
         if self._current_token.is_a(TokenTypes.TIME_PATTERN):
             return TimePattern.from_string(str(self._current_token))
         if self._current_token.is_a(TokenTypes.NAME):
-            return self._context.get_constant(str(self._current_token)).value
+            return self._context.get_constant(
+                str(self._current_token)).static_value
         return TimePattern(None, None)
 
-    def _current_reg(self):
+    def _current_reg(self) -> Register | None:
         if not self._current_token.is_a(TokenTypes.REGISTER):
             return None
         return Register.from_string(str(self._current_token))
 
-    def next_token(self):
+    def next_token(self) -> bool:
         if self._current_token != TokenTypes.EOF:
             try:
                 self._current_token = next(self._tokens)
@@ -741,17 +698,13 @@ class Parser:
                     self._current_token, self._current_token.token_type))
         return True
 
-    def _breakpoint(self):
+    def _breakpoint(self) -> None:
         self._code_gen.add_instruction(OpCode.BREAKPOINT)
 
-    def token_error(self, message_format):
-        return self.trigger_error(
-            message_format.format(str(self._current_token)))
-
-    def _unimplementd(self):
+    def _unimplementd(self) -> Literal[False]:
         return self.token_error('Unimplemented at token "{}"')
 
-    def _syntax_error(self):
+    def _syntax_error(self) -> Literal[False]:
         return self.token_error('Unexpected input "{}"')
 
     def _time_spec_error(self):
@@ -770,7 +723,7 @@ def _init_args():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('file', help='name of the script file')
     arg_parser.add_argument(
-        '-a', '--assembly', help='output assembly', action='store_true')
+        '-p', '--py', help='output full Python syntax', action='store_true')
     arg_parser.add_argument(
         '-l', '--load', help="use Loader", action='store_true')
     arg_parser.add_argument(
@@ -798,11 +751,9 @@ def main():
             output_code = loader.get_code()
 
         inst_num = 0
+        fn = Instruction.asm if args.py else Instruction.as_list_text
         for inst in output_code:
-            if args.assembly:
-                print(inst.as_list_text())
-            else:
-                print('{:5d} {}'.format(inst_num, inst))
+            print('{:5d} {}'.format(inst_num, fn(inst)))
             inst_num += 1
         if args.verbose and args.load:
             dump_routines(routines)

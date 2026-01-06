@@ -99,7 +99,7 @@ class Light(i_controller.Light):
 
 
 class MultizoneLight(Light, i_controller.MultizoneLight):
-    def __init__(self, name, group, location, num_zones=16):
+    def __init__(self, name, group, location, num_zones):
         super().__init__(name, group, location)
         self._zone_colors = [[0, 0, 0, 0] for _ in range(0, num_zones)]
         self._width = num_zones

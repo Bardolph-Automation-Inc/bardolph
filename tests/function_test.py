@@ -128,10 +128,11 @@ class FunctionTest(unittest.TestCase):
         script = """
             assign x 10
 
-            define set_x with val begin
-                assign x val
-                return 30
-            end
+            define set_x with val
+                begin
+                    assign x val
+                    return 30
+                end
 
             # Don't use the return value, but do execute it.
             [set_x 50]

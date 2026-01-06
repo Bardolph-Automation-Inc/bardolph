@@ -1,4 +1,4 @@
-from bardolph.vm.array import Array
+from bardolph.vm.array import ArrayBase, ArrayException
 from bardolph.vm.vm_codes import LoopVar
 
 
@@ -82,7 +82,11 @@ class CallStack:
     def exit_routine(self) -> None:
         self._top = self._top.parent
 
-    def put_variable(self, index, value) -> None:
+    def put_variable(self, index, value, allow_array=False) -> None:
+        if not allow_array and isinstance(value, ArrayBase):
+            raise ArrayException(
+                'An array cannot be assigned to a non-array variable. '
+                'Forgot to declare the target variable as an array?')
         if isinstance(index, LoopVar):
             self._top.set_loop_var(index, value)
         else:
@@ -116,4 +120,4 @@ class CallStack:
 
     def unwind_loops(self) -> None:
         while isinstance(self._top, LoopFrame):
-            self._top = self.parent
+            self._top = self._top.parent

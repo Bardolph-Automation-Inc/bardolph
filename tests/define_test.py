@@ -14,9 +14,10 @@ class DefineTest(unittest.TestCase):
 
     def test_simple_fn(self):
         script = """
-            define f with a b begin
-                return a + b
-            end
+            define f with a b
+                begin
+                    return a + b
+                end
 
             assign x [f 3 5]
         """
@@ -61,7 +62,9 @@ class DefineTest(unittest.TestCase):
 
     def test_nested_define(self):
         script = """
-            units raw define x 500 define y x
+            units raw
+            define x 500
+            define y x
             hue 1 saturation 2 brightness 3 kelvin 4 duration y
             set "Top"
         """

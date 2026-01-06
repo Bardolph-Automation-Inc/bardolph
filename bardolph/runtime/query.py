@@ -36,7 +36,8 @@ class QueryImpl:
     @inject(LightSet)
     def _is_multizone(name, light_set) -> int:
         light = light_set.get_light(name)
-        return 1 if light is not None and isinstance(light, MultizoneLight) else 0
+        return 1 if light is not None and isinstance(
+            light, MultizoneLight) else 0
 
     @staticmethod
     @inject(LightSet)

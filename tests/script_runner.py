@@ -21,6 +21,12 @@ class ScriptRunner:
         parser = Parser()
         self._test_case.assertTrue(parser.parse(script), parser.get_errors())
 
+    def parse_erroneous_script(self, script, error_line):
+        parser = Parser()
+        parser.set_testing_errors()
+        self._test_case.assertFalse(parser.parse(script))
+        self._test_case.assertEqual(parser.get_errors(), str(error_line))
+
     def run_script(self, script, max_waits=None):
         jobs = JobControl()
         script_job = ScriptJob.from_string(script)

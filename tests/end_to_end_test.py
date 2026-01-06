@@ -21,7 +21,6 @@ class EndToEndTest(unittest.TestCase):
             hue 44 saturation 55 brightness 66 set "Bottom"
         """
         self._runner.run_script(script)
-        lifx = provide(i_controller.LightApi)
         self._runner.check_call_list(
             'Top', (Action.SET_COLOR, [11, 22, 33, 2500], 0))
         self._runner.check_call_list(

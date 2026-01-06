@@ -9,21 +9,23 @@ class Assoc(Enum):
 class TokenTypes(Enum):
     ALL = auto()
     AND = auto()
+    ARRAY = auto()
     AS = auto()
     ASSIGN = auto()
     AT = auto()
     BEGIN = auto()
+    BRACKET_PAIR = auto()
     BREAK = auto()
     BREAKPOINT = auto()
     COLUMN = auto()
-    COMPARE = auto()
+    CMP = auto()
     CYCLE = auto()
-    DECLARE = auto()
     DEFAULT = auto()
     DEFINE = auto()
     ELSE = auto()
     END = auto()
     EOF = auto()
+    EOL = auto()
     ERROR = auto()
     FROM = auto()
     GET = auto()
@@ -66,18 +68,19 @@ class TokenTypes(Enum):
     ZONE = auto()
 
     def has_string(self):
-        return self in (TokenTypes.ERROR, TokenTypes.LITERAL_STRING,
-            TokenTypes.MARK, TokenTypes.NAME, TokenTypes.NUMBER,
-            TokenTypes.REGISTER, TokenTypes.TIME_PATTERN)
+        return self in (TokenTypes.BRACKET_PAIR, TokenTypes.ERROR,
+                        TokenTypes.LITERAL_STRING,
+                        TokenTypes.MARK, TokenTypes.NAME, TokenTypes.NUMBER,
+                        TokenTypes.REGISTER, TokenTypes.TIME_PATTERN)
 
     def is_executable(self):
         return self in (
-            TokenTypes.ASSIGN, TokenTypes.BREAKPOINT, TokenTypes.DECLARE,
+            TokenTypes.ARRAY, TokenTypes.ASSIGN, TokenTypes.BREAKPOINT,
             TokenTypes.GET, TokenTypes.IF, TokenTypes.OFF, TokenTypes.ON,
             TokenTypes.PRINT, TokenTypes.PRINTF, TokenTypes.PRINTLN,
             TokenTypes.PAUSE, TokenTypes.REGISTER, TokenTypes.REPEAT,
-            TokenTypes.SET, TokenTypes.STAGE, TokenTypes.UNITS,
-            TokenTypes.WHILE, TokenTypes.WAIT)
+            TokenTypes.RETURN, TokenTypes.SET, TokenTypes.STAGE,
+            TokenTypes.UNITS, TokenTypes.WHILE, TokenTypes.WAIT)
 
 class Token:
     def __init__(self,
@@ -120,7 +123,7 @@ class Token:
             return self._content
         return self._token_type.name.lower()
 
-    def is_a(self, token_type) -> bool:
+    def is_a(self, token_type: TokenTypes) -> bool:
         return self._token_type is token_type
 
     def is_any(self, *token_types) -> bool:
@@ -140,9 +143,11 @@ class Token:
 
     @property
     def is_binop(self):
-        return (self.is_a(TokenTypes.COMPARE)
-                or self.content in '+-*/%^'
-                or self.content in ('&&', '||'))
+        if self._token_type is TokenTypes.CMP:
+            return True
+        content = self.content
+        return (len(content) > 0 and
+                (content in '+-*/%^' or content in ('&&', '||', 'set')))
 
     @property
     def line_number(self):

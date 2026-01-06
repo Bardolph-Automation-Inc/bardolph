@@ -30,7 +30,7 @@ def instruction_text(file_name):
 
     program = parser.get_program()
     text = '    '
-    text += ',\n    '.join(map(lambda inst: inst.as_list_text(), program))
+    text += ',\n    '.join(map(lambda inst: inst.asm(), program))
     return text
 
 def output_python(output_text, output_name=None):

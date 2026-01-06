@@ -1,4 +1,3 @@
-
 import logging
 
 from bardolph.controller import light_set
@@ -8,7 +7,7 @@ from bardolph.lib import (i_lib, injection, log_config, object_list_output,
 from bardolph.runtime import runtime_module
 
 
-def configure(small_set=False):
+def configure(fn=None):
     injection.configure()
     settings.using({
         'log_level': logging.ERROR,
@@ -17,8 +16,8 @@ def configure(small_set=False):
     }).configure()
     log_config.configure()
     fake_clock.configure()
-    if small_set:
-        fake_light_api.using_small_set().configure()
+    if fn is not None:
+        fn().configure()
     else:
         fake_light_api.configure()
     light_set.configure()
@@ -30,7 +29,23 @@ def using_small_set():
     class _Reinit:
         @staticmethod
         def configure():
-            configure(True)
+            configure(fake_light_api.using_small_set)
+    return _Reinit()
+
+
+def using_medium_set():
+    class _Reinit:
+        @staticmethod
+        def configure():
+            configure(fake_light_api.using_medium_set)
+    return _Reinit()
+
+
+def using_large_set():
+    class _Reinit:
+        @staticmethod
+        def configure():
+            configure(fake_light_api.using_large_set)
     return _Reinit()
 
 

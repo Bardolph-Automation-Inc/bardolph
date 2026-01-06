@@ -1,431 +1,625 @@
 #!/usr/bin/env python
 
+
+from bardolph.parser import parse
 import unittest
 
-from bardolph.controller import light_set
-from bardolph.fakes import fake_light_api
-from bardolph.fakes.activity_monitor import Action
-from bardolph.lib.injection import provide
-from bardolph.parser.parse import Parser
-
-from tests import test_module
-from tests.script_runner import ScriptRunner
+from tests import print_driven_test, test_module
 
 
-class LoopTest(unittest.TestCase):
-    """
-        repeat-loop syntax:
-            repeat
-            [(all | in <light_list>) as <light_name>]
-            [with <numeric_var> (from <start> to <end> | cycle [<start>)]
-
-        light list syntax:
-            <light_name> | group <group_name> | location <location_name>
-            [and <light_list>]
-    """
-
+class LoopTest(print_driven_test.PrintDrivenTest):
     def setUp(self):
-        test_module.using_small_set().configure()
-        self._runner = ScriptRunner(self)
+        test_module.using_medium_set().configure()
+        self.post_setup()
 
-    def test_all(self):
+    def test_count(self):
         script = """
-            hue 180 saturation 50 brightness 50 kelvin 1000
-            repeat all as the_light set the_light
+            repeat 3 print "x"
+        """
+        self.run_and_check(script, ['x', 'x', 'x'])
 
-            repeat all as the_light with brt from 0 to 100 begin
-                brightness brt
-                set the_light
-            end
-
-            repeat all as a_light with the_hue cycle begin
-                hue the_hue
-                set a_light
+    def test_count_with_range(self):
+        script = """
+            repeat 3 with x from 5 to 15
+            begin
+                print x
             end
         """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light_0', [
-            (Action.SET_COLOR, [32768, 32768, 32768, 1000], 0),
-            (Action.SET_COLOR, [32768, 32768, 0, 1000], 0),
-            (Action.SET_COLOR, [0, 32768, 65535, 1000], 0)
-        ])
-        self._runner.check_call_list('light_1', [
-            (Action.SET_COLOR, [32768, 32768, 32768, 1000], 0),
-            (Action.SET_COLOR, [32768, 32768, 32768, 1000], 0),
-            (Action.SET_COLOR, [21845, 32768, 65535, 1000], 0)
-        ])
-        self._runner.check_call_list('light_2', [
-            (Action.SET_COLOR, [32768, 32768, 32768, 1000], 0),
-            (Action.SET_COLOR, [32768, 32768, 65535, 1000], 0),
-            (Action.SET_COLOR, [43690, 32768, 65535, 1000], 0)
-        ])
+        self.run_and_check(script, [5, 10, 15])
 
-    def test_bare_list(self):
+    def test_nested_count_with_range(self):
         script = """
-            hue 45 saturation 25 brightness 75 kelvin 2000 duration 9
-            define light_0 "light_0"
-            assign light_1 "light_1"
-            repeat in light_0 and light_1 and "light_2" as the_light
-                set the_light
+            repeat 3 with x from 5 to 7
+            begin
+                print x
+                repeat 3 with y from 1000 to 1002
+                begin
+                    print y
+                end
+            end
         """
-        self._runner.test_code(
+        self.run_and_check(
             script,
-            ('light_0', 'light_1', 'light_2'),
-            (Action.SET_COLOR, [8192, 16384, 49151, 2000], 9000))
+            [5, 1000, 1001, 1002, 6, 1000, 1001, 1002, 7, 1000, 1001, 1002])
 
-    def test_list_range(self):
+    def test_count_with_cycle(self):
         script = """
-            hue 180 saturation 50 brightness 50 kelvin 1000
+            repeat 5 with x cycle print x
+        """
+        self.run_and_check(script, [0, 72, 144, 216, 288])
 
-            define l0 "light_0" assign l1 "light_1"
-            repeat
-                in l0 and l1 and "light_2"
-                as the_light
-                with brt
-                    from saturation - brightness
-                    to hue - brightness - 30
+    def test_count_with_cycle_offset(self):
+        script = """
+            repeat 5 with x cycle 10
             begin
-                brightness brt
-                set the_light
+                print x
             end
         """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light_0',
-            (Action.SET_COLOR, [32768, 32768, 0, 1000], 0))
-        self._runner.check_call_list('light_1',
-            (Action.SET_COLOR, [32768, 32768, 32768, 1000], 0))
-        self._runner.check_call_list('light_2',
-            (Action.SET_COLOR, [32768, 32768, 65535, 1000], 0))
+        self.run_and_check(script, [10, 82, 154, 226, 298])
 
-    def test_list_cycle(self):
+    def test_count_with_nested_cycle(self):
         script = """
-            hue 180 saturation 50 brightness 50 kelvin 1000
-
-            repeat
-                in "light_0" and "light_1" and "light_2" as the_light
-                with the_hue cycle
+            repeat 4 with a cycle
             begin
-                hue the_hue
-                set the_light
+                print a
+                repeat in group "Table" as the_light with b cycle
+                begin
+                    print the_light
+                    print b
+                end
             end
         """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light_0',
-            (Action.SET_COLOR, [0, 32768, 32768, 1000], 0))
-        self._runner.check_call_list('light_1',
-            (Action.SET_COLOR, [21845, 32768, 32768, 1000], 0))
-        self._runner.check_call_list('light_2',
-            (Action.SET_COLOR, [43690, 32768, 32768, 1000], 0))
+        self.run_and_check(script,
+                            [0, 'table-0', 0, 'table-1', 180,
+                             90, 'table-0', 0, 'table-1', 180,
+                             180, 'table-0', 0, 'table-1', 180,
+                             270, 'table-0', 0, 'table-1', 180])
 
-    def test_const_count(self):
-        script = """
-            hue 180 saturation 50 brightness 50 kelvin 1000
-
-            repeat 4 with brt from 0 to 100 begin
-                brightness brt
-                set all
-            end
-        """
-        self._runner.run_script(script)
-        self._runner.check_global_call_list([
-            (Action.SET_COLOR, [32768, 32768, 0, 1000], 0),
-            (Action.SET_COLOR, [32768, 32768, 21845, 1000], 0),
-            (Action.SET_COLOR, [32768, 32768, 43690, 1000], 0),
-            (Action.SET_COLOR, [32768, 32768, 65535, 1000], 0)
-        ])
-
-    def test_expr_count(self):
+    def test_count_with_expressions(self):
         script = """
             assign x 16
             define y 5
             assign z 10
             assign thou 1000
 
-            hue 36 * y
-            saturation y * z
-            brightness 50 * 1
-            kelvin thou
+            repeat 16 / (y - 1) with brt from -z + z to thou / 10
+                print brt
+        """
+        self.run_and_check_rounded(script, [0, 33.33, 66.67, 100])
 
-            repeat 16 / (y - 1) with brt from -z + z to thou / 10 begin
-                brightness brt
-                set all
+    def test_all(self):
+        script = """
+            repeat all as the_light
+            begin
+                print the_light
             end
         """
-        self._runner.run_script(script)
-        self._runner.check_global_call_list([
-            (Action.SET_COLOR, [32768, 32768, 0, 1000], 0),
-            (Action.SET_COLOR, [32768, 32768, 21845, 1000], 0),
-            (Action.SET_COLOR, [32768, 32768, 43690, 1000], 0),
-            (Action.SET_COLOR, [32768, 32768, 65535, 1000], 0)
+        self.run_and_check(script, [
+            'Balcony', 'Bottom', 'Candle', 'Lamp', 'Middle', 'Top',
+            'White Candle', 'table-0', 'table-1'
         ])
 
-    def test_cycle_count(self):
+    def test_all_with_range(self):
         script = """
-            repeat 5 with the_hue cycle 180 begin
-                hue the_hue
-                set all
+            repeat all as the_light with x from 10 to 90
+            begin
+                print the_light
+                print x
             end
         """
-        self._runner.run_script(script)
-        self._runner.check_global_call_list([
-            (Action.SET_COLOR, [32768, 0, 0, 0], 0),
-            (Action.SET_COLOR, [45874, 0, 0, 0], 0),
-            (Action.SET_COLOR, [58982, 0, 0, 0], 0),
-            (Action.SET_COLOR, [6554, 0, 0, 0], 0),
-            (Action.SET_COLOR, [19660, 0, 0, 0], 0)
+        self.run_and_check(script, [
+            'Balcony', 10, 'Bottom', 20, 'Candle', 30, 'Lamp', 40, 'Middle', 50,
+            'Top', 60, 'White Candle', 70, 'table-0', 80, 'table-1', 90
         ])
 
-    def test_nested_cycle(self):
+    def test_all_with_range_expressions(self):
         script = """
-            saturation 90 brightness 75 kelvin 2700
+            assign a 5
+            assign b 45
 
-            repeat 5 with base_hue cycle begin
-                time 0
-                repeat all as the_light with the_hue cycle base_hue begin
-                    hue the_hue
-                    set the_light
+            repeat all as the_light with x from a * 2 to 2 * b
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(script, [
+            'Balcony', 10, 'Bottom', 20, 'Candle', 30, 'Lamp', 40, 'Middle', 50,
+            'Top', 60, 'White Candle', 70, 'table-0', 80, 'table-1', 90
+        ])
+
+    def test_all_with_cycle(self):
+        script = """
+            repeat all as the_light with x cycle
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(script, [
+            'Balcony', 0, 'Bottom', 40, 'Candle', 80, 'Lamp', 120,
+            'Middle', 160, 'Top', 200, 'White Candle', 240, 'table-0', 280,
+            'table-1', 320
+        ])
+
+    def test_all_with_cycle_offset(self):
+        script = """
+            assign y 50
+
+            repeat all as the_light with x cycle y * 2
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(script, [
+            'Balcony', 100, 'Bottom', 140, 'Candle', 180, 'Lamp', 220,
+            'Middle', 260, 'Top', 300, 'White Candle', 340, 'table-0', 380,
+            'table-1', 420
+        ])
+
+    def test_all_with_cycle(self):
+        script = """
+            repeat all as the_light with x cycle
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(script, [
+            'Balcony', 0, 'Bottom', 40, 'Candle', 80, 'Lamp', 120,
+            'Middle', 160, 'Top', 200, 'White Candle', 240, 'table-0', 280,
+            'table-1', 320
+        ])
+
+    def test_all_with_cycle_offset(self):
+        script = """
+            repeat all as the_light with x cycle 20
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(script, [
+            'Balcony', 20, 'Bottom', 60, 'Candle', 100, 'Lamp', 140,
+            'Middle', 180, 'Top', 220, 'White Candle', 260, 'table-0', 300,
+            'table-1', 340
+        ])
+
+    def test_locations(self):
+        script = """
+            repeat location as the_loc print the_loc
+        """
+        self.run_and_check(script, ['Home', 'Living Room', 'Outside'])
+
+    def test_locations_with_range(self):
+        script = """
+            repeat location as the_loc with a from 100 to 300
+            begin
+                print the_loc
+                print a
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Home', 100, 'Living Room', 200, 'Outside', 300])
+
+    def test_locations_with_cycle(self):
+        script = """
+            repeat location as the_loc with a cycle
+            begin
+                print the_loc
+                print a
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Home', 0, 'Living Room', 120, 'Outside', 240])
+
+    def test_locations_with_cycle_offset(self):
+        script = """
+            repeat location as the_loc with a cycle 50
+            begin
+                print the_loc
+                print a
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Home', 50, 'Living Room', 170, 'Outside', 290])
+
+    def test_groups(self):
+        script = """
+            repeat group as the_group print the_group
+        """
+        self.run_and_check(script, ['Furniture', 'Pole', 'Table', 'Windows'])
+
+    def test_groups_with_range(self):
+        script = """
+            repeat group as the_group with a from 100 to 400
+            begin
+                print the_group
+                print a
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Furniture', 100, 'Pole', 200, 'Table', 300, 'Windows', 400])
+
+    def test_groups_with_cycle(self):
+        script = """
+            repeat group as the_group with a cycle
+            begin
+                print the_group
+                print a
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Furniture', 0, 'Pole', 90, 'Table', 180, 'Windows', 270])
+
+    def test_groups_with_cycle_offset(self):
+        script = """
+            repeat group as the_group with a cycle 45
+            begin
+                print the_group
+                print a
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Furniture', 45, 'Pole', 135, 'Table', 225, 'Windows', 315])
+
+    def test_in_location(self):
+        script = """
+            repeat in location "Home" as the_light print the_light
+        """
+        self.run_and_check(script, ['Bottom', 'Middle', 'Top'])
+
+    def test_in_location_with_range(self):
+        script = """
+            repeat in location "Home" as the_light with x from 100 to 300
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(script, ['Bottom', 100, 'Middle', 200, 'Top', 300])
+
+    def test_in_location_and_light_with_range(self):
+        script = """
+            repeat in location "Home" and "Candle"
+                as the_light
+                with x from 100 to 400
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Bottom', 100, 'Middle', 200, 'Top', 300, 'Candle', 400])
+
+    def test_location_members_nested(self):
+        script = """
+            repeat location as the_loc
+            begin
+                print the_loc
+                repeat in location the_loc as the_light
+                begin
+                    print the_light
                 end
-                time 3
-                wait
             end
         """
-        self._runner.run_script(script)
+        self.run_and_check(script, [
+            'Home', 'Bottom', 'Middle', 'Top',
+            'Living Room', 'Lamp', 'table-0', 'table-1',
+            'Outside', 'Balcony', 'Candle', 'White Candle',
+        ])
+
+    def test_multiple_locations_with_range(self):
+        script = """
+            repeat in location "Outside" and location "Home" as the_light
+                with x from 1000 to 6000
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Balcony', 1000, 'Candle', 2000, 'White Candle', 3000,
+             'Bottom', 4000, 'Middle', 5000, 'Top', 6000])
+
+    def test_in_group(self):
+        script = """
+            repeat in group "Windows" as the_light print the_light
+        """
+        self.run_and_check(script, ['Balcony', 'Lamp'])
+
+    def test_in_group_with_range(self):
+        script = """
+            repeat in group "Pole" as the_light with x from 1000 to 3000
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Bottom', 1000, 'Middle', 2000, 'Top', 3000])
+
+    def test_in_group_with_cycle(self):
+        script = """
+            repeat in group "Pole" as the_light with x cycle
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(
+            script,
+            ['Bottom', 0, 'Middle', 120, 'Top', 240])
+
+    def test_group_members_nested(self):
+        script = """
+            repeat group as the_group
+            begin
+                print the_group
+                repeat in group the_group as the_light
+                    begin
+                        print the_light
+                    end
+            end
+        """
+        self.run_and_check(script, [
+            'Furniture', 'Candle', 'White Candle',
+            'Pole', 'Bottom', 'Middle', 'Top',
+            'Table', 'table-0', 'table-1',
+            'Windows', 'Balcony', 'Lamp'
+        ])
+
+    def test_multiple_groups_with_range(self):
+        script = """
+            repeat in group "Table" and group "Pole" as the_light
+                    with x from 100 to 500
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(
+            script,
+            ['table-0', 100, 'table-1', 200,
+             'Bottom', 300, 'Middle', 400, 'Top', 500])
+
+    def test_literal_list(self):
+        script = """
+            repeat in "Top" and "Middle" and "Bottom" as the_light
+                print the_light
+        """
+        self.run_and_check(script, ['Top', 'Middle', 'Bottom'])
+
+    def test_literal_list_with_range(self):
+        script = """
+            repeat in "Top" and "Middle" and "Bottom"
+                as the_light
+                with x from 25 to 75
+            begin
+                print the_light
+                print x
+            end
+        """
+        self.run_and_check(script, ['Top', 25, 'Middle', 50, 'Bottom', 75])
+
+    def test_var_list(self):
+        script = """
+            assign top "Top"
+            assign middle "Middle"
+            assign bottom "Bottom"
+
+            repeat in top and middle and bottom as the_light
+                print the_light
+        """
+        self.run_and_check(script, ['Top', 'Middle', 'Bottom'])
+
+    def test_var_list_with_range(self):
+        script = """
+            assign bottom "Bottom"
+            assign middle "Middle"
+            assign top "Top"
+
+            repeat in bottom and top and middle
+                as the_light
+                with var from 20000 to 30000
+            begin
+                print the_light
+                print var
+            end
+        """
+        self.run_and_check(script,
+                            ['Bottom', 20000, 'Top', 25000, 'Middle', 30000])
+
+    def test_var_list_with_cycle(self):
+        script = """
+            assign bottom "Bottom"
+            assign middle "Middle"
+            assign top "Top"
+
+            repeat in bottom and top and middle as the_light with var cycle
+            begin
+                print the_light
+                print var
+            end
+        """
+        self.run_and_check(script, ['Bottom', 0, 'Top', 120, 'Middle', 240])
+
+    def test_var_and_literal_list(self):
+        script = """
+            assign top "Top"
+            assign middle "Middle"
+            assign bottom "Bottom"
+
+            repeat in
+                    top
+                    and "Balcony"
+                    and middle
+                    and bottom
+                    and bottom
+                    and "Candle"
+                as the_light
+                    print the_light
+        """
+        self.run_and_check(script, [
+            'Top',
+            'Balcony',
+            'Middle',
+            'Bottom',
+            'Bottom',
+            'Candle'
+            ])
+
+    def test_var_and_literal_list_with_range(self):
+        script = """
+            assign top "Top"
+            assign middle "Middle"
+            assign bottom "Bottom"
+
+            repeat in top
+                    and "Balcony"
+                    and middle
+                    and bottom
+                    and bottom
+                    and "Candle"
+                as the_light
+                with the_hue from 1 to 10
+            begin
+                print the_light
+                print the_hue
+            end
+        """
+        self.run_and_check_rounded(
+            script,
+            ['Top', 1, 'Balcony', 2.8, 'Middle', 4.6, 'Bottom', 6.4,
+             'Bottom', 8.2, 'Candle', 10])
+
+    def test_var_and_literal_list_with_cycle(self):
+        script = """
+            assign top "Top"
+            assign middle "Middle"
+            assign bottom "Bottom"
+
+            repeat in top
+                    and middle
+                    and "Balcony"
+                    and bottom
+                    and "Candle"
+                    and bottom
+                as the_light
+                with the_hue cycle
+            begin
+                print the_light
+                print the_hue
+            end
+        """
+        self.run_and_check_rounded(
+            script,
+            ['Top', 0, 'Middle', 60, 'Balcony', 120, 'Bottom', 180,
+             'Candle', 240, 'Bottom', 300])
+
+    def test_range(self):
+        script = """
+            repeat with a from 5 to 7 print a
+        """
+        self.run_and_check(script, [5, 6, 7])
+
+    def test_reverse_range(self):
+        script = """
+            repeat with b from 20 to 15 print b
+        """
+        self.run_and_check(script, [20, 19, 18, 17, 16, 15])
 
     def test_while(self):
         script = """
-            hue 180 saturation 10 brightness 10 kelvin 500
-
             assign y 0
-            define x 100
-            repeat while y < 4 && x == 100 begin
-                set all
+            repeat while y < 3
+            begin
+                print y
                 assign y y + 1
             end
         """
-        self._runner.run_script(script)
-        self._runner.check_global_call_list(
-            [(Action.SET_COLOR, [32768, 6554, 6554, 500], 0)] * 4)
-
-    def test_bare_with(self):
-        script = """
-            units raw
-            repeat with i from 3 to 1 begin
-                hue i set all
-            end
-            repeat with i from 1 to 3 begin
-                hue i set all
-            end
-        """
-        self._runner.run_script(script)
-        self._runner.check_global_call_list([
-            (Action.SET_COLOR, [3, 0, 0, 0], 0),
-            (Action.SET_COLOR, [2, 0, 0, 0], 0),
-            (Action.SET_COLOR, [1, 0, 0, 0], 0),
-            (Action.SET_COLOR, [1, 0, 0, 0], 0),
-            (Action.SET_COLOR, [2, 0, 0, 0], 0),
-            (Action.SET_COLOR, [3, 0, 0, 0], 0)
-        ])
-
-    def test_group(self):
-        script = """
-            hue 180 saturation 50 brightness 50 kelvin 1000
-
-            repeat in group "group" as the_light with brt from 100 to 0
-            begin
-                brightness brt
-                set the_light
-            end
-        """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light_0',
-            (Action.SET_COLOR, [32768, 32768, 65535, 1000], 0))
-        self._runner.check_call_list('light_2',
-            (Action.SET_COLOR, [32768, 32768, 0, 1000], 0))
-
-    def test_group_cycle(self):
-        script = """
-            saturation 75 brightness 25 kelvin 1234
-
-            repeat in group "group" as the_light with the_hue cycle
-            begin
-                hue the_hue
-                set the_light
-            end
-        """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light_0',
-            (Action.SET_COLOR, [0, 49151, 16384, 1234], 0))
-        self._runner.check_call_list('light_2',
-            (Action.SET_COLOR, [32768, 49151, 16384, 1234], 0))
-
-    def test_group_no_with(self):
-        script = """
-            hue 90 saturation 50 brightness 75 kelvin 2000
-            repeat in group "group" as the_light set the_light
-        """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light_0',
-            (Action.SET_COLOR, [16384, 32768, 49151, 2000], 0))
-        self._runner.check_call_list('light_2',
-            (Action.SET_COLOR, [16384, 32768, 49151, 2000], 0))
-
-    def test_all_groups(self):
-        script = """
-            hue 180 saturation 50 brightness 50 kelvin 1000
-
-            repeat group as grp with brt from 0 to 100
-            begin
-                brightness brt
-                set group grp
-            end
-        """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light1',
-            (Action.SET_COLOR, [32768, 32768, 0, 1000], 0))
-        self._runner.check_call_list(('light_2', 'light_0'),
-            (Action.SET_COLOR, [32768, 32768, 65535, 1000], 0))
-
-    def test_all_locations(self):
-        script = """
-            hue 180 saturation 50 brightness 50 kelvin 1000
-
-            repeat location as loc with brt from 0 to 100
-            begin
-                brightness brt
-                set location loc
-            end
-        """
-        self._runner.run_script(script)
-        self._runner.check_call_list('light_1',
-            (Action.SET_COLOR, [32768, 32768, 0, 1000], 0))
-        self._runner.check_call_list(('light_2', 'light_0'),
-            (Action.SET_COLOR, [32768, 32768, 65535, 1000], 0))
-
-    def test_mixture(self):
-        fake_light_api.using_large_set().configure()
-        light_set.configure()
-
-        script = """
-            units raw hue 180 saturation 50 brightness 50 kelvin 1000
-
-            repeat in "Lamp" and group "Pole" and location "Home" as the_light
-            begin
-                set the_light
-            end
-        """
-        self._runner.run_script(script)
-        self._runner.check_call_list(
-            ('Lamp', 'Strip', 'Candle'),
-            [(Action.SET_COLOR, [180, 50, 50, 1000], 0)])
-
-        # These get two calls: one for being in the "Pole" group, and another
-        # for being in the "Home" location.
-        self._runner.check_call_list(
-            ('Top', 'Middle', 'Bottom'),
-            [(Action.SET_COLOR, [180, 50, 50, 1000], 0)] * 2)
+        self.run_and_check(script, [0, 1, 2])
 
     def test_break(self):
-        light_set.configure()
         script = """
-            units raw hue 100 saturation 200 brightness 300 kelvin 400
             assign i 0
-            repeat begin
+            repeat
+            begin
                 if i >= 2
                     break
-                hue i
-                set all
+                print i
                 assign i i + 1
             end
         """
-        self._runner.run_script(script)
-        self._runner.check_global_call_list([
-            (Action.SET_COLOR, [0, 200, 300, 400], 0.0),
-            (Action.SET_COLOR, [1, 200, 300, 400], 0.0)])
+        self.run_and_check(script, [0, 1])
 
     def test_nested_break(self):
-        light_set.configure()
         script = """
-            units raw hue 100 saturation 200 brightness 300 kelvin 400
             assign i 0
-            repeat begin
+            repeat
+            begin
                 if i >= 2
                     break
-                hue i
-                set all
+                print i
                 assign i i + 1
 
                 assign j 1000
-                repeat begin
+                repeat
+                begin
                     if j > 1002
                         break
-                    hue j
-                    set all
+                    print j
                     assign j j + 1
                 end
             end
         """
-        self._runner.run_script(script)
-        self._runner.check_global_call_list([
-            (Action.SET_COLOR, [0, 200, 300, 400], 0.0),
-            (Action.SET_COLOR, [1000, 200, 300, 400], 0.0),
-            (Action.SET_COLOR, [1001, 200, 300, 400], 0.0),
-            (Action.SET_COLOR, [1002, 200, 300, 400], 0.0),
-            (Action.SET_COLOR, [1, 200, 300, 400], 0.0),
-            (Action.SET_COLOR, [1000, 200, 300, 400], 0.0),
-            (Action.SET_COLOR, [1001, 200, 300, 400], 0.0),
-            (Action.SET_COLOR, [1002, 200, 300, 400], 0.0)])
+        self.run_and_check(script, [0, 1000, 1001, 1002, 1, 1000, 1001, 1002])
 
     def test_while_break(self):
         script = """
             assign y 0
-            units raw hue 180 saturation 190 brightness 200 kelvin 210
-            repeat while y < 4 begin
-                set all
+            repeat while y < 4
+            begin
+                print y
                 if y == 2
                     break
                 assign y y + 1
             end
         """
-        self._runner.run_script(script)
-        self._runner.check_global_call_list(
-            [(Action.SET_COLOR, [180, 190, 200, 210], 0)] * 3)
+        self.run_and_check(script, [0, 1, 2])
 
-    def test_count_break(self):
+    def test_nested_return(self):
         script = """
-            units raw hue 180 saturation 190 brightness 200 kelvin 210
-            repeat with i from 0 to 10 begin
-                set all
-                if i == 2
-                    break
+            define has_return
+            begin
+                repeat with i from 5 to 10
+                begin
+                    if i == 6
+                        return 1000
+                end
+                return 0
             end
-        """
-        self._runner.run_script(script)
-        self._runner.check_global_call_list(
-            [(Action.SET_COLOR, [180, 190, 200, 210], 0)] * 3)
 
-    def test_list_break(self):
-        script = """
-            units raw
-            hue 500 saturation 600 brightness 700 kelvin 800 duration 900
-            assign i 0
-            repeat in "light_0" and "light_1" and "light_2" as the_light begin
-                if i == 2
-                    break
-                set the_light
-                assign i i + 1
-            end
+            print [has_return]
         """
-        self._runner.run_script(script)
-        self._runner.check_call_list(('light_0', 'light_1'),
-            [(Action.SET_COLOR, [500, 600, 700, 800], 900)])
-        self._runner.check_no_others('light_0', 'light_1')
+        self.run_and_check(script, 1000)
 
-    def test_bad_break(self):
+    def test_erroneous_break(self):
         script = "hue 5 saturation 6 break set all"
-        parser = Parser()
+        parser = parse.Parser()
+        parser.set_testing_errors()
         self.assertFalse(parser.parse(script))
-        self.assertEqual(parser.get_errors(),
-            'Line 1: Encountered "break" not inside loop.\n')
+        self.assertEqual(parser.get_errors(), '1')
 
 
 if __name__ == '__main__':

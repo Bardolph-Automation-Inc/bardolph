@@ -7,6 +7,7 @@ from bardolph.parser.token import Token, TokenTypes
 
 class Lex:
     _CMP_SPEC = r'==|<=|>=|!=|[<>]'
+    _BRACKET_SPEC = r'\[\]'
     _REG = ('hue saturation brightness kelvin red green blue default duration '
              'time')
     _REG_LIST = _REG.split()
@@ -15,19 +16,21 @@ class Lex:
     _NON_ALNUM_SPEC = r'==|!=|<=|>=|&&|\|\||!|[\[\]\(\){}+\-*<>/#:\^]'
     _NUMBER_SPEC = r'[0-9]*\.?[0-9]+'
     _LITERAL_STRING_SPEC = r'"([^"]|(?<=\\)")*"'
-    _DEFAULT_SPEC = '\S+'
+    _DEFAULT_SPEC = r'\S+'
 
     _STRING = re.compile(_LITERAL_STRING_SPEC)
     _TOKEN_SPEC = '|'.join((
         TimePattern.REGEX_SPEC,
         _CMP_SPEC,
+        _BRACKET_SPEC,
         _LITERAL_STRING_SPEC,
         _NUMBER_SPEC,
         _NAME_SPEC,
         _NON_ALNUM_SPEC,
         _DEFAULT_SPEC))
 
-    _CMP = re.compile(_CMP_SPEC)
+    _COMPARE = re.compile(_CMP_SPEC)
+    _BRACKET = re.compile(_BRACKET_SPEC)
     _TOKEN = re.compile(_TOKEN_SPEC)
     _NAME = re.compile(_NAME_SPEC)
     _NUMBER = re.compile(_NUMBER_SPEC)
@@ -55,7 +58,7 @@ class Lex:
                         u_matched = u_matched[1:-1]
                         u_matched = u_matched.replace(r'\"', '"')
                 yield Token(token_type, u_matched, line_num, self._source)
-        yield Token(TokenTypes.EOF)
+        yield Token(TokenTypes.EOF, '', line_num, self._source)
 
     @staticmethod
     def is_int(text):
@@ -68,7 +71,8 @@ class Lex:
         if word in self._REG_LIST:
             return TokenTypes.REGISTER
         pairs = (
-            (self._CMP, TokenTypes.COMPARE),
+            (self._COMPARE, TokenTypes.CMP),
+            (self._BRACKET, TokenTypes.BRACKET_PAIR),
             (self._TIME_PATTERN, TokenTypes.TIME_PATTERN),
             (self._STRING, TokenTypes.LITERAL_STRING),
             (self._NUMBER, TokenTypes.NUMBER),

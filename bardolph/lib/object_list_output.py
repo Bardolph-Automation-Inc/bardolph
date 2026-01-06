@@ -20,5 +20,12 @@ class ObjectListOutput(i_lib.Output):
     def get_objects(self) -> list:
         return self._output_objects
 
+    def get_rounded(self, precision: int = 2) -> list:
+        return [round(obj, precision)
+                if isinstance(obj, float)
+                else obj
+                for obj in self._output_objects]
+
+
 def configure():
     bind(ObjectListOutput).to(i_lib.Output)

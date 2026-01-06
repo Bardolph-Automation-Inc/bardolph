@@ -14,6 +14,7 @@ class ParserTest(unittest.TestCase):
         runtime_module.configure()
         logging.getLogger().addHandler(logging.NullHandler())
         self.parser = Parser()
+        self.parser.set_testing_errors()
 
     def good_input(self, input_string):
         self.assertTrue(self.parser.parse(input_string))
@@ -33,20 +34,22 @@ class ParserTest(unittest.TestCase):
             self.assertIsNotNone(self.parser.parse(string), string)
 
     def test_bad_keyword(self):
-        input_string = 'on "Top" on "Bottom" on\n"Middle" Frank'
-        self.assertFalse(self.parser.parse(input_string))
-        self.assertIn('Unknown name', self.parser.get_errors())
+        script = """
+            on "Top" on "Bottom" on
+            "Middle" Frank'
+        """
+        self.assertFalse(self.parser.parse(script))
+        self.assertEqual('3', self.parser.get_errors())
 
     def test_bad_number(self):
-        input_string = "hue 5 saturation x"
-        self.assertFalse(self.parser.parse(input_string))
-        self.assertIn('Unknown name', self.parser.get_errors())
+        script = "hue 5 saturation x"
+        self.assertFalse(self.parser.parse(script))
+        self.assertEquals('1', self.parser.get_errors())
 
     def test_overwrite_constant(self):
-        input_string = 'define x 5 assign x 6'
-        self.assertFalse(self.parser.parse(input_string))
-        self.assertIn('Attempt to assign to constant',
-                      self.parser.get_errors())
+        script = 'define x 5 assign x 6'
+        self.assertFalse(self.parser.parse(script))
+        self.assertEquals('1', self.parser.get_errors())
 
 
 if __name__ == '__main__':

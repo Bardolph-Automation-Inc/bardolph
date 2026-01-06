@@ -24,3 +24,11 @@ Bardolph Project
     docs/controller
     docs/iteration
     docs/release_notes
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Articles
+
+    docs/art_webserver
+    docs/art_strips
+    docs/art_coding

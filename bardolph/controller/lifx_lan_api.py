@@ -22,7 +22,7 @@ class LifxLanApi(i_controller.LightApi):
                 for impl in self._lifxlan.get_lights()
             ]
         except lifxlan.errors.WorkflowException as ex:
-            logging.error("In get_lights(): {}".format(ex))
+            logging.warning("In get_lights(): {}".format(ex))
             raise i_controller.LightException(ex)
 
         expected = settings.get_value('default_num_lights', None)

@@ -1,33 +1,28 @@
 import operator
 from numbers import Number
 
+from bardolph.vm.array import ArrayBase, ArrayCursor, array_set, assure_rvalue
+from bardolph.vm.call_stack import CallStack
 from bardolph.vm.eval_stack import EvalStack
 from bardolph.vm.vm_codes import LoopVar, Operand, Operator, Register
 
 
 class VmMath:
-    _fn_table = {
-        Operator.ADD: operator.add,
-        Operator.DIV: operator.truediv,
-        Operator.EQ: operator.__eq__,
-        Operator.GT: operator.gt,
-        Operator.GTE: operator.ge,
-        Operator.LT: operator.lt,
-        Operator.LTE: operator.le,
-        Operator.NOTEQ: operator.ne,
-        Operator.MOD: operator.mod,
-        Operator.MUL: operator.mul,
-        Operator.POW: operator.pow,
-        Operator.SUB: operator.sub
-    }
-
-    def __init__(self, call_stack, reg):
+    def __init__(self, call_stack: CallStack, reg):
         self._call_stack = call_stack
         self._reg = reg
         self._eval_stack = EvalStack()
 
+    @property
+    def eval_stack(self) -> EvalStack:
+        return self._eval_stack
+
+    @property
+    def call_stack(self) -> CallStack:
+        return self._call_stack
+
     def reset(self) -> None:
-        self._eval_stack.clear()
+        self.eval_stack.clear()
 
     def push(self, srce) -> None:
         value = None
@@ -46,35 +41,72 @@ class VmMath:
         self._eval_stack.push(srce)
 
     def pop(self, dest) -> None:
-        value = self._eval_stack.pop()
+        self._top_to_dest(self.eval_stack.pop(), dest)
+
+    def peek(self, dest) -> None:
+        self._top_to_dest(self.eval_stack.top(), dest)
+
+    def _top_to_dest(self, value, dest) -> None:
+        if isinstance(value, ArrayCursor) and value.is_at_leaf():
+            value = value.get_value()
         if dest is None:
             return
         if isinstance(dest, Register):
             self._reg.set_by_enum(dest, value)
         elif isinstance(dest, (str, LoopVar)):
-            self._call_stack.put_variable(dest, value)
+            self.call_stack.put_variable(dest, value)
 
-    def op(self, operator) -> None:
-        if operator in (Operator.UADD, Operator.USUB, Operator.NOT):
-            self.unary_op(operator)
-        elif operator in (Operator.AND, Operator.OR):
-            self.logical_op(operator)
+    def op(self, operator: Operator) -> None:
+        match operator:
+            case Operator.UADD:
+                return
+            case Operator.USUB:
+                self.eval_stack.replace_top(-self.eval_stack.top())
+            case Operator.NOT:
+                self.eval_stack.replace_top(not self.eval_stack.top())
+            case Operator.AND | Operator.OR:
+                self.logical_op(operator)
+            case Operator.SET:
+                self._set()
+            case Operator.SIZE:
+                self.eval_stack.replace_top(len(self.eval_stack.top()))
+            case _:
+                self.bin_op(operator)
+
+    _bin_op_dict = {
+        Operator.ADD: operator.add,
+        Operator.DIV: operator.truediv,
+        Operator.EQ: operator.__eq__,
+        Operator.GT: operator.gt,
+        Operator.GTE: operator.ge,
+        Operator.LT: operator.lt,
+        Operator.LTE: operator.le,
+        Operator.NOTEQ: operator.ne,
+        Operator.MOD: operator.mod,
+        Operator.MUL: operator.mul,
+        Operator.POW: operator.pow,
+        Operator.SUB: operator.sub
+    }
+
+    def bin_op(self, operator: Operator) -> None:
+        op2 = assure_rvalue(self.eval_stack.pop())
+        op1 = assure_rvalue(self.eval_stack.pop())
+        self.eval_stack.push(self._bin_op_dict[operator](op1, op2))
+
+    def _set(self) -> None:
+        rvalue = self.eval_stack.pop()
+        lvalue = self.eval_stack.pop()
+        if isinstance(lvalue, ArrayBase):
+            array_set(lvalue, rvalue)
+        elif isinstance(lvalue, Register):
+            self._reg.set_by_enum(lvalue, rvalue)
+        elif isinstance(rvalue, ArrayCursor):
+            self.call_stack.put_variable(lvalue, rvalue.get_value())
         else:
-            self.bin_op(operator)
+            self.call_stack.put_variable(lvalue, rvalue)
 
-    def unary_op(self, operator) -> None:
-        if operator is Operator.USUB:
-            self._eval_stack.replace_top(-self._eval_stack.top)
-        elif operator is Operator.NOT:
-            self._eval_stack.replace_top(not self._eval_stack.top)
-
-    def bin_op(self, operator) -> None:
-        op2 = self._eval_stack.pop()
-        op1 = self._eval_stack.pop()
-        self._eval_stack.push(VmMath._fn_table[operator](op1, op2))
-
-    def logical_op(self, operator) -> None:
-        op2 = bool(self._eval_stack.pop())
-        op1 = bool(self._eval_stack.pop())
+    def logical_op(self, operator: Operator) -> None:
+        op2 = bool(self.eval_stack.pop())
+        op1 = bool(self.eval_stack.pop())
         result = op1 and op2 if operator == Operator.AND else op1 or op2
-        self._eval_stack.push(result)
+        self.eval_stack.push(result)
