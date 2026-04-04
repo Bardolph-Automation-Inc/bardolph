@@ -89,6 +89,17 @@ class MathRuntimeTest(unittest.TestCase):
         self.assertListEqual(
             self._output.get_objects(), [350, 5, 350, 350, 7])
 
+    def test_abs(self):
+        script = """
+            print [abs 1]
+            print [abs (1 - 2)]
+            print [abs 0]
+            print [abs 2 - 1]
+        """
+        self._runner.run_script(script)
+        self.assertListEqual(
+            self._output.get_objects(), [1, 1, 0, 1])
+
 
 if __name__ == '__main__':
     unittest.main()

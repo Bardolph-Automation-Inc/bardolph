@@ -104,6 +104,18 @@ class MultizoneLight(Light, i_controller.MultizoneLight):
         self._zone_colors = [[0, 0, 0, 0] for _ in range(0, num_zones)]
         self._width = num_zones
 
+    def set_color(self, color, duration=0):
+        self._monitor.log_call(Action.SET_COLOR, color, duration)
+        logging.info('Set color for "{}": {}, {}'.format(
+            self._name, self._color, duration))
+        for zone in range(0, self._width):
+            self._zone_colors[zone] = color.copy()
+
+    def get_color(self):
+        # Mimic the behavior of physical devices, which is to return the values
+        # from zone 0.
+        return self.get_zone_colors(0, 1)[0]
+
     def get_zone_colors(self, start_index=0, end_index=16):
         start_index = param_16(start_index)
         end_index = param_16(end_index)

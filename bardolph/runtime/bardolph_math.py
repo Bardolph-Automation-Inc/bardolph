@@ -22,6 +22,10 @@ def ceil(x):
     return math.ceil(x)
 
 @builtin
+def abs(x):
+    return x if x >= 0.0 else -x
+
+@builtin
 def sqrt(x):
     return math.sqrt(x) if x >= 0.0 else -1
 

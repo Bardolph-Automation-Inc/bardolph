@@ -84,9 +84,9 @@ class Parser:
             srce.close()
             return self.parse(input_string)
         except FileNotFoundError:
-            logging.error('Error: file {} not found.'.format(file_name))
+            self._error_output = 'file not found'
         except OSError:
-            logging.error('Error accessing file {}'.format(file_name))
+            self._error_output = 'Error accessing file'
         return False
 
     def set_testing_errors(self, are_enabled: bool = True) -> None:
@@ -259,6 +259,17 @@ class Parser:
         self._add_instruction(OpCode.MOVEQ, operand, Register.OPERAND)
         return True
 
+    def _single_zone(self) -> bool:
+        if not self._at_rvalue(False):
+            return self.token_error('Expected single zone number, got {}')
+        if not self._rvalue(self._code_gen):
+            return False
+        self._add_instruction(OpCode.POP, Register.FIRST_ZONE)
+        self._add_instruction(OpCode.MOVEQ, None, Register.LAST_ZONE)
+        if self._at_rvalue(False):
+            return self.trigger_error('Only one zone may be specfied here')
+        return True
+
     def _zone_range(self) -> bool:
         if self._op_code is not OpCode.COLOR:
             return self.trigger_error('Zones not supported for {}'.format(
@@ -266,12 +277,12 @@ class Parser:
         self.next_token()
         return self._set_zones()
 
-    def _set_zones(self):
+    def _set_zones(self) -> bool:
         if not self._at_rvalue(False):
-            return self.token_error('Expected zone number, got "{}"')
+            return self.token_error('Expected zone number, got {}')
         return self._range(Register.FIRST_ZONE, Register.LAST_ZONE)
 
-    def _range(self, first, last):
+    def _range(self, first, last) -> bool:
         if not self._rvalue(self._code_gen):
             return False
         self._add_instruction(OpCode.POP, first)
@@ -295,7 +306,7 @@ class Parser:
         self.next_token()
         if self._current_token.token_type not in (
                 TokenTypes.RAW, TokenTypes.RGB, TokenTypes.LOGICAL):
-            return self.token_error('Invalid parameter "{}" for units.')
+            return self.token_error('Invalid parameter "{}" for units')
         mode = UnitMode[self._current_token.token_type.name]
         self._add_instruction(OpCode.MOVEQ, mode, Register.UNIT_MODE)
         return self.next_token()
@@ -306,17 +317,28 @@ class Parser:
 
     def _get_color(self) -> bool:
         self.next_token()
-        if not self._at_rvalue(False):
-            return self.token_error('Needed light name, got {}')
+        if not self._at_rvalue():
+            return self.token_error('Needed light for get, got {}')
         if not self._rvalue_str(self._code_gen):
             return False
         self._add_instruction(OpCode.POP, Register.NAME)
+
+        if self._current_token.is_a(TokenTypes.ZONE):
+            self.next_token()
+            if not self._single_zone():
+                return False
+            operand = Operand.MZ_LIGHT
+        else:
+            operand = Operand.LIGHT
+
+        self._add_instruction(OpCode.MOVEQ, operand, Register.OPERAND)
         self._add_instruction(OpCode.GET_COLOR)
+
         return True
 
     def _matrix_get(self) -> bool:
         if not self._context.in_matrix():
-            return self.token_error("Can't get {} in this context.")
+            return self.token_error("Can't get {} in this context")
         mat_parser = MatrixParser(self)
         if self.current_token.is_a(TokenTypes.ALL):
             return mat_parser.get_all()
@@ -397,7 +419,7 @@ class Parser:
 
     def _at_rvalue(self, include_reg=True) -> bool:
         token = self.current_token
-        if str(token) in '{[':
+        if str(token) in '{[(+-':
             return True
         if token.token_type in (
                 TokenTypes.LITERAL_STRING,

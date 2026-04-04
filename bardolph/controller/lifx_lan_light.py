@@ -74,7 +74,7 @@ class MultizoneLight(Light, i_controller.MultizoneLight):
         if first_zone is not None:
             first_zone = param_16(first_zone)
         if last_zone is not None:
-            last_zone = param_16(first_zone)
+            last_zone = param_16(last_zone)
         return self._impl.get_color_zones(first_zone, last_zone)
 
     @tries(_MAX_TRIES, WorkflowException)

@@ -22,6 +22,7 @@ module_names = (
     'expr_test',
     'fake_light_builder_test',
     'function_test',
+    'get_test',
     'injection_test',
     'io_parser_test',
     'job_control_test',

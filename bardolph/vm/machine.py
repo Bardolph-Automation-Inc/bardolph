@@ -238,7 +238,7 @@ class Machine:
 
     def _color_mz_light(self) -> None:
         light = self._get_named_light()
-        if light is not None and self._zone_check(light):
+        if light is not None and self._verify_multizone(light):
             start_index = self._reg.first_zone
             end_index = self._reg.last_zone
             if end_index is None:
@@ -333,9 +333,28 @@ class Machine:
         if light is None:
             Machine._report_missing(name)
         else:
-            if isinstance(light, (MultizoneLight, MatrixLight)):
-                fmt = 'unable to retrieve color from multi-color light "{}".'
+            if isinstance(light, MatrixLight):
+                fmt = 'unable to retrieve color from matrix light "{}".'
                 logging.warning(fmt.format(name))
+            else:
+                color = light.get_color()
+                self._color_to_reg(self._assure_units(color))
+
+    @inject(LightSet)
+    def _get_color(self, light_set) -> None:
+        name = self._reg.name
+        light = light_set.get_light(name)
+        if light is None:
+            Machine._report_missing(name)
+        elif isinstance(light, MatrixLight):
+            fmt = 'unable to retrieve color from matrix light "{}".'
+            logging.warning(fmt.format(name))
+        else:
+            if self._reg.operand is Operand.MZ_LIGHT:
+                if self._verify_multizone(light):
+                    zone = self._reg.first_zone
+                    color = light.get_zone_colors(zone, zone + 1)[0]
+                    self._color_to_reg(self._assure_units(color))
             else:
                 color = light.get_color()
                 self._color_to_reg(self._assure_units(color))
@@ -623,7 +642,7 @@ class Machine:
         else:
             self._reg.time.union(inst.param1)
 
-    def _zone_check(self, light) -> bool:
+    def _verify_multizone(self, light) -> bool:
         if not isinstance(light, MultizoneLight):
             logging.warning(
                 'Light "{}" is not multi-zone.'.format(light.get_name()))

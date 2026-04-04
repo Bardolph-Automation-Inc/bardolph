@@ -20,6 +20,8 @@ Bardolph Project
     docs/language
     docs/web_install
     docs/web_server
+    docs/platform
+    docs/product
     docs/python_interface
     docs/controller
     docs/iteration
@@ -32,3 +34,4 @@ Bardolph Project
     docs/art_webserver
     docs/art_strips
     docs/art_coding
+    docs/art_jupyter

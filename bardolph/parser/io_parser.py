@@ -23,7 +23,8 @@ class IoParser(SubParser):
         self.next_token()
         format_str = self.current_str
         if len(format_str) == 0:
-            return self.token_error('Expected format specifier, got {}')
+            return self.token_error(
+                'Expected format specifier, got {}. Missing closing quote?')
         self.next_token()
 
         num_unnamed = sum(

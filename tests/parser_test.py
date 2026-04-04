@@ -44,12 +44,12 @@ class ParserTest(unittest.TestCase):
     def test_bad_number(self):
         script = "hue 5 saturation x"
         self.assertFalse(self.parser.parse(script))
-        self.assertEquals('1', self.parser.get_errors())
+        self.assertEqual('1', self.parser.get_errors())
 
     def test_overwrite_constant(self):
         script = 'define x 5 assign x 6'
         self.assertFalse(self.parser.parse(script))
-        self.assertEquals('1', self.parser.get_errors())
+        self.assertEqual('1', self.parser.get_errors())
 
 
 if __name__ == '__main__':

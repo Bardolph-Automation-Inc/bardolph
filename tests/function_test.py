@@ -14,9 +14,10 @@ class FunctionTest(unittest.TestCase):
 
     def test_minimal(self):
         script = """
-            define f with a begin
-                return a
-            end
+            define f with a
+                begin
+                    return a
+                end
 
             define g with b return b
 
@@ -25,6 +26,38 @@ class FunctionTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self.assertListEqual(self._output.get_objects(), [0, 1])
+
+    def test_unary_minus(self):
+        script = """
+            define f with x
+                begin
+                    if x < 0
+                        return -x
+                    else
+                        return x
+                end
+
+            print [f -1]
+            print [f 2]
+        """
+        self._runner.run_script(script)
+        self.assertListEqual(self._output.get_objects(), [1, 2])
+
+    def test_paren(self):
+        script = """
+            define f with x
+                begin
+                    if x < 0
+                        return (-x)
+                    else
+                        return (x)
+                end
+
+            print [f -1]
+            print [f 2]
+        """
+        self._runner.run_script(script)
+        self.assertListEqual(self._output.get_objects(), [1, 2])
 
     def test_recursion(self):
         script = """

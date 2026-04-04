@@ -4,8 +4,8 @@ import threading
 
 
 class Job:
-    def execute(self): pass
-    def request_stop(self): pass
+    def execute(self) -> None: pass
+    def request_stop(self) -> None: pass
 
 
 class Agent:
@@ -13,18 +13,18 @@ class Agent:
     The name serves as the unique identifier. When the job finishes, the
     callback is invoked with self (this Agent) as the only parameter.
     """
-    def __init__(self, job, callback, name=None):
+    def __init__(self, job: Job, callback, name: str = None):
         self._job = job
         self._callback = callback
         self._thread = None
         self._name = name or 'job {}'.format(id(self))
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def job(self):
+    def job(self) -> Job:
         return self._job
 
     def is_running(self):
@@ -35,10 +35,10 @@ class Agent:
         self._thread.start()
         return self
 
-    def request_stop(self):
+    def request_stop(self) -> None:
         self._job.request_stop()
 
-    def _execute_and_call(self):
+    def _execute_and_call(self) -> None:
         try:
             self._job.execute()
         finally:
@@ -70,13 +70,21 @@ class JobControl:
     def clear_queue(self) -> None:
         self._queue.clear()
 
-    def add_job(self, job, name=None):
+    def add_job(self, job: Job, name: str = None) -> Agent | None:
         return self._enqueue_job(job, self._queue.append, name)
 
-    def insert_job(self, job, name=None):
+    def insert_job(self, job: Job, name: str = None) -> Agent | None:
         return self._enqueue_job(job, self._queue.appendleft, name)
 
-    def spawn_job(self, job, name):
+    def run_job(self, job: Job, name: str = None) -> bool:
+        self.stop_current()
+        self.clear_queue()
+        return self.add_job(job, name)
+
+    def run_single_job(self, job: Job) -> None:
+        job.execute()
+
+    def spawn_job(self, job: Job, name):
         agent = None
         if self._acquire_lock():
             try:
@@ -118,7 +126,7 @@ class JobControl:
                 self._release_lock()
         return result
 
-    def stop_job(self, name) -> bool:
+    def stop_job(self, name: str) -> bool:
         result = False
         if self._acquire_lock():
             try:
@@ -156,7 +164,7 @@ class JobControl:
             finally:
                 self._release_lock()
 
-    def _enqueue_job(self, job, append_fn, name):
+    def _enqueue_job(self, job, append_fn, name) -> Agent | None:
         agent = None
         if self._acquire_lock():
             try:
@@ -168,7 +176,7 @@ class JobControl:
                 self._lock.release()
         return agent
 
-    def _on_execution_done(self, _):
+    def _on_execution_done(self, _) -> None:
         if self._acquire_lock():
             try:
                 self._active_agent = None

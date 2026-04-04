@@ -62,7 +62,7 @@ class WebApp:
         if script_control.run_background:
             self._jobs.spawn_job(job, script_control.path)
         else:
-            self._jobs.add_job(job, script_control.path)
+            self._jobs.run_job(job, script_control.path)
         return True
 
     def queue_file(self, file_name, run_background=False):

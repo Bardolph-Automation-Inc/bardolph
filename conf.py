@@ -19,7 +19,7 @@ author = 'Al Fontes'
 
 from sphinx.highlighting import lexers
 lexers ['lightbulb'] = bardolph_lexer.BardolphLexer()
-extensions = []
+extensions = ["sphinx_design"]
 
 templates_path = ['_templates']
 
@@ -27,7 +27,7 @@ exclude_patterns = []
 
 root_doc = 'contents'
 html_favicon = 'www/logo_ico.png'
-html_static_path = ['web/static', '_static']
+html_static_path = ['web/static']
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
     'analytics_id': 'G-7VQPMY58X8'
