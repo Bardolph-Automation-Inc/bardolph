@@ -22,6 +22,9 @@ The language may be missing some constructs you might expect, such as arrays,
 string manipulation, and data structures, but it's still under development and
 you will probably find it very useful.
 
+This entire repository is shared under the Apache 2.0 license, as specified in the
+LICENSE file contained within said repository.
+
 ## Quick Examples
 Here is a script, named `all_on.ls`, that will turn on all your lights:
 ```
