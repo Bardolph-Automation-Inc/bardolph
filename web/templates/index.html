@@ -2,6 +2,7 @@
 
 <head>
 <title>Bardolph</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link
   rel="stylesheet" type="text/css"
   href="/static/styles.css" />
@@ -12,34 +13,37 @@
 {% endif %}
 
 <script language='javascript'>var path_root = '{{ path_root }}';</script>
-<script src="/static/lights.js"></script>
+<script src='/static/{{ js_file }}'></script>
 
 </head>
 
-<body class="{{ agent_class }} index" onLoad="addEvents()">
+<body class="{{ agent_class }}" onLoad="addEvents()">
 
 <div class="main">
-{% if agent_class != "tv" %}
-  <div class="title">{{ title }}</div>
-{% endif %}
+    <div class="title shadow">
+        <img src="/static/logo.png" class="logoTitle">
+    </div>
 
-{% for script in scripts %}
-  {% if loop.index is not even %}<div class="commandRow">{% endif %}
-  <div
-    {% if script.running %}
-    class = "lightCommand running"
-    {% else %}
-    class = "lightCommand"
+    {% for script in scripts %}
+    {% if loop.index is not even %}
+    <div class="commandRow {{ agent_class }}">
     {% endif %}
-    style =
-      "color: {{ script.color }}; background-color: {{ script.background }}"
-    id="{{ script.path }}">
-    {% if script.running %}<img src="/static/litBulb-32.png"/>{% endif %}
-    {{ script.title }}
-  </div>
-  {% if loop.index is even or loop.last %}</div>{% endif %}
-{% endfor %}
-
+        <div
+            {% if script.path in running %}
+            class = "lightCommand running {{ agent_class }}"
+            {% else %}
+            class = "lightCommand {{ agent_class}}"
+            {% endif %}
+            style = "color: {{ script.button_spec.color }}; background: {{ script.button_spec.background }}"
+            id= "{{ script.path }}">
+            {% if script.path in running %}<img src="/static/litBulb-32.png"/>{% endif %}
+            {{ script.button_spec.title }}
+        </div>
+    {% if loop.index is even or loop.last %}
+    </div>
+    {% endif %}
+    {% endfor %}
 </div>
+
 </body>
 </html>

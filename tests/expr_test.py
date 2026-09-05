@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import logging
-from logging import handlers
 import unittest
-
-from bardolph.vm.vm_codes import Register
+from logging import handlers
 
 from tests import test_module
 from tests.script_runner import ScriptRunner

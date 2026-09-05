@@ -1,43 +1,67 @@
 function addEvents() {
-  targets = document.getElementsByClassName('lightCommand')
-  for (el in targets) {
-    if (targets[el] instanceof HTMLDivElement) {
-      targets[el].addEventListener('click', onClick);
+    const targets = document.querySelectorAll('.lightCommand');
+
+    for (const el of targets) {
+        el.addEventListener('click', onClick);
     }
-  }
-  document.addEventListener('touchstart', touch2Mouse, true);
-  document.addEventListener('touchmove', touch2Mouse, true);
-  document.addEventListener('touchend', touch2Mouse, true);
+
+    const touchEvents = ['touchstart', 'touchmove', 'touchend'];
+    for (const type of touchEvents) {
+        document.addEventListener(type, touch2Mouse, true);
+    }
 }
 
 function onClick(event) {
-  // Need to use indexOf here because includes() is missing from TV's
-  // implementation of Javascript.
-  //
-  if (event.target.className.indexOf('running') >= 0) {
-    window.location = path_root + 'stop/' + event.target.id;
-  } else {
-    window.location = path_root + event.target.id;
-  }
-  return event.preventDefault();
+    const target = event.currentTarget;
+    const isRunning =
+        target.classList
+            ? target.classList.contains('running')
+            : target.className.indexOf('running') >= 0;
+
+    if (isRunning) {
+        window.location = path_root + 'stop/' + target.id;
+    } else {
+        window.location = path_root + target.id;
+    }
+
+    event.preventDefault();
 }
 
-var touchToMouse = [];
-touchToMouse['touchstart'] = 'mousedown';
-touchToMouse['touchend'] = 'mouseup';
-touchToMouse['touchmove'] = 'mousemove';
+// Map touch event names to mouse event names cleanly
+const touchToMouse = {
+    'touchstart': 'mousedown',
+    'touchend': 'mouseup',
+    'touchmove': 'mousemove'
+};
 
 function touch2Mouse(e) {
-  if (!e.type in touchToMouse) {
-    return;
-  }
+    const mouseEv = touchToMouse[e.type];
+    if (!mouseEv) return;
 
-  var mouseEv = touchToMouse[e.type];
-  var theTouch = e.changedTouches[0];
-  var mouseEvent = document.createEvent('MouseEvent');
-  mouseEvent.initMouseEvent(
-      mouseEv, true, true, window, 1,
-      theTouch.screenX, theTouch.screenY, theTouch.clientX,
-      theTouch.clientY, false, false, false, false, 0, null);
-  theTouch.target.dispatchEvent(mouseEvent);
+    const theTouch = e.changedTouches[0];
+
+    // Use CustomEvent / MouseEvent constructor if supported, fallback to
+    // initMouseEvent
+    let mouseEvent;
+    if (typeof MouseEvent === 'function') {
+        mouseEvent = new MouseEvent(mouseEv, {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            detail: 1,
+            screenX: theTouch.screenX,
+            screenY: theTouch.screenY,
+            clientX: theTouch.clientX,
+            clientY: theTouch.clientY
+        });
+    } else {
+        mouseEvent = document.createEvent('MouseEvent');
+        mouseEvent.initMouseEvent(
+            mouseEv, true, true, window, 1,
+            theTouch.screenX, theTouch.screenY, theTouch.clientX,
+            theTouch.clientY, false, false, false, false, 0, null
+        );
+    }
+
+    theTouch.target.dispatchEvent(mouseEvent);
 }

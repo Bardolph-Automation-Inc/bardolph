@@ -2,6 +2,8 @@
 
 import unittest
 
+from bardolph.lib.i_lib import Output
+from bardolph.lib.injection import inject
 from tests.script_runner import ScriptRunner
 from tests import test_module
 
@@ -9,23 +11,26 @@ from tests import test_module
 class ArrayTest(unittest.TestCase):
     def setUp(self):
         test_module.configure()
-        self._output = test_module.replace_print()
+        test_module.replace_print()
         self._runner = ScriptRunner(self)
 
-    def _assert_output(self, expected):
+    @inject(Output)
+    def _assert_output(self, expected, output):
         try:
-            self.assertEqual(self._output.get_object(), expected)
+            self.assertEqual(output.get_object(), expected)
         except IndexError:
             self.fail("No output was generated.")
 
-    def _run_and_check(self, script, expected):
+    @inject(Output)
+    def _run_and_check(self, script, expected, output):
         self._runner.run_script(script)
         if isinstance(expected, list):
-            self.assertListEqual(self._output.get_objects(), expected)
+            self.assertListEqual(output.get_objects(), expected)
         else:
             self._assert_output(expected)
 
-    def test_min_declaration(self):
+    @inject(Output)
+    def test_min_declaration(self, output):
         script = """
             array a[10]
             array b[10 20]
@@ -33,7 +38,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._runner.run_script(script)
 
-    def test_min_assign(self):
+    @inject(Output)
+    def test_min_assign(self, output):
         script = """
             array a[10]
             assign a[5] 100
@@ -41,7 +47,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 100)
 
-    def test_string_assign(self):
+    @inject(Output)
+    def test_string_assign(self, output):
         script = """
             array a[10]
             assign a[5] "hello"
@@ -49,7 +56,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 'hello')
 
-    def test_min_assign_2d(self):
+    @inject(Output)
+    def test_min_assign_2d(self, output):
         script = """
             array x[5 10]
             assign x[3 2] 4
@@ -57,7 +65,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 4)
 
-    def test_assign_partial(self):
+    @inject(Output)
+    def test_assign_partial(self, output):
         script = """
             array x[5 10]
             assign x[3 2] 30
@@ -69,7 +78,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 30)
 
-    def test_assign_empty(self):
+    @inject(Output)
+    def test_assign_empty(self, output):
         script = """
             array a[10]
             assign a[5] 200
@@ -79,7 +89,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 200)
 
-    def test_overwrite_with_empty(self):
+    @inject(Output)
+    def test_overwrite_with_empty(self, output):
         script = """
             array a[10]
             assign a[5] 200
@@ -90,7 +101,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 200)
 
-    def test_lvalue_error(self):
+    @inject(Output)
+    def test_lvalue_error(self, output):
         script = """
             array a[10]
             array b[20]
@@ -98,7 +110,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._runner.parse_erroneous_script(script, 4)
 
-    def test_rvalue_error(self):
+    @inject(Output)
+    def test_rvalue_error(self, output):
         script = """
             array a[10]
             array b[20]
@@ -106,7 +119,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._runner.parse_erroneous_script(script, 5)
 
-    def test_as_param(self):
+    @inject(Output)
+    def test_as_param(self, output):
         script = """
             define f with arr[] index begin
                 return arr[index]
@@ -119,7 +133,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 250)
 
-    def test_nested(self):
+    @inject(Output)
+    def test_nested(self, output):
         script = """
             array outer[10]
             array inner[5]
@@ -132,7 +147,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 5)
 
-    def test_partial_deref(self):
+    @inject(Output)
+    def test_partial_deref(self, output):
         script = """
             array a[10 20]
             assign a[5 10] 300
@@ -142,7 +158,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 300)
 
-    def test_partial_param(self):
+    @inject(Output)
+    def test_partial_param(self, output):
         script = """
             define f with a[] i
                 begin
@@ -156,7 +173,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 200)
 
-    def test_no_deref(self):
+    @inject(Output)
+    def test_no_deref(self, output):
         script = """
             array a[10]
             assign a[5] 400
@@ -167,7 +185,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 400)
 
-    def test_as_return(self):
+    @inject(Output)
+    def test_as_return(self, output):
         script = """
             array a[20]
             assign a[10] 415
@@ -177,7 +196,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 415)
 
-    def test_as_unindexed_return(self):
+    @inject(Output)
+    def test_as_unindexed_return(self, output):
         script = """
             array a[20]
             assign a[10] 415
@@ -192,7 +212,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 415)
 
-    def test_return_partial(self):
+    @inject(Output)
+    def test_return_partial(self, output):
         script = """
             define return_partial[] with arr[] n
                 begin
@@ -208,7 +229,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 2000)
 
-    def test_as_param(self):
+    @inject(Output)
+    def test_as_param2(self, output): ###
         script = """
             define ret_elem with arr[]
                 return arr[10]
@@ -219,7 +241,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 500)
 
-    def test_return_as_param(self):
+    @inject(Output)
+    def test_return_as_param(self, output):
         script = """
             define return_arr[] with a b
                 begin
@@ -239,7 +262,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, [100, 200])
 
-    def test_poke_param(self):
+    @inject(Output)
+    def test_poke_param(self, output):
         script = """
             define set_arr with arr[]
                 assign arr[10] 50
@@ -252,7 +276,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, 50)
 
-    def test_as_param_and_return(self):
+    @inject(Output)
+    def test_as_param_and_return(self, output):
         script = """
             array a[20]
             assign a[10] 415
@@ -266,7 +291,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, [415, 510])
 
-    def test_return_partial_deref(self):
+    @inject(Output)
+    def test_return_partial_deref(self, output):
         script = """
             array a[10 20]
             assign a[0 1] 415
@@ -280,7 +306,8 @@ class ArrayTest(unittest.TestCase):
         """
         self._run_and_check(script, [415, 510])
 
-    def test_internally_created(self):
+    @inject(Output)
+    def test_internally_created(self, output):
         script = """
             define create[]
             begin

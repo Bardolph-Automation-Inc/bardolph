@@ -6,6 +6,7 @@ import re
 from bardolph.controller import (arg_helper, config_values, i_controller,
                                  light_module)
 from bardolph.controller.i_controller import LightSet
+from bardolph.controller.units import raw_to_logical
 from bardolph.lib import injection, settings
 from bardolph.parser.parse import Parser
 from bardolph.vm.vm_codes import Register
@@ -15,6 +16,7 @@ class Snapshot:
     def __init__(self):
         self._text = None
         self._brief = False
+        self._logical_units = False
 
     def start_snapshot(self):
         self._text = ''
@@ -37,6 +39,8 @@ class Snapshot:
     def end_matrix(self, light): pass
 
     def color(self, raw_color):
+        if self._logical_units:
+            raw_color = raw_to_logical(raw_color)
         self.setting(Register.HUE, raw_color[0])
         self.setting(Register.SATURATION, raw_color[1])
         self.setting(Register.BRIGHTNESS, raw_color[2])
@@ -52,8 +56,8 @@ class Snapshot:
     def matrix(self, light):
         light_matrix = light.get_matrix()
         mat = light_matrix.matrix
-        for row in range(0, light_matrix.height):
-            for column in range(0, light_matrix.width):
+        for row in range(light_matrix.height):
+            for column in range(light_matrix.width):
                 self.matrix_cell(row, column, mat[row][column])
 
     @injection.inject(LightSet)
@@ -121,7 +125,7 @@ class ScriptSnapshot(Snapshot):
 
 
 class InstructionSnapshot(Snapshot):
-    def generate(self, name):
+    def generate(self, name: str):
         self.start_snapshot()
         script_snapshot = ScriptSnapshot()
         script_snapshot.generate(name)
@@ -146,7 +150,8 @@ class NameSnapshot(Snapshot):
 class TextSnapshot(Snapshot):
     def __init__(self):
         super().__init__()
-        self._field_width = 15
+        self._field_width = 12
+        self._logical_units = True
 
     def start_snapshot(self):
         super().start_snapshot()
@@ -214,7 +219,7 @@ class TextSnapshot(Snapshot):
 
     def start_matrix(self, light):
         self.start_light(light)
-        for spacer in range(0, 4):
+        for spacer in range(4):
             self._add_field(' ')
         self.power(light)
         self._nl()
@@ -222,8 +227,8 @@ class TextSnapshot(Snapshot):
     def matrix(self, light):
         light_matrix = light.get_matrix()
         mat = light_matrix.matrix
-        for row in range(0, light_matrix.height):
-            for col in range(0, light_matrix.width):
+        for row in range(light_matrix.height):
+            for col in range(light_matrix.width):
                 self._add_field('   {:1d} {:1d}'.format(row, col))
                 self.color(mat[row][col])
                 self._nl()

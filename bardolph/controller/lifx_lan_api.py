@@ -26,7 +26,7 @@ class LifxLanApi(i_controller.LightApi):
             raise i_controller.LightException(ex)
 
         expected = settings.get_value('default_num_lights', None)
-        if expected is not None:
+        if expected:
             actual = len(lights)
             if actual < expected:
                 logging.info(

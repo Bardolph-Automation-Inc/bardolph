@@ -39,8 +39,16 @@ class Light(i_controller.Light):
     def get_group(self) -> str:
         return self._group
 
+    def set_group(self, group: str) -> None:
+        # Not supported for physical lights. Test purposes only.
+        self._group = group
+
     def get_location(self) -> str:
         return self._location
+
+    def set_location(self, location: str) -> None:
+        # Not supported for physical lights. Test purposes only.
+        self._location = location
 
     def set_height(self, height: int) -> None:
         self._height = height
@@ -85,6 +93,8 @@ class Light(i_controller.Light):
     def set_power(self, power, duration):
         power = param_bool(power)
         duration = param_32(duration)
+        logging.info(
+            'Set power for "{}": {}, {}'.format( self._name, power, duration))
         self._monitor.log_call(Action.SET_POWER, power, duration)
 
     def quietly(self):
@@ -101,14 +111,14 @@ class Light(i_controller.Light):
 class MultizoneLight(Light, i_controller.MultizoneLight):
     def __init__(self, name, group, location, num_zones):
         super().__init__(name, group, location)
-        self._zone_colors = [[0, 0, 0, 0] for _ in range(0, num_zones)]
+        self._zone_colors = [[0, 0, 0, 0] for _ in range(num_zones)]
         self._width = num_zones
 
     def set_color(self, color, duration=0):
         self._monitor.log_call(Action.SET_COLOR, color, duration)
         logging.info('Set color for "{}": {}, {}'.format(
             self._name, self._color, duration))
-        for zone in range(0, self._width):
+        for zone in range(self._width):
             self._zone_colors[zone] = color.copy()
 
     def get_color(self):

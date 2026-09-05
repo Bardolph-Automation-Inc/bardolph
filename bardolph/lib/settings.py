@@ -1,11 +1,12 @@
 import configparser
 import os
+from typing import Any, ClassVar
 
 from bardolph.lib import i_lib, injection
 
 
-class Settings:
-    _the_config = {}
+class Settings(i_lib.Settings):
+    _the_config: ClassVar[dict[str, Any]] = {}
 
     def __init__(self):
         self._config = Settings._the_config
@@ -13,7 +14,7 @@ class Settings:
     def __contains__(self, name):
         return name in self._config
 
-    def get_value(self, name, default=None):
+    def get_value(self, name: str, default: Any = None) -> Any:
         return self._config.get(name, default)
 
 

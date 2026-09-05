@@ -19,7 +19,7 @@ class _Chroma(Enum):
     WHITE = auto()
 
 
-class _LightBuilder:
+class LightBuilder:
     def __init__(self):
         self._name = self._group = self._location = ''
         self._type = _Type.STD
@@ -74,7 +74,7 @@ class _LightBuilder:
     @staticmethod
     def new_from_spec(spec):
         it = iter(spec)
-        builder = _LightBuilder()
+        builder = LightBuilder()
 
         numbers = []
         strings = []
@@ -113,7 +113,7 @@ class _LightBuilder:
 class FakeLightApi(i_controller.LightApi):
     def __init__(self, specs):
         self._monitor = ActivityMonitor()
-        self._lights = [_LightBuilder().new_from_spec(spec) for spec in specs]
+        self._lights = [LightBuilder().new_from_spec(spec) for spec in specs]
 
     def get_lights(self):
         return self._lights
@@ -134,6 +134,9 @@ class FakeLightApi(i_controller.LightApi):
         for light in self.get_lights():
             light.quietly().set_power(power_level, duration)
 
+    def add_light(self, light):
+        self._lights.append(light)
+
     def get_call_list(self):
         return self._monitor.get_call_list()
 
@@ -146,62 +149,59 @@ class _Reinit:
         bind_instance(FakeLightApi(self._specs)).to(i_controller.LightApi)
 
 
-def using_large_set():
-    specs = (
-        ('Top', 'Pole', 'Home'),
-        ('Middle', 'Pole', 'Home'),
-        ('Bottom', 'Pole', 'Home'),
-
-        ('Strip', 'Furniture', 'Home', _Type.MULTI_ZONE, 16),
-        ('Balcony', 'Windows', 'Home', _Type.MULTI_ZONE, 60),
-        ('Candle', 'Furniture', 'Home', _Type.MATRIX, 6, 5),
-        ('White Candle', 'Furniture', 'Home',
-            _Type.MATRIX, _Chroma.WHITE, 6, 5),
-        ('Tube', 'Furniture', 'Home', _Type.MATRIX, 11, 5),
-
-        ('Lamp', 'Furniture', 'Living Room', _Chroma.WHITE),
-        ('table-0', 'Table', 'Living Room'),
-        ('table-1', 'Table', 'Living Room'),
-        ('table-2', 'Table', 'Living Room'),
-        ('table-3', 'Table', 'Living Room'),
-        ('table-4', 'Table', 'Living Room'),
-        ('table-5', 'Table', 'Living Room'),
-        ('table-6', 'Table', 'Living Room'),
-        ('table-7', 'Table', 'Living Room')
-    )
+def using(specs: tuple[tuple[str]]):
     return _Reinit(specs)
 
+"""
+name, group, location, type of light, (optional) white or color, number of zones
+"""
 
-def using_medium_set():
-    specs = (
-        ('Top', 'Pole', 'Home'),
-        ('Middle', 'Pole', 'Home'),
-        ('Bottom', 'Pole', 'Home'),
+large_set = (
+    ('Top', 'Pole', 'Home'),
+    ('Middle', 'Pole', 'Home'),
+    ('Bottom', 'Pole', 'Home'),
 
-        ('Balcony', 'Windows', 'Outside', _Type.MULTI_ZONE, 60),
-        ('Candle', 'Furniture', 'Outside', _Type.MATRIX, 6, 5),
-        ('White Candle', 'Furniture', 'Outside',
-            _Type.MATRIX, _Chroma.WHITE, 6, 5),
+    ('Strip', 'Furniture', 'Home', _Type.MULTI_ZONE, 16),
+    ('Balcony', 'Windows', 'Home', _Type.MULTI_ZONE, 60),
+    ('Candle', 'Furniture', 'Home', _Type.MATRIX, 6, 5),
+    ('White Candle', 'Furniture', 'Home',
+     _Type.MATRIX, _Chroma.WHITE, 6, 5),
+    ('Tube', 'Furniture', 'Home', _Type.MATRIX, 11, 5),
 
-        ('Lamp', 'Windows', 'Living Room', _Chroma.WHITE),
-        ('table-0', 'Table', 'Living Room'),
-        ('table-1', 'Table', 'Living Room'),
-    )
-    return _Reinit(specs)
+    ('Lamp', 'Furniture', 'Living Room', _Chroma.WHITE),
+    ('table-0', 'Table', 'Living Room'),
+    ('table-1', 'Table', 'Living Room'),
+    ('table-2', 'Table', 'Living Room'),
+    ('table-3', 'Table', 'Living Room'),
+    ('table-4', 'Table', 'Living Room'),
+    ('table-5', 'Table', 'Living Room'),
+    ('table-6', 'Table', 'Living Room'),
+    ('table-7', 'Table', 'Living Room')
+)
 
 
-def using_small_set():
-    specs = (
-        ('light_1', 'a', 'b'),
-        ('light_2', 'group', 'loc'),
-        ('light_0', 'group', 'loc')
-    )
-    return _Reinit(specs)
+medium_set = (
+    ('Top', 'Pole', 'Home'),
+    ('Middle', 'Pole', 'Home'),
+    ('Bottom', 'Pole', 'Home'),
+
+    ('Balcony', 'Windows', 'Outside', _Type.MULTI_ZONE, 60),
+    ('Candle', 'Furniture', 'Outside', _Type.MATRIX, 6, 5),
+    ('White Candle', 'Furniture', 'Outside',
+     _Type.MATRIX, _Chroma.WHITE, 6, 5),
+
+    ('Lamp', 'Windows', 'Living Room', _Chroma.WHITE),
+    ('table-0', 'Table', 'Living Room'),
+    ('table-1', 'Table', 'Living Room'),
+)
+
+
+small_set = (
+    ('light_1', 'a', 'b'),
+    ('light_2', 'group', 'loc'),
+    ('light_0', 'group', 'loc')
+)
 
 
 def configure():
-    using_large_set().configure()
-
-
-def using(specs):
-    return _Reinit(specs)
+    using(large_set).configure()

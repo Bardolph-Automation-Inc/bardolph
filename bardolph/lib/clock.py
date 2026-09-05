@@ -22,50 +22,50 @@ class Clock(i_lib.Clock):
         self._cue_time = 0.0
         self._keep_going = True
 
-    def start(self):
-        self.reset()
-        threading.Thread(target=self.run, args=(), daemon=True).start()
+    def start(self) -> None:
+        self._reset()
+        threading.Thread(target=self._run, args=(), daemon=True).start()
+
+    def stop(self) -> None:
+        self._keep_going = False
+
+    def wait_until(self, time_pattern) -> None:
+        hour, minute = Clock._hour_minute()
+        while not time_pattern.match(hour, minute):
+            self._wait()
+            hour, minute = Clock._hour_minute()
+        self._reset()
+
+    def pause_for(self, delay) -> None:
+        self._cue_time += delay
+        while self._et() < self._cue_time:
+            if not self._wait():
+                break
 
     @injection.inject(i_lib.Settings)
-    def run(self, settings):
+    def _run(self, settings):
         self._keep_going = True
         sleep_time = float(settings.get_value('sleep_time'))
         while self._keep_going:
             if sleep_time > 0.0:
                 time.sleep(sleep_time)
-            self.fire()
+            self._fire()
 
-    def stop(self):
-        self._keep_going = False
-
-    def reset(self):
+    def _reset(self):
         self._cue_time = 0.0
         self._start_time = now()
 
-    def et(self):
+    def _et(self):
         return time.time() - self._start_time
 
-    def fire(self):
+    def _fire(self):
         self._event.set()
         self._event.clear()
 
-    def wait(self):
+    def _wait(self):
         if self._keep_going:
             self._event.wait()
         return self._keep_going
-
-    def pause_for(self, delay):
-        self._cue_time += delay
-        while self.et() < self._cue_time:
-            if not self.wait():
-                break
-
-    def wait_until(self, time_pattern):
-        hour, minute = Clock._hour_minute()
-        while not time_pattern.match(hour, minute):
-            self.wait()
-            hour, minute = Clock._hour_minute()
-        self.reset()
 
     @staticmethod
     def _hour_minute():

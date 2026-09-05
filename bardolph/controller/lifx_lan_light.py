@@ -1,13 +1,19 @@
 import logging
 
-from bardolph.lib.cache import Cache
 from lifxlan.errors import WorkflowException
-from lifxlan.msgtypes import (GetDeviceChain, GetTileState64, SetTileState64,
-                              StateDeviceChain, StateTileState64)
+from lifxlan.msgtypes import (
+    GetDeviceChain,
+    GetTileState64,
+    SetTileState64,
+    StateDeviceChain,
+    StateTileState64,
+)
 
-from bardolph.controller import i_controller, light
+from bardolph.controller import i_controller
+from bardolph.controller import light as controller_light
 from bardolph.controller.color_matrix import ColorMatrix
-from bardolph.lib.param_helper import param_16, param_32, param_8, param_color
+from bardolph.lib.cache import Cache
+from bardolph.lib.param_helper import param_8, param_16, param_32, param_color
 from bardolph.lib.retry import tries
 
 _MAX_TRIES = 3
@@ -25,7 +31,7 @@ class _SizeCache(Cache):
 _the_cache = _SizeCache()
 
 
-class Light(light.Light):
+class Light(controller_light.Light):
     def __init__(self, impl):
         super().__init__(
             hash(impl.get_mac_addr()), impl.get_label(), impl.get_group(),
@@ -33,6 +39,8 @@ class Light(light.Light):
         self._impl = impl
         self.product_features = impl.get_product_features()
         self._is_color = self.product_features.get('color', False)
+        self._mac_addr = impl.get_ip_addr()
+        self._uid = hash(self._mac_addr)
 
     def is_color(self):
         return self._is_color
@@ -120,11 +128,11 @@ class MatrixLight(Light, i_controller.MatrixLight):
     def _valid_width_height(self) -> bool:
         result = True
         if self._width is None or self._width <= 0:
-            logging.debug('width = {} in set_matrix()'.format(self._width))
+            logging.debug(f'width = {self._width} in set_matrix()')
             logging.error('Data error setting matrix light color.')
             result = False
         if self._height is None or self._height <= 0:
-            logging.debug('height = {} in set_matrix()'.format(self._height))
+            logging.debug(f'height = {self._height} in set_matrix()')
             logging.error('Data error setting matrix light color.')
             result = False
         return result

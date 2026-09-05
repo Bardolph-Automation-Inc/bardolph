@@ -1,36 +1,42 @@
 <html>
 
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
 <body>
 <p>
 <h3>{{ title }}</h3>
 <p>Python version: {{ data.py_version }}</p>
+<p>Bardolph version: {{ data.bardolph_version }}</p>
 <pre>
 {{ data.lights }}
 </pre>
 
-{% macro sub_listing(agent_list) -%}
-    {% if agent_list %}
+{% macro sub_listing(job_list) -%}
+    {% if job_list %}
         <ul>
-        {% for agent in agent_list %}
-            <li>{{ agent.name }}</li>
+        {% for job in job_list %}
+            <li>{{ job }}</li>
         {% endfor %}
         </ul>
     {% else %}
-        <p>No jobs to list.</p>
+        <p>(none)</p>
     {% endif %}
 {%- endmacro %}
 
-{% if data.current_job %}
-    <p>Active job: data.current_job </p>
+<h3>Script Running In Foreground</h3>
+{% if data.foreground_job %}
+    <p>{{ data.foreground_job }}</p>
 {% else %}
-    <p>No active jobs.</p>
+    <p>(none)</p>
 {% endif %}
 
-<h3>Background Jobs</h3>
-<p> {{ sub_listing(data.background_jobs) }} </p>
-
-<h3>Queue</h3>
+<h3>Script Queue</h3>
 <p> {{ sub_listing(data.queued_jobs) }} </p>
+
+<h3>Scripts Running In Background</h3>
+<p> {{ sub_listing(data.background_jobs) }} </p>
 
 </body>
 </html>

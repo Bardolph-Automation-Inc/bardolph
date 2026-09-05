@@ -1,20 +1,24 @@
 import logging
 import traceback
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 from bardolph.controller import units
 from bardolph.controller.color_matrix import ColorMatrix, Rect
 from bardolph.controller.get_key import getch
 from bardolph.controller.i_controller import (LightSet, MatrixLight,
                                               MultizoneLight)
-from bardolph.controller.routine import RuntimeRoutine
+from bardolph.controller.routine import Routine, RuntimeRoutine
 from bardolph.controller.units import UnitMode
-from bardolph.lib.i_lib import Clock, TimePattern
+from bardolph.lib import i_lib
 from bardolph.lib.injection import inject, provide
 from bardolph.lib.symbol import Symbol
 from bardolph.vm.array import (Array, ArrayBase, ArrayCursor, ArrayException,
                                assure_rvalue)
 from bardolph.vm.call_stack import CallStack
 from bardolph.vm.eval_stack import EvalStack
+from bardolph.vm.instruction import Instruction
 from bardolph.vm.loader import Loader
 from bardolph.vm.vm_codes import (JumpCondition, LoopVar, OpCode, Operand,
                                   Register, SetOp)
@@ -23,32 +27,32 @@ from bardolph.vm.vm_io import VmIo
 from bardolph.vm.vm_math import VmMath
 
 
+@dataclass
 class Registers:
-    def __init__(self):
-        self.blue = 0.0
-        self.brightness = 0.0
-        self.default = None
-        self.disc_forward = False
-        self.duration = 0.0
-        self.first_column = None
-        self.first_row = None
-        self.first_zone = 0
-        self.green = 0.0
-        self.hue = 0.0
-        self.kelvin = 0.0
-        self.last_column = None
-        self.last_row = None
-        self.last_zone = 0
-        self.matrix = None
-        self.name = None
-        self.operand = Operand.NULL
-        self.pc = 0
-        self.power = False
-        self.red = 0.0
-        self.result = None
-        self.saturation = 0.0
-        self.time = 0.0  # ms.
-        self.unit_mode = UnitMode.LOGICAL
+    blue = 0.0
+    brightness = 0.0
+    default: Any = None
+    disc_forward: bool = False
+    duration = 0.0
+    first_column = 0
+    first_row = 0
+    first_zone = 0
+    green = 0.0
+    hue = 0.0
+    kelvin = 0.0
+    last_column = 0
+    last_row = 0
+    last_zone = 0
+    matrix: ColorMatrix | None = None
+    name: str | None = None
+    operand = Operand.NULL
+    pc = 0
+    power = False
+    red = 0.0
+    result: Any | None = None
+    saturation = 0.0
+    time = 0.0  # ms.
+    unit_mode: UnitMode = UnitMode.LOGICAL
 
     def get_color(self):
         if self.unit_mode is not UnitMode.RGB:
@@ -61,16 +65,16 @@ class Registers:
         else:
             self.red, self.green, self.blue, self.kelvin = color
 
-    def get_by_enum(self, reg):
+    def get_by_enum(self, reg) -> Any:
         return getattr(self, reg.name.lower())
 
-    def set_by_enum(self, reg, value):
+    def set_by_enum(self, reg, value: Any) -> None:
         setattr(self, reg.name.lower(), value)
 
-    def reset(self):
+    def reset(self) -> None:
         self.__init__()
 
-    def get_power(self):
+    def get_power(self) -> int:
         return 65535 if self.power else 0
 
 
@@ -81,11 +85,14 @@ class MachineState:
 
 
 class Machine:
+    _fn_table: list[Callable] = None
+    _color_fn_table: list[Callable] = None
+
     def __init__(self):
         self._cue_time = 0
-        self._clock = provide(Clock)
-        self._routines = {}
-        self._program = []
+        self._clock = provide(i_lib.Clock)
+        self._routines: dict[str, Routine] = {}
+        self._program: list[Instruction] = []
         self._reg = Registers()
         self._call_stack = CallStack()
         self._vm_io = VmIo(self._call_stack, self._reg)
@@ -94,13 +101,8 @@ class Machine:
             self._call_stack, self._vm_math.eval_stack, self._reg)
         self._enable_pause = True
         self._keep_running = True
-        excluded = (OpCode.STOP, OpCode.ROUTINE)
-        op_codes = [code for code in OpCode if code not in excluded]
-        self._fn_table = {
-            op_code: getattr(self, '_' + op_code.name.lower(), self._unimpl)
-            for op_code in (op_codes)
-        }
-        self._fn_table[OpCode.STOP] = self.stop
+        if self._fn_table is None:
+            init_function_maps()
 
     def reset(self) -> None:
         self._reg.reset()
@@ -128,7 +130,7 @@ class Machine:
                     break
                 fn = self._fn_table[inst.op_code]
                 try:
-                    fn()
+                    fn(self)
                 except ArrayException as aex:
                     logging.error(str(aex))
                 if inst.op_code not in (OpCode.END, OpCode.JSR, OpCode.JUMP):
@@ -137,9 +139,8 @@ class Machine:
             self._vm_io.flush()
             logging.debug(
                 'Stopped, _keep_running = {}, _pc = {}, program_len = {}'
-                .format(
-                    self._keep_running, self._reg.pc, program_len))
-        except Exception as ex:
+                .format(self._keep_running, self._reg.pc, program_len))
+        except ZeroDivisionError as ex:
             logging.debug(traceback.format_exc())
             logging.error("Script stopped due to {} at instruction {}"
                           .format(ex, self._reg.pc))
@@ -180,23 +181,7 @@ class Machine:
         return self._reg.get_color()
 
     def _color(self) -> None:
-        match self._reg.operand:
-            case Operand.ALL:
-                self._color_all()
-            case Operand.DEFAULT:
-                self._color_default()
-            case Operand.LIGHT:
-                self._color_light()
-            case Operand.GROUP:
-                self._color_group()
-            case Operand.LOCATION:
-                self._color_location()
-            case Operand.MATRIX:
-                self._color_matrix()
-            case Operand.MATRIX_LIGHT:
-                self._color_matrix_light()
-            case Operand.MZ_LIGHT:
-                self._color_mz_light()
+        self._color_fn_table[self._reg.operand](self)
 
     @inject(LightSet)
     def _get_named_light(self, light_set) -> None:
@@ -532,7 +517,7 @@ class Machine:
 
     def _wait(self) -> None:
         time = self._reg.time
-        if isinstance(time, TimePattern):
+        if isinstance(time, i_lib.TimePattern):
             self._clock.wait_until(time)
         elif time > 0:
             if self._reg.unit_mode is UnitMode.RAW:
@@ -662,3 +647,21 @@ class Machine:
     def _trigger_error(self, message) -> bool:
         logging.error(message)
         return False
+
+
+def init_function_maps() -> None:
+    Machine._fn_table = [Machine._unimpl] * (len(OpCode) + 1)
+    for op_code in OpCode:
+        Machine._fn_table[op_code] = getattr(
+            Machine, '_' + op_code.name.lower(), Machine._unimpl)
+
+    Machine._color_fn_table = [Machine._unimpl] * (len(Operand) + 1)
+    Machine._color_fn_table[Operand.ALL] = Machine._color_all
+    Machine._color_fn_table[Operand.DEFAULT] = Machine._color_default
+    Machine._color_fn_table[Operand.LIGHT] = Machine._color_light
+    Machine._color_fn_table[Operand.GROUP] = Machine._color_group
+    Machine._color_fn_table[Operand.LOCATION] = Machine._color_location
+    Machine._color_fn_table[Operand.MATRIX] = Machine._color_matrix
+    Machine._color_fn_table[Operand.MATRIX_LIGHT] = Machine._color_matrix_light
+    Machine._color_fn_table[Operand.MZ_LIGHT] = Machine._color_mz_light
+

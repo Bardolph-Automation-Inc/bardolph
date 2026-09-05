@@ -37,10 +37,10 @@ class ClockTest(unittest.TestCase):
     def test_clock(self):
         clk = clock.Clock()
         clk.start()
-        time_0 = clk.et()
+        time_0 = clk._et()
         for _ in range(1, 10):
-            clk.wait()
-            time_1 = clk.et()
+            clk._wait()
+            time_1 = clk._et()
             delta = time_1 - time_0
             self.assertAlmostEqual(delta, self._precision, 1)
             time_0 = time_1

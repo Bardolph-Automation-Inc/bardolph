@@ -5,10 +5,12 @@ import unittest
 from bardolph.fakes.activity_monitor import Action
 from tests.script_runner import ScriptRunner
 from tests import test_module
+from tests.threaded_test import ThreadedTest
 
 
-class DefineTest(unittest.TestCase):
+class DefineTest(ThreadedTest):
     def setUp(self):
+        super().setUp()
         test_module.configure()
         self._runner = ScriptRunner(self)
 

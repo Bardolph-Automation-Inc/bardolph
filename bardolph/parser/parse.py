@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+from pathlib import Path
 from typing import Literal
 
 from bardolph.controller.routine import Routine, RuntimeRoutine
@@ -21,8 +22,14 @@ from bardolph.parser.token import Token, TokenTypes
 from bardolph.runtime import bardolph_fn, i_runtime, runtime_module
 from bardolph.vm.instruction import Instruction
 from bardolph.vm.loader import Loader
-from bardolph.vm.vm_codes import (JumpCondition, OpCode, Operand, Operator,
-                                  Register, SetOp)
+from bardolph.vm.vm_codes import (
+    JumpCondition,
+    OpCode,
+    Operand,
+    Operator,
+    Register,
+    SetOp,
+)
 
 
 class Parser:
@@ -76,17 +83,15 @@ class Parser:
     def get_program(self) -> list:
         return self._code_gen.program
 
-    def parse_file(self, file_name) -> bool:
-        logging.debug('"{}"'.format(file_name))
+    def parse_file(self, path: Path) -> bool:
+        logging.debug('"{}"'.format(path.name))
         try:
-            srce = open(file_name, 'r')
-            input_string = srce.read()
-            srce.close()
-            return self.parse(input_string)
+            code = path.read_text()
+            return self.parse(code)
         except FileNotFoundError:
             self._error_output = 'file not found'
         except OSError:
-            self._error_output = 'Error accessing file'
+            self._error_output = 'error accessing file'
         return False
 
     def set_testing_errors(self, are_enabled: bool = True) -> None:
@@ -297,10 +302,12 @@ class Parser:
     def _var_operand(self) -> bool:
         name = str(self._current_token)
         if not self._context.has_symbol_typed(
-                name, SymbolType.CONSTANT, SymbolType.VAR):
+                name, SymbolType.CONSTANT, SymbolType.VAR, SymbolType.ARRAY):
             return self.token_error('Undefined: {}')
-        self._add_instruction(OpCode.MOVE, name, Register.NAME)
-        return self.next_token()
+        if not ExpressionParser(self).rvalue():
+            return False
+        self._add_instruction(OpCode.POP, Register.NAME)
+        return True
 
     def _set_units(self) -> bool:
         self.next_token()
@@ -470,7 +477,7 @@ class Parser:
             return self._macro_definition(name)
 
         if not self._context.get_routine(name).undefined:
-            return self.token_error('already defined: "{}"')
+            return self.trigger_error('already defined: "{}"'.format(name))
 
         return self._routine_definition(name)
 
@@ -762,7 +769,7 @@ def main():
         level=logging.DEBUG,
         format='%(filename)s(%(lineno)d) %(funcName)s(): %(message)s')
     parser = Parser()
-    if not parser.parse_file(args.file):
+    if not parser.parse_file(Path(args.file)):
         print("Error compiling: {}".format(parser.get_errors()))
     else:
         output_code = parser.get_program()
@@ -772,11 +779,9 @@ def main():
             routines = loader.get_routines()
             output_code = loader.get_code()
 
-        inst_num = 0
         fn = Instruction.asm if args.py else Instruction.as_list_text
-        for inst in output_code:
+        for inst_num, inst in enumerate(output_code):
             print('{:5d} {}'.format(inst_num, fn(inst)))
-            inst_num += 1
         if args.verbose and args.load:
             dump_routines(routines)
 

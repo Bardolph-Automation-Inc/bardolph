@@ -7,7 +7,7 @@ _PARAMS = 'bardolph_params'
 
 def builtin(fn):
     sig = inspect.signature(fn)
-    setattr(fn, _PARAMS, [name for name in sig.parameters.keys()])
+    setattr(fn, _PARAMS, [name for name in sig.parameters])
 
     @functools.wraps(fn)
     def wrapper(*args):

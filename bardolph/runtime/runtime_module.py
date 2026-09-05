@@ -7,7 +7,8 @@ from bardolph.runtime import bardolph_fn, i_runtime
 
 class Runtime(i_runtime.Runtime):
     _module_names = ('bardolph.runtime.bardolph_math',
-                     'bardolph.runtime.query')
+                     'bardolph.runtime.query',
+                     'bardolph.runtime.bardolph_str')
 
     def __init__(self):
         modules = [importlib.import_module(name)
@@ -30,7 +31,7 @@ class NullRuntime(i_runtime.Runtime):
         return {}
 
 
-class _NullInit():
+class _NullInit:
     @staticmethod
     def configure():
         bind_instance(NullRuntime()).to(i_runtime.Runtime)

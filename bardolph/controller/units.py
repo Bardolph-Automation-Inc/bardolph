@@ -2,7 +2,6 @@ import colorsys
 from enum import Enum, auto
 
 from bardolph.lib.noneable import noneable
-from bardolph.vm.vm_codes import Register
 
 _EPSILON = 1.0 / 65536.0 / 2.0
 
@@ -52,7 +51,8 @@ def raw_to_logical(raw_color):
 def rgb_to_raw(rgb_color):
     r, g, b = [rgb_color[i] / 100.0 for i in range(0, 3)]
     h, s, v = colorsys.rgb_to_hsv(r, g, b)
-    make_raw = lambda x: round(max(0, min((x * 65535.0), 65535)))
+    def make_raw(x):
+        return round(max(0, min((x * 65535.0), 65535)))
     return [make_raw(h), make_raw(s), make_raw(v), round(rgb_color[3])]
 
 @noneable

@@ -1,7 +1,8 @@
 <html>
 
 <head>
-<title>{{ script.title }}</title>
+<title>{{ title }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" type="text/css" href="/static/styles.css" />
 
 {% if icon is defined %}
@@ -10,18 +11,26 @@
 {% endif %}
 
 <script language='javascript'>var path_root = '{{ path_root }}';</script>
-<script src="/static/lights.js"></script>
+<script src="/static/{{ js_file }}"></script>
 
 </head>
 
 <body class="{{ agent_class }} launched" onLoad="addEvents()">
 
+{% if agent_class != "tv" %}
+<div class="title shadow">
+<img src="/static/logo.png" class="logoTitle">
+</div>
+{% endif %}
+
 <div class="main">
     <div class="statusColumn">
-        <div class="lightCommand statusRow"
-            style="color: {{ script.color }}; background-color: {{ script.background }}">
-            {{ script.title }}
-            {% if message %} {{message}} {% endif %}
+        <div class="lightCommand statusRow {{ agent_class }}"
+            style="color: {{ color }}; background-color: {{ background_color }}">
+            <code>{{ file_name }}</code>
+        {% if message %}
+            &nbsp; &nbsp; {{message}}
+        {% endif %}
         </div>
 
         <div class="lightCommand statusRow homeButton" id="">Home</div>

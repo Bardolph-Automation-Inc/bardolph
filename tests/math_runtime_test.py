@@ -2,6 +2,8 @@
 
 import unittest
 
+from bardolph.lib.i_lib import Output
+from bardolph.lib.injection import inject
 from tests.script_runner import ScriptRunner
 from tests import test_module
 
@@ -9,10 +11,11 @@ from tests import test_module
 class MathRuntimeTest(unittest.TestCase):
     def setUp(self):
         test_module.configure()
-        self._output = test_module.replace_print()
+        test_module.replace_print()
         self._runner = ScriptRunner(self)
 
-    def test_round(self):
+    @inject(Output)
+    def test_round(self, output):
         script = """
             print [round 1]
             print [round 1.5]
@@ -21,9 +24,10 @@ class MathRuntimeTest(unittest.TestCase):
             print [round -1.6]
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [1, 2, 1, -1, -2])
+        self.assertListEqual(output.get_objects(), [1, 2, 1, -1, -2])
 
-    def test_trunc(self):
+    @inject(Output)
+    def test_trunc(self, output):
         script = """
             print [trunc 1]
             print [trunc 1.5]
@@ -32,39 +36,44 @@ class MathRuntimeTest(unittest.TestCase):
             print [trunc -1.6]
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [1, 1, 1, -1, -1])
+        self.assertListEqual(output.get_objects(), [1, 1, 1, -1, -1])
 
-    def test_floor(self):
+    @inject(Output)
+    def test_floor(self, output):
         script = """
             print [floor 2]
             print [floor 2.5]
             print [floor -2.5]
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [2, 2, -3])
+        self.assertListEqual(output.get_objects(), [2, 2, -3])
 
-    def test_ceil(self):
+    @inject(Output)
+    def test_ceil(self, output):
         script = """
             print [ceil 2]
             print [ceil 2.5]
             print [ceil -2.5]
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [2, 3, -2])
+        self.assertListEqual(output.get_objects(), [2, 3, -2])
 
-    def test_random(self):
+    @inject(Output)
+    def test_random(self, output):
         self._runner.run_script('print [random 0 100]')
-        self.assertTrue(0 <= self._output.get_object() <= 100)
+        self.assertTrue(0 <= output.get_object() <= 100)
 
-    def test_sqrt(self):
+    @inject(Output)
+    def test_sqrt(self, output):
         script = """
             print [sqrt -9]
             print [sqrt 16]
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [-1, 4])
+        self.assertListEqual(output.get_objects(), [-1, 4])
 
-    def test_trig(self):
+    @inject(Output)
+    def test_trig(self, output):
         script = """
             print [sin 270]
             print [cos 0]
@@ -75,9 +84,10 @@ class MathRuntimeTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self._runner.assert_list_almost_equal(
-            self._output.get_objects(), [-1, 1, 1, -90, 0, 45])
+            output.get_objects(), [-1, 1, 1, -90, 0, 45])
 
-    def test_cycle(self):
+    @inject(Output)
+    def test_cycle(self, output):
         script = """
             print [cycle 350]
             print [cycle 365]
@@ -87,9 +97,10 @@ class MathRuntimeTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self.assertListEqual(
-            self._output.get_objects(), [350, 5, 350, 350, 7])
+            output.get_objects(), [350, 5, 350, 350, 7])
 
-    def test_abs(self):
+    @inject(Output)
+    def test_abs(self, output):
         script = """
             print [abs 1]
             print [abs (1 - 2)]
@@ -98,7 +109,7 @@ class MathRuntimeTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self.assertListEqual(
-            self._output.get_objects(), [1, 1, 0, 1])
+            output.get_objects(), [1, 1, 0, 1])
 
 
 if __name__ == '__main__':

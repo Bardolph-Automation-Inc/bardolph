@@ -2,6 +2,8 @@
 
 import unittest
 
+from bardolph.lib.i_lib import Output
+from bardolph.lib.injection import inject
 from tests.script_runner import ScriptRunner
 from tests import test_module
 
@@ -9,10 +11,11 @@ from tests import test_module
 class FunctionTest(unittest.TestCase):
     def setUp(self):
         test_module.configure()
-        self._output = test_module.replace_print()
+        test_module.replace_print()
         self._runner = ScriptRunner(self)
 
-    def test_minimal(self):
+    @inject(Output)
+    def test_minimal(self, output):
         script = """
             define f with a
                 begin
@@ -25,9 +28,10 @@ class FunctionTest(unittest.TestCase):
             print [g 1]
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [0, 1])
+        self.assertListEqual(output.get_objects(), [0, 1])
 
-    def test_unary_minus(self):
+    @inject(Output)
+    def test_unary_minus(self, output):
         script = """
             define f with x
                 begin
@@ -41,9 +45,10 @@ class FunctionTest(unittest.TestCase):
             print [f 2]
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [1, 2])
+        self.assertListEqual(output.get_objects(), [1, 2])
 
-    def test_paren(self):
+    @inject(Output)
+    def test_paren(self, output):
         script = """
             define f with x
                 begin
@@ -57,9 +62,10 @@ class FunctionTest(unittest.TestCase):
             print [f 2]
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [1, 2])
+        self.assertListEqual(output.get_objects(), [1, 2])
 
-    def test_recursion(self):
+    @inject(Output)
+    def test_recursion(self, output):
         script = """
             define f with a begin
                 if a > 9
@@ -71,9 +77,10 @@ class FunctionTest(unittest.TestCase):
             print [f 0]
         """
         self._runner.run_script(script)
-        self.assertEqual(self._output.get_object(), 10)
+        self.assertEqual(output.get_object(), 10)
 
-    def test_calls_as_params(self):
+    @inject(Output)
+    def test_calls_as_params(self, output):
         script = """
             define f with a b return a + b
             define g with y return y + 1
@@ -82,9 +89,10 @@ class FunctionTest(unittest.TestCase):
             print [f [g 5] [g 10]]
         """
         self._runner.run_script(script)
-        self.assertEqual(self._output.get_object(), 17)
+        self.assertEqual(output.get_object(), 17)
 
-    def test_global(self):
+    @inject(Output)
+    def test_global(self, output):
         script = """
             assign x 100
 
@@ -97,9 +105,10 @@ class FunctionTest(unittest.TestCase):
             print x
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [400, 200])
+        self.assertListEqual(output.get_objects(), [400, 200])
 
-    def test_global_as_param(self):
+    @inject(Output)
+    def test_global_as_param(self, output):
         script = """
             assign x 100
 
@@ -114,9 +123,10 @@ class FunctionTest(unittest.TestCase):
             print x
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [20, 100])
+        self.assertListEqual(output.get_objects(), [20, 100])
 
-    def test_no_return(self):
+    @inject(Output)
+    def test_no_return(self, output):
         script = """
             define no_return begin
                 assign x 25
@@ -126,9 +136,10 @@ class FunctionTest(unittest.TestCase):
             print [no_return]
         """
         self._runner.run_script(script)
-        self.assertEqual(self._output.get_object(), None)
+        self.assertEqual(output.get_object(), None)
 
-    def test_multiple_returns(self):
+    @inject(Output)
+    def test_multiple_returns(self, output):
         script = """
             define m_returns with val begin
                 if val > 100 && val < 200
@@ -155,9 +166,10 @@ class FunctionTest(unittest.TestCase):
         """
         self._runner.run_script(script)
         self.assertListEqual(
-            self._output.get_objects(), [10, 240, 1400, 22000, None])
+            output.get_objects(), [10, 240, 1400, 22000, None])
 
-    def test_standalone(self):
+    @inject(Output)
+    def test_standalone(self, output):
         script = """
             assign x 10
 
@@ -175,9 +187,10 @@ class FunctionTest(unittest.TestCase):
             print x
         """
         self._runner.run_script(script)
-        self.assertListEqual(self._output.get_objects(), [50, 30, 100])
+        self.assertListEqual(output.get_objects(), [50, 30, 100])
 
-    def test_mixed_params(self):
+    @inject(Output)
+    def test_mixed_params(self, output):
         script = """
             define plus with i j begin
                 return i + j
@@ -190,7 +203,8 @@ class FunctionTest(unittest.TestCase):
             print [multi_params 5 5+2 [plus 5 4]]
         """
         self._runner.run_script(script)
-        self.assertEqual(self._output.get_object(), 9705)
+        self.assertEqual(output.get_object(), 9705)
+
 
 if __name__ == '__main__':
     unittest.main()

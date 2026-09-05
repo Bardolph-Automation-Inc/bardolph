@@ -1,19 +1,49 @@
-class Clock:
-    def start(self): pass
-    def stop(self): pass
-    def reset(self): pass
-    def pause_for(self, _): pass
+from abc import ABC, abstractmethod
+from typing import Any
 
-class Settings: pass
 
-class TimePattern:
-    def match(self, hour, minute): pass
+class Clock(ABC):
+    @abstractmethod
+    def start(self) -> None:
+        pass
 
-class LogConfig: pass
+    @abstractmethod
+    def stop(self) -> None:
+        pass
 
-class Output:
-    def out(self, output) -> None: pass
-    def newline(self) -> None: pass
-    def flush(self) -> None: pass
+    @abstractmethod
+    def wait_until(self):
+        pass
 
-def configure(): pass
+    @abstractmethod
+    def pause_for(self, delay) -> None:
+        pass
+
+
+class Settings(ABC):
+    def get_value(self, name: str, default: Any = None) -> Any:
+        return self._config.get(name, default)
+
+
+class TimePattern(ABC):
+    @abstractmethod
+    def match(self, hour, minute):
+        pass
+
+
+class LogConfig(ABC):
+    pass
+
+
+class Output(ABC):
+    @abstractmethod
+    def out(self, output) -> None:
+        pass
+
+    @abstractmethod
+    def newline(self) -> None:
+        pass
+
+    @abstractmethod
+    def flush(self) -> None:
+        pass

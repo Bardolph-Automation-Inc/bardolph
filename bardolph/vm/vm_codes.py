@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum, IntEnum, auto
 
 
 class Register(Enum):
@@ -32,10 +32,10 @@ class Register(Enum):
     @staticmethod
     def from_string(name):
         upper = name.upper()
-        return getattr(Register, upper) if hasattr(Register, upper) else None
+        return getattr(Register, upper, None)
 
 
-class OpCode(Enum):
+class OpCode(IntEnum):
     ARRAY = auto()
     BASE = auto()
     BREAKPOINT = auto()
@@ -115,7 +115,7 @@ class Operator(Enum):
     USUB = auto()
 
 
-class Operand(Enum):
+class Operand(IntEnum):
     ALL = auto()
     LIGHT = auto()
     GROUP = auto()      # Device-configured group or location

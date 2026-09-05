@@ -158,7 +158,7 @@ class LoopTest(print_driven_test.PrintDrivenTest):
             'table-1', 420
         ])
 
-    def test_all_with_cycle(self):
+    def test_all_with_cycle2(self): ###
         script = """
             repeat all as the_light with x cycle
             begin
@@ -172,7 +172,7 @@ class LoopTest(print_driven_test.PrintDrivenTest):
             'table-1', 320
         ])
 
-    def test_all_with_cycle_offset(self):
+    def test_all_with_cycle_offset2(self): ###
         script = """
             repeat all as the_light with x cycle 20
             begin

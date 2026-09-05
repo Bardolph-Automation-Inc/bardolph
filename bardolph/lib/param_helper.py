@@ -1,4 +1,3 @@
-import functools
 
 
 def param_8(param) -> int:

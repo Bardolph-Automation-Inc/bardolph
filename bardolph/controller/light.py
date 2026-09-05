@@ -40,20 +40,22 @@ class Light(i_controller.Light):
     def get_width(self) -> int:
         return 1
 
+    def is_color(self) -> bool:
+        logging.warning("controller.Light: get_color() not implemented.")
+        return False
+
     def get_age(self) -> float:
         # seconds
         return time.time() - self._birth
 
     def get_color(self):
         logging.warning("controller.Light: get_color() not implemented.")
-        return None
 
     def set_color(self, *_):
         logging.warning("controller.Light: set_color() not implemented.")
 
     def get_power(self):
         logging.warning("controller.Light: get_power() not implemented.")
-        return None
 
     def set_power(self, *_):
         logging.warning("controller.Light: set_power() not implemented.")

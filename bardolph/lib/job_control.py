@@ -1,202 +1,186 @@
 import collections
-import logging
 import threading
+from collections.abc import Iterator
+from functools import partial
 
 
 class Job:
+    """
+    A Job runs in a single thread. A call to execute() blocks until the job
+    finishes.
+    """
+
     def execute(self) -> None: pass
     def request_stop(self) -> None: pass
 
 
 class Agent:
     """
-    The name serves as the unique identifier. When the job finishes, the
-    callback is invoked with self (this Agent) as the only parameter.
+    When the job finishes, the callback is invoked with self (this Agent) as
+    the only parameter.
     """
-    def __init__(self, job: Job, callback, name: str = None):
+
+    def __init__(self, job: Job, callback=None):
         self._job = job
         self._callback = callback
         self._thread = None
-        self._name = name or 'job {}'.format(id(self))
-
-    @property
-    def name(self) -> str:
-        return self._name
+        self._stop_requested = False
 
     @property
     def job(self) -> Job:
         return self._job
 
-    def is_running(self):
-        return self._thread is not None and self._thread.is_alive()
+    def is_running(self) -> bool:
+        return bool(self._thread and self._thread.is_alive())
 
-    def execute(self):
-        self._thread = threading.Thread(target=self._execute_and_call)
-        self._thread.start()
-        return self
+    def launch(self) -> None:
+        """
+        Run the job inside a new Thread. This function returns immediately.
+        """
+        if not self._stop_requested:
+            self._thread = threading.Thread(target=self.run)
+            self._thread.start()
 
-    def request_stop(self) -> None:
-        self._job.request_stop()
-
-    def _execute_and_call(self) -> None:
-        try:
+    def run(self) -> None:
+        """
+        Run the job. This function blocks until the job finishes executing.
+        """
+        if not self._stop_requested:
             self._job.execute()
-        finally:
+        if self._callback:
             self._callback(self)
 
-
-def failed_job() -> Agent:
-    class FailedJob:
-        def execute(self):
-            return False
-        def request_stop(self):
-            return True
-    callback = lambda _: None
-    return Agent(FailedJob(), callback, "failed job")
+    def request_stop(self) -> None:
+        self._stop_requested = True
+        self._job.request_stop()
 
 
 class JobControl:
     """
+    Each running Job is contained by an Agent. There is one foreground Agent
+    and a dictionary of background Agents. The foreground Agents typically come
+    from the queue.
+
     Jobs are pulled out from the left (front of the queue). add_job() appends
-    one to the end (right side), while insert_job() inserts it in front (left
-    side).
+    one to the end (right side).
     """
+
     def __init__(self):
-        self._background = {}
-        self._active_agent = None
-        self._queue = collections.deque()
-        self._lock = threading.RLock()
+        self._bg_agents = set()
+        self._fg_agent = None
+        self._fg_queue = collections.deque()
 
     def clear_queue(self) -> None:
-        self._queue.clear()
+        self._fg_queue.clear()
 
-    def add_job(self, job: Job, name: str = None) -> Agent | None:
-        return self._enqueue_job(job, self._queue.append, name)
+    def append_job(self, job: Job) -> Agent:
+        """
+        Add a Job to the end of the foreground queue. This function returns
+        without waiting.
+        """
+        return self._enqueue_job(job, self._fg_queue.append)
 
-    def insert_job(self, job: Job, name: str = None) -> Agent | None:
-        return self._enqueue_job(job, self._queue.appendleft, name)
-
-    def run_job(self, job: Job, name: str = None) -> bool:
-        self.stop_current()
-        self.clear_queue()
-        return self.add_job(job, name)
-
-    def run_single_job(self, job: Job) -> None:
-        job.execute()
-
-    def spawn_job(self, job: Job, name):
-        agent = None
-        if self._acquire_lock():
-            try:
-                agent = Agent(job, self._on_background_done, name)
-                self._background[agent.name] = agent
-                agent.execute()
-            finally:
-                self._release_lock()
+    def run_job(self, job: Job, callback=None) -> Agent:
+        """
+        Clear out the foreground queue and stop the foreground job if one is
+        running. Run the incoming job immediately. This function returns without
+        waiting.
+        """
+        if callback is not None:
+            fn = partial(self._callback_chain, callback, self._on_fg_done)
+        else:
+            fn = self._on_fg_done
+        agent = Agent(job, fn)
+        self.clear_foreground()
+        self._fg_agent = agent
+        agent.launch()
         return agent
 
-    def get_queued(self):
-        return list(self._queue) if self._queue is not None else None
-
-    def get_background(self):
-        if self._background is None:
-            return None
-        return self._background.values()
-
-    def get_current(self):
-        return self._active_agent
-
-    def is_running(self, name) -> bool:
-        if self._active_agent is not None and self._active_agent.name == name:
-            return True
-        return name in self._background
-
-    def stop_background(self) -> bool:
-        result = False
-        if self._acquire_lock():
-            result = True
-            try:
-                # Get a copy to avoid iterating over a list that's undergoing
-                # deletions.
-                agents = self.get_background()
-                if agents is not None:
-                    for agent in list(agents).copy():
-                        agent.request_stop()
-            finally:
-                self._release_lock()
-        return result
-
-    def stop_job(self, name: str) -> bool:
-        result = False
-        if self._acquire_lock():
-            try:
-                if (self._active_agent is not None and
-                        self._active_agent.name == name):
-                    self._active_agent.request_stop()
-                    result = True
-                elif name in self._background:
-                    self._background[name].request_stop()
-                    result = True
-            finally:
-                self._release_lock()
-        return result
-
-    def stop_current(self) -> bool:
-        if self._active_agent is not None and self._active_agent.is_running():
-            if self._acquire_lock():
-                try:
-                    self._active_agent.request_stop()
-                finally:
-                    self._release_lock()
-                return True
-        return False
-
-    def has_jobs(self) -> bool:
-        return (len(self._queue) > 0 or len(self._background) > 0 or
-                self._active_agent is not None)
-
-    def _run_next_job(self) -> None:
-        if self._acquire_lock():
-            try:
-                if self._active_agent is None and len(self._queue) > 0:
-                    self._active_agent = self._queue.popleft()
-                    self._active_agent.execute()
-            finally:
-                self._release_lock()
-
-    def _enqueue_job(self, job, append_fn, name) -> Agent | None:
-        agent = None
-        if self._acquire_lock():
-            try:
-                agent = Agent(job, self._on_execution_done, name)
-                append_fn(agent)
-                if self._active_agent is None:
-                    self._run_next_job()
-            finally:
-                self._lock.release()
-        return agent
-
-    def _on_execution_done(self, _) -> None:
-        if self._acquire_lock():
-            try:
-                self._active_agent = None
-            finally:
-                self._release_lock()
-            self._run_next_job()
-
-    def _on_background_done(self, agent):
-        if self._acquire_lock():
-            try:
-                del self._background[agent.name]
-            finally:
-                self._release_lock()
-
-    def _acquire_lock(self):
-        if not self._lock.acquire(True, 1.0):
-            logging.error("Unable to acquire lock.")
-            return False
+    def run_iterated(self, producer: Iterator[Job]) -> bool:
+        """
+        Run jobs one after another. Rather than putting them all into the
+        queue, get each job when the current one finishes. This function
+        blocks until all of the Jobs have been processed.
+        """
+        for job in producer:
+            self._fg_agent = Agent(job)
+            self._fg_agent.run()
+            self._fg_agent = None
         return True
 
-    def _release_lock(self):
-        self._lock.release()
+    def spawn(self, job: Job) -> Agent:
+        """
+        Run a job in the background. This function returns without waiting.
+        """
+        agent = Agent(job, self._on_bg_done)
+        self._bg_agents.add(agent)
+        agent.launch()
+        return agent
 
+    def get_queued(self) -> list[Agent]:
+        return list(self._fg_queue)
+
+    def get_background(self) -> list[Agent]:
+        return list(self._bg_agents)
+
+    def get_foreground(self) -> Agent | None:
+        return self._fg_agent
+
+    def stop_foreground(self) -> None:
+        if self._fg_agent is not None:
+            self._fg_agent.request_stop()
+
+    def clear_foreground(self) -> None:
+        """
+        Clear the queue and stop the foreground job.
+        """
+        self._fg_queue.clear()
+        fg_agent = self._fg_agent
+        if fg_agent is not None:
+            fg_agent.request_stop()
+
+    def clear_background(self) -> None:
+        """
+        Stop and clear out all background jobs.
+        """
+        any_change = False
+        agents = list(self._bg_agents)
+        if len(agents) > 0:
+            any_change = True
+            list_copy = list(agents).copy()
+            agents.clear()
+        if any_change:
+            for agent in list_copy:
+                agent.request_stop()
+
+    def has_any_jobs(self) -> bool:
+        return (len(self._fg_queue) > 0
+                or len(self._bg_agents) > 0
+                or self._fg_agent is not None)
+
+    def _run_next_job(self) -> None:
+        """
+        If necessary, get the next Job from the queue and run it. If a
+        foreground Job is already present, do nothing.
+        """
+        if self._fg_agent is None and len(self._fg_queue) > 0:
+            self._fg_agent = self._fg_queue.popleft()
+            if self._fg_agent is not None:
+                self._fg_agent.launch()
+
+    def _enqueue_job(self, job, append_fn) -> Agent:
+        """
+        append_fn is deque.append() or deque.appendleft().
+        """
+        agent = Agent(job, self._on_fg_done)
+        append_fn(agent)
+        self._run_next_job()
+        return agent
+
+    def _on_fg_done(self, agent: Agent) -> None:
+        if agent is self._fg_agent:
+            self._fg_agent = None
+        self._run_next_job()
+
+    def _on_bg_done(self, agent: Agent) -> None:
+        self._bg_agents.discard(agent)

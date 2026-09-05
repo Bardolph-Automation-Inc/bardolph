@@ -1,6 +1,7 @@
 from bardolph.lib import i_lib
 from bardolph.lib.injection import bind
 
+
 class StdOutOutput(i_lib.Output):
     def __init__(self):
         self._line_pending = False

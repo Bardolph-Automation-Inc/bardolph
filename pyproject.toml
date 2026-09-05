@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bardolph"
-version = "0.3.1"
+version = "0.3.2"
 description="Simple scripting language for LIFX lights"
 readme = "README.md"
 authors = [{name  = "Bardolph Automation", email="info@bardolphauto.com"}]
@@ -53,3 +53,15 @@ lsc = "bardolph.controller:lsc.main"
 lscap = "bardolph.controller:snapshot.main"
 lsrun = "bardolph.controller:run.main"
 lsparse = "bardolph.parser:parse.main"
+
+[tool.ruff.lint]
+ignore = [
+    "EXE001", # Shebang with python as the executable
+    "LOG015", # Warning to root logger
+    "I001",   # Imports don't meet Ruff's standard
+    "UP032"   # Use f-string instead of format()
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+lines-after-imports = 2

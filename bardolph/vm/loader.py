@@ -17,9 +17,9 @@ from bardolph.vm.vm_codes import JumpCondition, OpCode
 
 class Loader:
     def __init__(self):
-        self._main_segment = []
-        self._routine_segment = []
-        self._routines = {}
+        self._main_segment: list[Instruction] = []
+        self._routine_segment: list[Instruction] = []
+        self._routines: dict[str, Routine] = {}
         self._iter = None
 
     def _next_inst(self):
@@ -31,7 +31,7 @@ class Loader:
             self._iter = None
             return None
 
-    def load(self, instructions: list):
+    def load(self, instructions: list[Instruction]):
         self._main_segment.clear()
         self._routine_segment.clear()
         self._routines.clear()
@@ -53,7 +53,7 @@ class Loader:
         for name, fn in runtime.get_fns().items():
             self._routines[name] = RuntimeRoutine(name, fn)
 
-    def _load_routine(self, current_inst):
+    def _load_routine(self, current_inst: Instruction):
         routine_name = current_inst.param0
         self._routine_segment.append(current_inst)
         new_routine = Routine(routine_name)

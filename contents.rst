@@ -1,7 +1,10 @@
 .. figure:: docs/logo.png
-   :align: center
+    :align: center
+    :alt: Bardolph logo
+    :target: https://bardolph.org
+    :width: 75%
 
-   http://www.bardolph.org
+    http://bardolph.org
 
 .. _index:
 

@@ -1,0 +1,74 @@
+[[button]]
+file_name = "off-all.ls"
+path = "off"
+background = "#222"
+color = "Linen"
+
+[[button]]
+file_name = "on-all.ls"
+path = "on"
+background = "Linen"
+color = "#222"
+
+[[button]]
+file_name = "incandescent.ls"
+background = "LightYellow"
+color = "#222"
+
+[[button]]
+file_name = "on5.ls"
+title = "On 5 Min."
+background = "rgb(21, 139, 168)"
+color = "white"
+
+[[button]]
+file_name = "cycle-color-slow.ls"
+title = "Slow Cycle"
+background = "rgb(32, 192, 192)"
+color = "#222"
+run_background = true
+
+[[button]]
+file_name = "fade-to-dark.ls"
+path = "fade"
+title = "Fade to Dark"
+background = "rgb(60, 90, 90)"
+color = "White"
+
+[[button]]
+file_name = "darker.ls"
+title = "All 33% Darker"
+background = "rgb(64, 64, 64)"
+color = "rgb(208, 208, 208)"
+
+[[button]]
+file_name = "lighter.ls"
+title = "All 33% Lighter"
+background = "rgb(192, 192, 192)"
+color = "rgb(32, 32, 32)"
+
+[[button]]
+file_name = ""
+path = "capture"
+background = "SlateGray"
+color = "White"
+
+[[button]]
+path = "retrieve"
+file_name = "__snapshot__.ls"
+background = "rgb(64, 64, 128)"
+color = "rgb(128, 192, 192)"
+
+[[button]]
+path = "night-light"
+background = "rgb(64, 128, 64)"
+color = "Linen"
+
+[[button]]
+path = "stop-all"
+file_name = ""
+title = "Stop All Scripts"
+background = "Maroon"
+color = "White"
+stop_foreground = "true"
+clear_background = "true"

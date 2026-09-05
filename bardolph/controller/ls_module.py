@@ -6,16 +6,7 @@ from bardolph.lib import job_control
 from bardolph.controller.script_job import ScriptJob
 from bardolph.runtime import runtime_module
 
-class LsModule:
-    _jobs = job_control.JobControl()
-
-    @staticmethod
-    def queue_script(script: str):
-        return LsModule._jobs.add_job(ScriptJob.from_string(script))
-
-    @staticmethod
-    def run_script(script: str):
-        return LsModule._jobs.run_job(ScriptJob.from_string(script))
+_job_control = job_control.JobControl()
 
 
 def configure():
@@ -25,16 +16,21 @@ def configure():
     runtime_module.configure()
 
 
-def queue_script(script) -> job_control.Agent:
-    return LsModule.queue_script(script) or job_control.failed_job()
+def queue_script(script: str) -> job_control.Agent:
+    return _job_control.append_job(ScriptJob.from_string(script))
 
 
-def run_script(script) -> job_control.Agent:
-    return LsModule.run_script(script) or job_control.failed_job()
+def run_script(script: str) -> job_control.Agent:
+    return _job_control.run_job(ScriptJob.from_string(script))
 
 
-def consume_scripts(producer: Iterator[str]):
-    LsModule._jobs.stop_current()
-    LsModule._jobs.clear_queue()
-    for script in producer:
-        LsModule._jobs.run_single_job(ScriptJob.from_string(script))
+def spawn_script(script: str) -> job_control.Agent:
+    return _job_control.spawn(ScriptJob.from_string(script))
+
+
+def consume_scripts(script_producer: Iterator[str]) -> bool:
+    def produce_jobs(script_producer: Iterator[str]) -> Iterator[ScriptJob]:
+        for script in script_producer:
+            yield ScriptJob.from_string(script)
+
+    return _job_control.run_iterated(produce_jobs(script_producer))

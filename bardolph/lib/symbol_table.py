@@ -1,5 +1,6 @@
 from bardolph.lib.symbol import Symbol, SymbolType
 
+
 class SymbolTable:
     def __init__(self):
         self._dict = {}

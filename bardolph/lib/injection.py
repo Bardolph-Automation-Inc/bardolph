@@ -52,7 +52,6 @@ def provide(interface):
 
 
 def configure():
-    global _providers
     _providers.clear()
 
 

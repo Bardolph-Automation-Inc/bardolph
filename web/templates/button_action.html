@@ -1,0 +1,36 @@
+<html>
+
+<head>
+<title>{{ script.title }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="/static/styles.css" />
+
+{% if icon is defined %}
+  <link rel="icon" sizes="192x192" href="/static/{{ icon }}-192.png" />
+  <link rel="icon" sizes="512x512" href="/static/{{ icon }}-512.png" />
+{% endif %}
+
+<script language='javascript'>var path_root = '{{ path_root }}';</script>
+<script src="/static/{{ js_file }}"></script>
+
+</head>
+
+<body class="launched {{ agent_class }}" onLoad="addEvents()">
+
+<div class="main">
+    <div class="title shadow">
+    <img src="/static/logo.png" class="logoTitle">
+    </div>
+
+    <div class="statusColumn">
+        <div class="lightCommand statusRow shadow {{ agent_class }}"
+            style="color: {{ script.button_spec.color }}; background-color: {{ script.button_spec.background }}">
+            {% if message %} {{message}} {% endif %}
+            &quot;{{ script.button_spec.title }}&quot;
+        </div>
+
+        <div class="lightCommand statusRow homeButton" id="">Home</div>
+    </div>
+</div>
+
+</body>

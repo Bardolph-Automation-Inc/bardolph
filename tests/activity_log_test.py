@@ -5,8 +5,6 @@ import unittest
 from bardolph.fakes.activity_monitor import ActivityMonitor
 
 class ActivityLogTest(unittest.TestCase):
-    def setUp(self): pass
-
     def test_calls(self):
         activities = ActivityMonitor()
         activities.log_call("a", (1, 2))

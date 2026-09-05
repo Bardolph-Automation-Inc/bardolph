@@ -1,13 +1,15 @@
 import os
+from dataclasses import dataclass
+from typing import Any
 
-from .vm_codes import OpCode
+from bardolph.vm.vm_codes import OpCode
 
 
+@dataclass
 class Instruction:
-    def __init__(self, op_code, param0=None, param1=None):
-        self.op_code = op_code
-        self.param0 = param0
-        self.param1 = param1
+    op_code: OpCode
+    param0: Any | None = None
+    param1: Any | None = None
 
     def __repr__(self):
         if self.op_code is OpCode.TIME_PATTERN:
@@ -52,7 +54,10 @@ class Instruction:
         return self._code_output(self.op_code.name)
 
     def asm(self) -> str:
-        return self._code_output(str(self.op_code))
+        return self._code_output(str(self.op_code.name))
+
+    def ctor(self) -> str:
+        return self._code_output('OpCode.' + str(self.op_code.name))
 
     @staticmethod
     def quote_if_string(obj):
@@ -63,8 +68,6 @@ class Instruction:
     @staticmethod
     def do_listing(program):
         result = ''
-        inst_num = 0
-        for inst in program:
+        for inst_num, inst in enumerate(program):
             result += '{:5d} {}\n'.format(inst_num, inst)
-            inst_num += 1
         return result

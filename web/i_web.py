@@ -1,1 +1,2 @@
-class WebApp: pass
+class WebApp:
+    pass

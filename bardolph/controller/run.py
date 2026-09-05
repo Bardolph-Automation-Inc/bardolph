@@ -2,15 +2,11 @@
 
 import argparse
 import logging
+from pathlib import Path
 
-from bardolph.lib import injection
-from bardolph.lib import job_control
-from bardolph.lib import settings
-
-from bardolph.controller import arg_helper
-from bardolph.controller import light_module
-from bardolph.controller import config_values
+from bardolph.controller import arg_helper, config_values, light_module
 from bardolph.controller.script_job import ScriptJob
+from bardolph.lib import injection, job_control, settings
 from bardolph.runtime import runtime_module
 
 _epilog = """The -n parameter is optional, but if you don't specify it,
@@ -52,7 +48,7 @@ def init_settings(args):
         settings_init.apply_file(args.config_file)
 
     overrides = arg_helper.get_overrides(args)
-    if overrides is not None:
+    if overrides:
         settings_init.add_overrides(overrides)
     settings_init.apply_env().configure()
 
@@ -66,10 +62,10 @@ def main():
 
     jobs = job_control.JobControl()
     if args.script is not None:
-        jobs.add_job(ScriptJob.from_string(args.script))
+        jobs.run_job(ScriptJob.from_script(args.script))
     else:
         for file_name in args.file:
-            jobs.add_job(ScriptJob.from_file(file_name))
+            jobs.run_job(ScriptJob.from_path(Path(file_name)))
 
 
 if __name__ == "__main__":

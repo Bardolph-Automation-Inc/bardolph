@@ -33,14 +33,14 @@ class ScriptRunner:
         if script_job.program is None:
             self._test_case.fail(
                 "Compile failed - {}".format(script_job.compile_errors))
-        jobs.add_job(script_job)
-        while jobs.has_jobs():
+        jobs.append_job(script_job)
+        while jobs.has_any_jobs():
             time.sleep(0.01)
             if max_waits is not None:
                 max_waits -= 1
                 if max_waits < 0:
                     self._test_case.fail("Jobs didn't finish.")
-            self._machine_state = script_job.get_machine_state()
+        self._machine_state = script_job.get_machine_state()
 
     def check_call_list(self, to_check, expected):
         light_api = provide(i_controller.LightApi)
