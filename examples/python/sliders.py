@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+
+"""
+This program uses tkinter to display a panel of three sliders: one for
+red, one for green, and one for blue. Each time you adjust a slider, 
+a short script to update the light named "Lamp" is generated and run.
+"""
 import tkinter as tk
 
 from bardolph.controller import ls_module
